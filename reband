@@ -445,7 +445,7 @@ end
 entity.Debug.OnDeath = function()
     warn("You died.")
     print("fuck.")
-loadstring(game:HttpGet("https://raw.githubusercontent.com/check78/Jumpscares/main/ReboundJumpscare.txt"))()
+loadstring(game:HttpGet("https://pastebin.com/raw/yvCMGAwP"))()
 wait(1.8)
 loadstring(game:HttpGet("https://raw.githubusercontent.com/check78/GuidingLight/main/BoundDie.txt"))()
 end
@@ -463,7 +463,7 @@ end
 entity.Debug.OnDeath = function()
     warn("You died.")
     print("fuck.")
-loadstring(game:HttpGet("https://raw.githubusercontent.com/check78/Jumpscares/main/ReboundJumpscare.txt"))()
+loadstring(game:HttpGet("https://pastebin.com/raw/yvCMGAwP"))()
 wait(1.8)
 loadstring(game:HttpGet("https://raw.githubusercontent.com/check78/GuidingLight/main/BoundDie.txt"))()
 end
@@ -481,7 +481,7 @@ end
 entity.Debug.OnDeath = function()
     warn("You died.")
     print("fuck.")
-loadstring(game:HttpGet("https://raw.githubusercontent.com/check78/Jumpscares/main/ReboundJumpscare.txt"))()
+loadstring(game:HttpGet("https://pastebin.com/raw/yvCMGAwP"))()
 wait(1.8)
 loadstring(game:HttpGet("https://raw.githubusercontent.com/check78/GuidingLight/main/BoundDie.txt"))()
 end
@@ -499,7 +499,7 @@ end
 entity.Debug.OnDeath = function()
     warn("You died.")
     print("fuck.")
-loadstring(game:HttpGet("https://raw.githubusercontent.com/check78/Jumpscares/main/ReboundJumpscare.txt"))()
+loadstring(game:HttpGet("https://pastebin.com/raw/yvCMGAwP"))()
 wait(1.8)
 loadstring(game:HttpGet("https://raw.githubusercontent.com/check78/GuidingLight/main/BoundDie.txt"))()
 end
