@@ -47,12 +47,12 @@ local camShake = CameraShaker.new(Enum.RenderPriority.Camera.Value, function(sha
 end)
 camShake:Start()
 camShake:ShakeOnce(10,3,0.1,6,2,0.5)
-local speed = math.random(150,150)
+local speed = math.random(125,150)
 local delay = {"2", "2.5", "1.5", "1", "2.1"}
 local fuck = delay[math.random(1, #delay)]
 wait(2.8)
 
-local Creator = loadstring(game:HttpGet("https://pastebin.com/raw/ZFqqQzYz"))()
+local Creator = loadstring(game:HttpGet("https://pastebin.com/raw/nedWj8Yh"))()
 
 -- Create entity
 
@@ -64,7 +64,7 @@ local entity = Creator.createEntity({
     HeightOffset = 0.3,
     CanKill = true,
     BreakLights = false,
-    KillRange = 20,
+    KillRange = 40,
     BackwardsMovement = true,
     FlickerLights = {
         false, -- Enabled
@@ -129,7 +129,7 @@ entity.Debug.OnEntityStartMoving = function(entityModel)
     print("Entity has started moving:", entityModel)
     game.ReplicatedStorage.GameData.LatestRoom.Changed:Wait()
     
-local Creator = loadstring(game:HttpGet("https://pastebin.com/raw/ZFqqQzYz"))()
+local Creator = loadstring(game:HttpGet("https://pastebin.com/raw/nedWj8Yh"))()
 
 -- Create entity
 
@@ -141,7 +141,7 @@ local entity = Creator.createEntity({
     HeightOffset = 0.3,
     CanKill = true,
     BreakLights = false,
-    KillRange = 20,
+    KillRange = 40,
     BackwardsMovement = true,
     FlickerLights = {
         false, -- Enabled
@@ -206,7 +206,7 @@ entity.Debug.OnEntityStartMoving = function(entityModel)
     print("Entity has started moving:", entityModel)
     game.ReplicatedStorage.GameData.LatestRoom.Changed:Wait()
     
-local Creator = loadstring(game:HttpGet("https://pastebin.com/raw/ZFqqQzYz"))()
+local Creator = loadstring(game:HttpGet("https://pastebin.com/raw/nedWj8Yh"))()
 
 -- Create entity
 
@@ -218,7 +218,7 @@ local entity = Creator.createEntity({
     HeightOffset = 0.3,
     CanKill = true,
     BreakLights = false,
-    KillRange = 20,
+    KillRange = 40,
     BackwardsMovement = true,
     FlickerLights = {
         false, -- Enabled
@@ -283,7 +283,7 @@ entity.Debug.OnEntityStartMoving = function(entityModel)
     print("Entity has started moving:", entityModel)
     game.ReplicatedStorage.GameData.LatestRoom.Changed:Wait()
     
-local Creator = loadstring(game:HttpGet("https://pastebin.com/raw/ZFqqQzYz"))()
+local Creator = loadstring(game:HttpGet("https://pastebin.com/raw/nedWj8Yh"))()
 
 -- Create entity
 
@@ -295,7 +295,7 @@ local entity = Creator.createEntity({
     HeightOffset = 0.3,
     CanKill = true,
     BreakLights = false,
-    KillRange = 20,
+    KillRange = 40,
     BackwardsMovement = true,
     FlickerLights = {
         false, -- Enabled
@@ -360,7 +360,7 @@ entity.Debug.OnEntityStartMoving = function(entityModel)
     print("Entity has started moving:", entityModel)
     game.ReplicatedStorage.GameData.LatestRoom.Changed:Wait()
     
-local Creator = loadstring(game:HttpGet("https://pastebin.com/raw/ZFqqQzYz"))()
+local Creator = loadstring(game:HttpGet("https://pastebin.com/raw/nedWj8Yh"))()
 
 -- Create entity
 
@@ -372,7 +372,7 @@ local entity = Creator.createEntity({
     HeightOffset = 0.3,
     CanKill = true,
     BreakLights = false,
-    KillRange = 20,
+    KillRange = 40,
     BackwardsMovement = true,
     FlickerLights = {
         false, -- Enabled
@@ -445,7 +445,7 @@ end
 entity.Debug.OnDeath = function()
     warn("You died.")
     print("fuck.")
-loadstring(game:HttpGet("https://pastebin.com/raw/yvCMGAwP"))()
+loadstring(game:HttpGet("https://pastebin.com/raw/fkewA78x"))()
 wait(1.8)
 loadstring(game:HttpGet("https://raw.githubusercontent.com/check78/GuidingLight/main/BoundDie.txt"))()
 end
@@ -463,7 +463,7 @@ end
 entity.Debug.OnDeath = function()
     warn("You died.")
     print("fuck.")
-loadstring(game:HttpGet("https://pastebin.com/raw/yvCMGAwP"))()
+loadstring(game:HttpGet("https://pastebin.com/raw/fkewA78x"))()
 wait(1.8)
 loadstring(game:HttpGet("https://raw.githubusercontent.com/check78/GuidingLight/main/BoundDie.txt"))()
 end
@@ -481,7 +481,7 @@ end
 entity.Debug.OnDeath = function()
     warn("You died.")
     print("fuck.")
-loadstring(game:HttpGet("https://pastebin.com/raw/yvCMGAwP"))()
+loadstring(game:HttpGet("https://pastebin.com/raw/fkewA78x"))()
 wait(1.8)
 loadstring(game:HttpGet("https://raw.githubusercontent.com/check78/GuidingLight/main/BoundDie.txt"))()
 end
@@ -499,7 +499,7 @@ end
 entity.Debug.OnDeath = function()
     warn("You died.")
     print("fuck.")
-loadstring(game:HttpGet("https://pastebin.com/raw/yvCMGAwP"))()
+loadstring(game:HttpGet("https://pastebin.com/raw/fkewA78x"))()
 wait(1.8)
 loadstring(game:HttpGet("https://raw.githubusercontent.com/check78/GuidingLight/main/BoundDie.txt"))()
 end
@@ -517,7 +517,7 @@ end
 entity.Debug.OnDeath = function()
     warn("You died.")
     print("fuck.")
-loadstring(game:HttpGet("https://pastebin.com/raw/yvCMGAwP"))()
+loadstring(game:HttpGet("https://pastebin.com/raw/fkewA78x"))()
 wait(1.8)
 loadstring(game:HttpGet("https://raw.githubusercontent.com/check78/GuidingLight/main/BoundDie.txt"))()
 end
