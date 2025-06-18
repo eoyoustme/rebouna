@@ -41,7 +41,7 @@ local entity = spawner.Create({
     Damage = {
         Enabled = false,
         Range = 40,
-        Amount = 125
+        Amount = 0.1
     },
     Crucifixion = {
         Enabled = true,
@@ -135,7 +135,7 @@ entity:SetCallback("OnSpawned", function()
     cue2.Parent = game.Workspace
     cue2.Name = "Spawn"
     cue2.SoundId = "rbxassetid://9125713501"
-    cue2.Volume = 999
+    cue2.Volume = 9999
     cue2.PlaybackSpeed = 0.525
     cue2:Play()
 
