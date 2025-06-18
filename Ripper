@@ -1,0 +1,134 @@
+-- Load spawner entity Doors
+local spawner = loadstring(game:HttpGet("https://raw.githubusercontent.com/RegularVynixu/Utilities/main/Doors/Entity%20Spawner/V2/Source.lua"))()
+
+-- Tạo entity Ripper
+local entity = spawner.Create({
+	Entity = {
+		Name = "Ripper",
+		Asset = "rbxassetid://118750853123155",
+		HeightOffset = 0
+	},
+	Lights = {
+		Flicker = {Enabled = true, Duration = 1},
+		Shatter = true,
+		Repair = false
+	},
+	Earthquake = {Enabled = true},
+	CameraShake = {Enabled = true, Range = 100, Values = {1.5, 20, 0.1, 1}},
+	Movement = {Speed = 100, Delay = 7, Reversed = false},
+	Rebounding = {Enabled = false, Type = "Ambush", Min = 1, Max = 1, Delay = 2},
+	Damage = {Enabled = true, Range = 40, Amount = 125},
+	Crucifixion = {Enabled = true, Range = 40, Resist = false, Break = true},
+	Death = {Type = "Guiding", Hints = {"You die to Ripper", "IF you hear a scream and game to red he is spawn", "Go", "HIDE"}, Cause = ""}
+})
+
+-- Biến điều khiển jumpscare
+local RunService = game:GetService("RunService")
+local Players = game:GetService("Players")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local TweenService = game:GetService("TweenService")
+local Lighting = game:GetService("Lighting")
+
+-- Giả lập RemoteEvents (nếu trong executor không có sẵn, bạn có thể tạo tạm)
+local lockCamEvent = ReplicatedStorage:FindFirstChild("LockCameraEvent") or Instance.new("RemoteEvent", ReplicatedStorage)
+lockCamEvent.Name = "LockCameraEvent"
+local unlockCamEvent = ReplicatedStorage:FindFirstChild("UnlockCameraEvent") or Instance.new("RemoteEvent", ReplicatedStorage)
+unlockCamEvent.Name = "UnlockCameraEvent"
+
+local isScaring = false
+local patrolActive = true
+local pendingScareTargets = {}
+local lastScareTime = {}
+
+-- Hàm jumpscarePlayer
+local function jumpscarePlayer(player)
+	if isScaring then return end
+	isScaring = true
+	patrolActive = false
+
+	local char = player.Character
+	local hrp = char and char:FindFirstChild("HumanoidRootPart")
+	if not hrp then
+		isScaring = false
+		patrolActive = true
+		return
+	end
+
+	-- Gửi tín hiệu khóa camera client
+	lockCamEvent:FireClient(player, entity)
+
+	-- Đợi client gửi hướng camera (timeout 2s)
+	local timeout = 2
+	local timer = 0
+	while not pendingScareTargets[player] and timer < timeout do
+		wait(0.1)
+		timer += 0.1
+	end
+
+	local targetData = pendingScareTargets[player]
+	pendingScareTargets[player] = nil
+
+	if targetData then
+		local targetPos = targetData.target
+		local lookAt = targetData.lookAt
+
+		local direction = (targetPos - entity.PrimaryPart.Position).Unit
+		local distance = (targetPos - entity.PrimaryPart.Position).Magnitude
+		local traveled = 0
+
+		while traveled < distance do
+			local deltaTime = RunService.Heartbeat:Wait()
+			local step = math.min(200 * deltaTime, distance - traveled)
+			traveled += step
+			local nextPos = entity.PrimaryPart.Position + direction * step
+			entity:SetPrimaryPartCFrame(CFrame.new(nextPos, lookAt))
+		end
+	end
+
+	-- Phát âm thanh jumpscare
+	local scareSound = entity:FindFirstChild("Jumpscare")
+	if scareSound then scareSound:Play() end
+
+	-- Delay 1.5 giây rồi giết player
+	wait(1.5)
+	local humanoid = char:FindFirstChildOfClass("Humanoid")
+	if humanoid then
+		humanoid.Health = 0
+	end
+
+	-- Mở khóa camera ngay
+	unlockCamEvent:FireClient(player)
+
+	-- Lưu thời điểm jumpscare
+	lastScareTime[player] = tick()
+
+	isScaring = false
+	patrolActive = true
+end
+
+-- Đăng ký callback entity
+entity:SetCallback("OnSpawned", function()
+	print("Entity has spawned")
+	-- Hiệu ứng màu sắc đơn giản khi spawn
+	if not Lighting:FindFirstChild("MainColorCorrection") then
+		local cc = Instance.new("ColorCorrectionEffect")
+		cc.Name = "MainColorCorrection"
+		cc.Parent = Lighting
+	end
+	Lighting.MainColorCorrection.TintColor = Color3.fromRGB(255,255,255)
+	Lighting.MainColorCorrection.Contrast = 10
+	TweenService:Create(Lighting.MainColorCorrection, TweenInfo.new(2.5), {Contrast=0}):Play()
+	TweenService:Create(Lighting.MainColorCorrection, TweenInfo.new(5), {TintColor=Color3.fromRGB(250,0,0)}):Play()
+end)
+
+entity:SetCallback("OnEnterRoom", function(room, firstTime)
+	if firstTime then
+		print("Entity entered room "..room.Name)
+		-- Chạy jumpscare cho tất cả player (bạn có thể tùy chỉnh logic)
+		for _, player in pairs(Players:GetPlayers()) do
+			jumpscarePlayer(player)
+		end
+	end
+end)
+
+entity:Run()
