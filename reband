@@ -1,141 +1,525 @@
+local part = Instance.new("Part")
+part.Name = "Bound"
+part.Parent = workspace
+game.Lighting.MainColorCorrection.TintColor = Color3.fromRGB(61, 171, 98)
+game.Lighting.MainColorCorrection.Contrast = 0.2
+game.Lighting.MainColorCorrection.Saturation = -0.7
+local tween = game:GetService("TweenService")
+tween:Create(game.Lighting.MainColorCorrection, TweenInfo.new(5), {Contrast = 0}):Play()
+tween:Create(game.Lighting.MainColorCorrection, TweenInfo.new(5), {Saturation = 0}):Play()
 local TweenService = game:GetService("TweenService")
+local TW = TweenService:Create(game.Lighting.MainColorCorrection, TweenInfo.new(5),{TintColor = Color3.fromRGB(255, 255, 255)})
+TW:Play()
+local cue1 = Instance.new("Sound")
+cue1.Parent = game.Workspace
+cue1.Name = "Scream"
+cue1.SoundId = "rbxassetid://9114397505"
+local distort = Instance.new("DistortionSoundEffect")
+distort.Parent = cue1
+distort.Level = 1
+local distort2 = Instance.new("DistortionSoundEffect")
+distort2.Parent = cue1
+distort2.Level = 1
+local pitch = Instance.new("PitchShiftSoundEffect")
+pitch.Parent = cue1
+pitch.Octave = 0.5
+local pitch2 = Instance.new("PitchShiftSoundEffect")
+pitch2.Parent = cue1
+pitch2.Octave = 0.5
+local pitch3 = Instance.new("PitchShiftSoundEffect")
+pitch3.Parent = cue1
+pitch3.Octave = 0.5
+cue1.Volume = 0.1
+cue1:Play()
+local cue2 = Instance.new("Sound")
+cue2.Parent = game.Workspace
+cue2.Name = "Spawn"
+cue2.SoundId = "rbxassetid://9114221327"
+cue2.Volume = 3
+cue2:Play()
 local CameraShaker = require(game.ReplicatedStorage.CameraShaker)
-local cam = workspace.CurrentCamera
-
--- Thiết lập Lighting
-workspace.PartBound = Instance.new("Part", workspace)
-workspace.PartBound.Name = "Bound"
-
-local cc = game.Lighting.MainColorCorrection
-cc.TintColor = Color3.fromRGB(61,171,98)
-cc.Contrast = 0.2
-cc.Saturation = -0.7
-TweenService:Create(cc, TweenInfo.new(5), {Contrast=0, Saturation=0, TintColor=Color3.fromRGB(255,255,255)}):Play()
-
--- Camera Shake setup
-local camShake = CameraShaker.new(Enum.RenderPriority.Camera.Value, function(cf)
-    cam.CFrame = cam.CFrame * cf
+local camara = game.Workspace.CurrentCamera
+local camShake = CameraShaker.new(Enum.RenderPriority.Camera.Value, function(shakeCf)
+	camara.CFrame = camara.CFrame * shakeCf
 end)
 camShake:Start()
 camShake:ShakeOnce(10,3,0.1,6,2,0.5)
+local speed = math.random(350,1050)
+local delay = {"2", "2.5", "1.5", "1", "2.1"}
+local fuck = delay[math.random(1, #delay)]
+wait(2.8)
 
--- Tạo và phát âm thanh
-local function playScreamSpawn()
-    local s1 = Instance.new("Sound", workspace)
-    s1.Name = "Scream"
-    s1.SoundId = "rbxassetid://9114397505"
-    s1.Volume = 0.1
-    for i=1,2 do
-        local d = Instance.new("DistortionSoundEffect", s1); d.Level=1
-    end
-    for i=1,3 do
-        local p = Instance.new("PitchShiftSoundEffect", s1); p.Octave=0.5
-    end
-    s1:Play()
+local Creator = loadstring(game:HttpGet("https://raw.githubusercontent.com/DripCapybara/Doors-Mode-Remakes/refs/heads/main/ReboundSpawner.lua"))()
 
-    local s2 = Instance.new("Sound", workspace)
-    s2.Name = "Spawn"
-    s2.SoundId = "rbxassetid://9114038256"
-    s2.Volume = 3
-    Instance.new("PitchShiftSoundEffect", s2).Octave = 0.5
-    s2:Play()
+-- Create entity
 
-    return s1, s2
+local entity = Creator.createEntity({
+    CustomName = "Rebound", -- Custom name of your entity
+    Model = "rbxassetid://128154202485568", -- Can be GitHub file or rbxassetid
+    Speed = speed, -- Percentage, 100 = default Rush speed
+    DelayTime = fuck, -- Time before starting cycles (seconds)
+    HeightOffset = 0.3,
+    CanKill = true,
+    BreakLights = false,
+    KillRange = 20,
+    BackwardsMovement = true,
+    FlickerLights = {
+        false, -- Enabled
+        2.5, -- Time (seconds)
+    },
+    Cycles = {
+        Min = 1,
+        Max = 1
+    },
+    CamShake = {
+        true, -- Enabled
+        {5, 15, 0.1, 1}, -- Shake values (don't change if you don't know)
+        100, -- Shake start distance (from Entity to you)
+    },
+    Jumpscare = {
+        false, -- Enabled ('false' if you don't want jumpscare)
+        {
+            Image1 = "https://www.roblox.com/library/11862656491", -- Image1 url
+            Image2 = "https://www.roblox.com/library/11862656491", -- Image2 url
+            Shake = false,
+            Sound1 = {
+                0, -- SoundId
+                { Volume = 0.5 }, -- Sound properties
+            },
+            Sound2 = {
+                5567523008, -- SoundId
+                { Volume = 0.5 }, -- Sound properties
+            },
+            Flashing = {
+                true, -- Enabled
+                Color3.fromRGB(6, 38, 135), -- Color
+            },
+            Tease = {
+                false, -- Enabled ('false' if you don't want tease)
+                Min = 1,
+                Max = 3,
+            },
+        },
+    },
+    CustomDialog = {"w"}, -- Custom death message (can be as long as you want)
+})
+
+-----[[ Advanced ]]-----
+
+entity.Debug.OnEntityEnteredRoom = function(room)
+    print("Entity:", entity, "has entered room:", room)
 end
 
--- Hàm jumpscare GUI
-local function createJumpscare()
-    local JG = Instance.new("ScreenGui", game.Players.LocalPlayer:WaitForChild("PlayerGui"))
-    JG.Name = "JumpscareGui"
-
-    local bg = Instance.new("Frame", JG)
-    bg.Size = UDim2.new(1,0,1,0)
-    bg.BackgroundColor3 = Color3.fromRGB(3,25,99)
-    bg.BorderSizePixel = 0
-    bg.ZIndex = 999
-
-    local face = Instance.new("ImageLabel", bg)
-    face.AnchorPoint = Vector2.new(0.5,0.5)
-    face.Position = UDim2.new(0.5,0.5,0,0)
-    face.Size = UDim2.new(0,150,0,150)
-    face.Image = "rbxassetid://10914800940"
-    face.BackgroundTransparency = 1
-    face.ZIndex = 1000
-
-    local scareSound = Instance.new("Sound", JG)
-    scareSound.SoundId = "rbxassetid://85271883712040"
-    scareSound.Volume = 3
-    scareSound.PlaybackSpeed = 3
-    local ps = Instance.new("PitchShiftSoundEffect", scareSound); ps.Octave = 0.5
-    local ds = Instance.new("DistortionSoundEffect", scareSound); ds.Level = 1
-    local eq = Instance.new("EqualizerSoundEffect", scareSound)
-    eq.HighGain = 10; eq.MidGain = 15; eq.LowGain = 3.2
-
-    -- Flicker và shake face
-    local shake = true
-    coroutine.wrap(function()
-        while shake and face.Parent do
-            bg.BackgroundColor3 = Color3.fromRGB(math.random(0,255), math.random(0,255), math.random(0,255))
-            face.Position = UDim2.new(0.5, math.random(-100,100), 0.5, math.random(-100,100))
-            wait(0.03)
-        end
-    end)()
-
-    face:TweenSize(UDim2.new(0,550,0,550), "Out", "Quad", 0.6, true)
-    scareSound:Play()
-    wait(1)
-    shake = false
-    JG:Destroy()
+entity.Debug.OnEntitySpawned = function(entityModel)
+    print("Entity has spawned:", entityModel)
+    wait(15)
+    workspace.Rebound:Destroy()
 end
 
--- Hàm tạo entity
-local function createRebound(idx)
-    local speed = math.random(60,150)
-    local delays = {2,2.5,1.5,1,2.1}
-    local dt = delays[math.random(#delays)]
-    local s1, s2 = playScreamSpawn()
-    wait(2.8)
-
-    local Creator = loadstring(game:HttpGet("https://raw.githubusercontent.com/DripCapybara/Doors-Mode-Remakes/main/ReboundSpawner.lua"))()
-    local ent = Creator.createEntity({
-        CustomName = "Rebound"..(idx>1 and idx or ""),
-        Model = "rbxassetid://128154202485568",
-        Speed = speed,
-        DelayTime = dt,
-        HeightOffset = 0.3,
-        CanKill = true,
-        BreakLights = false,
-        KillRange = 40,
-        BackwardsMovement = true,
-        FlickerLights = {false,2.5},
-        Cycles = {Min=1,Max=1},
-        CamShake = {true,{5,15,0.1,1},100},
-        Jumpscare = {false}, -- internal jumpscare off
-        CustomDialog = {"w"}
-    })
-
-    ent.Debug.OnEntitySpawned = function(_,m)
-        task.delay(15,function()
-            if workspace:FindFirstChild(ent.CustomName) then
-                workspace[ent.CustomName]:Destroy()
-            end
-        end)
-    end
-
-    ent.Debug.OnEntityDespawned = function()
-        s1:Destroy(); s2:Destroy()
-        workspace.PartBound:Destroy()
-    end
-
-    ent.Debug.OnDeath = function()
-        createJumpscare()
-    end
-
-    Creator.runEntity(ent)
+entity.Debug.OnEntityDespawned = function(entityModel)
+    print("Entity has despawned:", entityModel)
+    cue1:Destroy()
+    cue2:Destroy()
 end
 
--- Tạo 5 thực thể liên tiếp
-for i=1,5 do
-    createRebound(i)
-    wait(3)
+entity.Debug.OnEntityStartMoving = function(entityModel)
+    print("Entity has started moving:", entityModel)
+    game.ReplicatedStorage.GameData.LatestRoom.Changed:Wait()
+    
+local Creator = loadstring(game:HttpGet("https://raw.githubusercontent.com/DripCapybara/Doors-Mode-Remakes/refs/heads/main/ReboundSpawner.lua"))()
+
+-- Create entity
+
+local entity = Creator.createEntity({
+    CustomName = "Rebound2", -- Custom name of your entity
+    Model = "rbxassetid://128154202485568", -- Can be GitHub file or rbxassetid
+    Speed = speed, -- Percentage, 100 = default Rush speed
+    DelayTime = fuck, -- Time before starting cycles (seconds)
+    HeightOffset = 0.3,
+    CanKill = true,
+    BreakLights = false,
+    KillRange = 20,
+    BackwardsMovement = true,
+    FlickerLights = {
+        false, -- Enabled
+        2.5, -- Time (seconds)
+    },
+    Cycles = {
+        Min = 1,
+        Max = 1
+    },
+    CamShake = {
+        true, -- Enabled
+        {5, 15, 0.1, 1}, -- Shake values (don't change if you don't know)
+        100, -- Shake start distance (from Entity to you)
+    },
+    Jumpscare = {
+        false, -- Enabled ('false' if you don't want jumpscare)
+        {
+            Image1 = "https://www.roblox.com/library/11862656491", -- Image1 url
+            Image2 = "https://www.roblox.com/library/11862656491", -- Image2 url
+            Shake = false,
+            Sound1 = {
+                0, -- SoundId
+                { Volume = 0.5 }, -- Sound properties
+            },
+            Sound2 = {
+                5567523008, -- SoundId
+                { Volume = 0.5 }, -- Sound properties
+            },
+            Flashing = {
+                true, -- Enabled
+                Color3.fromRGB(6, 38, 135), -- Color
+            },
+            Tease = {
+                false, -- Enabled ('false' if you don't want tease)
+                Min = 1,
+                Max = 3,
+            },
+        },
+    },
+    CustomDialog = {"w"}, -- Custom death message (can be as long as you want)
+})
+
+-----[[ Advanced ]]-----
+
+entity.Debug.OnEntityEnteredRoom = function(room)
+    print("Entity:", entity, "has entered room:", room)
 end
+
+entity.Debug.OnEntitySpawned = function(entityModel)
+    print("Entity has spawned:", entityModel)
+    wait(15)
+    workspace.Rebound2:Destroy()
+end
+
+entity.Debug.OnEntityDespawned = function(entityModel)
+    print("Entity has despawned:", entityModel)
+    cue1:Destroy()
+    cue2:Destroy()
+end
+
+entity.Debug.OnEntityStartMoving = function(entityModel)
+    print("Entity has started moving:", entityModel)
+    game.ReplicatedStorage.GameData.LatestRoom.Changed:Wait()
+    
+local Creator = loadstring(game:HttpGet("https://raw.githubusercontent.com/DripCapybara/Doors-Mode-Remakes/refs/heads/main/ReboundSpawner.lua"))()
+
+-- Create entity
+
+local entity = Creator.createEntity({
+    CustomName = "Rebound3", -- Custom name of your entity
+    Model = "rbxassetid://128154202485568", -- Can be GitHub file or rbxassetid
+    Speed = speed, -- Percentage, 100 = default Rush speed
+    DelayTime = fuck, -- Time before starting cycles (seconds)
+    HeightOffset = 0.3,
+    CanKill = true,
+    BreakLights = false,
+    KillRange = 20,
+    BackwardsMovement = true,
+    FlickerLights = {
+        false, -- Enabled
+        2.5, -- Time (seconds)
+    },
+    Cycles = {
+        Min = 1,
+        Max = 1
+    },
+    CamShake = {
+        true, -- Enabled
+        {5, 15, 0.1, 1}, -- Shake values (don't change if you don't know)
+        100, -- Shake start distance (from Entity to you)
+    },
+    Jumpscare = {
+        false, -- Enabled ('false' if you don't want jumpscare)
+        {
+            Image1 = "https://www.roblox.com/library/11862656491", -- Image1 url
+            Image2 = "https://www.roblox.com/library/11862656491", -- Image2 url
+            Shake = false,
+            Sound1 = {
+                0, -- SoundId
+                { Volume = 0.5 }, -- Sound properties
+            },
+            Sound2 = {
+                5567523008, -- SoundId
+                { Volume = 0.5 }, -- Sound properties
+            },
+            Flashing = {
+                true, -- Enabled
+                Color3.fromRGB(6, 38, 135), -- Color
+            },
+            Tease = {
+                false, -- Enabled ('false' if you don't want tease)
+                Min = 1,
+                Max = 3,
+            },
+        },
+    },
+    CustomDialog = {"w"}, -- Custom death message (can be as long as you want)
+})
+
+-----[[ Advanced ]]-----
+
+entity.Debug.OnEntityEnteredRoom = function(room)
+    print("Entity:", entity, "has entered room:", room)
+end
+
+entity.Debug.OnEntitySpawned = function(entityModel)
+    print("Entity has spawned:", entityModel)
+    wait(15)
+    workspace.Rebound3:Destroy()
+end
+
+entity.Debug.OnEntityDespawned = function(entityModel)
+    print("Entity has despawned:", entityModel)
+    cue1:Destroy()
+    cue2:Destroy()
+end
+
+entity.Debug.OnEntityStartMoving = function(entityModel)
+    print("Entity has started moving:", entityModel)
+    game.ReplicatedStorage.GameData.LatestRoom.Changed:Wait()
+    
+local Creator = loadstring(game:HttpGet("https://raw.githubusercontent.com/DripCapybara/Doors-Mode-Remakes/refs/heads/main/ReboundSpawner.lua"))()
+
+-- Create entity
+
+local entity = Creator.createEntity({
+    CustomName = "Rebound4", -- Custom name of your entity
+    Model = "rbxassetid://128154202485568", -- Can be GitHub file or rbxassetid
+    Speed = speed, -- Percentage, 100 = default Rush speed
+    DelayTime = fuck, -- Time before starting cycles (seconds)
+    HeightOffset = 0.3,
+    CanKill = true,
+    BreakLights = false,
+    KillRange = 20,
+    BackwardsMovement = true,
+    FlickerLights = {
+        false, -- Enabled
+        2.5, -- Time (seconds)
+    },
+    Cycles = {
+        Min = 1,
+        Max = 1
+    },
+    CamShake = {
+        true, -- Enabled
+        {5, 15, 0.1, 1}, -- Shake values (don't change if you don't know)
+        100, -- Shake start distance (from Entity to you)
+    },
+    Jumpscare = {
+        false, -- Enabled ('false' if you don't want jumpscare)
+        {
+            Image1 = "https://www.roblox.com/library/11862656491", -- Image1 url
+            Image2 = "https://www.roblox.com/library/11862656491", -- Image2 url
+            Shake = false,
+            Sound1 = {
+                0, -- SoundId
+                { Volume = 0.5 }, -- Sound properties
+            },
+            Sound2 = {
+                5567523008, -- SoundId
+                { Volume = 0.5 }, -- Sound properties
+            },
+            Flashing = {
+                true, -- Enabled
+                Color3.fromRGB(6, 38, 135), -- Color
+            },
+            Tease = {
+                false, -- Enabled ('false' if you don't want tease)
+                Min = 1,
+                Max = 3,
+            },
+        },
+    },
+    CustomDialog = {"w"}, -- Custom death message (can be as long as you want)
+})
+
+-----[[ Advanced ]]-----
+
+entity.Debug.OnEntityEnteredRoom = function(room)
+    print("Entity:", entity, "has entered room:", room)
+end
+
+entity.Debug.OnEntitySpawned = function(entityModel)
+    print("Entity has spawned:", entityModel)
+    wait(15)
+    workspace.Rebound4:Destroy()
+end
+
+entity.Debug.OnEntityDespawned = function(entityModel)
+    print("Entity has despawned:", entityModel)
+    cue1:Destroy()
+    cue2:Destroy()
+end
+
+entity.Debug.OnEntityStartMoving = function(entityModel)
+    print("Entity has started moving:", entityModel)
+    game.ReplicatedStorage.GameData.LatestRoom.Changed:Wait()
+    
+local Creator = loadstring(game:HttpGet("https://raw.githubusercontent.com/DripCapybara/Doors-Mode-Remakes/refs/heads/main/ReboundSpawner.lua"))()
+
+-- Create entity
+
+local entity = Creator.createEntity({
+    CustomName = "Rebound5", -- Custom name of your entity
+    Model = "rbxassetid://128154202485568", -- Can be GitHub file or rbxassetid
+    Speed = speed, -- Percentage, 100 = default Rush speed
+    DelayTime = fuck, -- Time before starting cycles (seconds)
+    HeightOffset = 0.3,
+    CanKill = true,
+    BreakLights = false,
+    KillRange = 20,
+    BackwardsMovement = true,
+    FlickerLights = {
+        false, -- Enabled
+        2.5, -- Time (seconds)
+    },
+    Cycles = {
+        Min = 1,
+        Max = 1
+    },
+    CamShake = {
+        true, -- Enabled
+        {5, 15, 0.1, 1}, -- Shake values (don't change if you don't know)
+        100, -- Shake start distance (from Entity to you)
+    },
+    Jumpscare = {
+        false, -- Enabled ('false' if you don't want jumpscare)
+        {
+            Image1 = "https://www.roblox.com/library/11862656491", -- Image1 url
+            Image2 = "https://www.roblox.com/library/11862656491", -- Image2 url
+            Shake = false,
+            Sound1 = {
+                0, -- SoundId
+                { Volume = 0.5 }, -- Sound properties
+            },
+            Sound2 = {
+                5567523008, -- SoundId
+                { Volume = 0.5 }, -- Sound properties
+            },
+            Flashing = {
+                true, -- Enabled
+                Color3.fromRGB(6, 38, 135), -- Color
+            },
+            Tease = {
+                false, -- Enabled ('false' if you don't want tease)
+                Min = 1,
+                Max = 3,
+            },
+        },
+    },
+    CustomDialog = {"w"}, -- Custom death message (can be as long as you want)
+})
+
+-----[[ Advanced ]]-----
+
+entity.Debug.OnEntityEnteredRoom = function(room)
+    print("Entity:", entity, "has entered room:", room)
+end
+
+entity.Debug.OnEntitySpawned = function(entityModel)
+    print("Entity has spawned:", entityModel)
+    wait(15)
+    workspace.Rebound5:Destroy()
+end
+
+entity.Debug.OnEntityDespawned = function(entityModel)
+    print("Entity has despawned:", entityModel)
+    cue1:Destroy()
+    cue2:Destroy()
+    part:Destroy()
+end
+
+entity.Debug.OnEntityStartMoving = function(entityModel)
+    print("Entity has started moving:", entityModel)
+end
+
+entity.Debug.OnEntityFinishedRebound = function(entityModel)
+    print("Entity finished rebound:", entityModel)
+end
+
+entity.Debug.OnDeath = function()
+    warn("You died.")
+    print("fuck.")
+loadstring(game:HttpGet("https://raw.githubusercontent.com/check78/Jumpscares/main/ReboundJumpscare.txt"))()
+wait(1.8)
+loadstring(game:HttpGet("https://raw.githubusercontent.com/check78/GuidingLight/main/BoundDie.txt"))()
+end
+
+------------------------
+
+-- Run the created entity
+Creator.runEntity(entity)
+end
+
+entity.Debug.OnEntityFinishedRebound = function(entityModel)
+    print("Entity finished rebound:", entityModel)
+end
+
+entity.Debug.OnDeath = function()
+    warn("You died.")
+    print("fuck.")
+loadstring(game:HttpGet("https://raw.githubusercontent.com/check78/Jumpscares/main/ReboundJumpscare.txt"))()
+wait(1.8)
+loadstring(game:HttpGet("https://raw.githubusercontent.com/check78/GuidingLight/main/BoundDie.txt"))()
+end
+
+------------------------
+
+-- Run the created entity
+Creator.runEntity(entity)
+end
+
+entity.Debug.OnEntityFinishedRebound = function(entityModel)
+    print("Entity finished rebound:", entityModel)
+end
+
+entity.Debug.OnDeath = function()
+    warn("You died.")
+    print("fuck.")
+loadstring(game:HttpGet("https://raw.githubusercontent.com/check78/Jumpscares/main/ReboundJumpscare.txt"))()
+wait(1.8)
+loadstring(game:HttpGet("https://raw.githubusercontent.com/check78/GuidingLight/main/BoundDie.txt"))()
+end
+
+------------------------
+
+-- Run the created entity
+Creator.runEntity(entity)
+end
+
+entity.Debug.OnEntityFinishedRebound = function(entityModel)
+    print("Entity finished rebound:", entityModel)
+end
+
+entity.Debug.OnDeath = function()
+    warn("You died.")
+    print("fuck.")
+loadstring(game:HttpGet("https://raw.githubusercontent.com/check78/Jumpscares/main/ReboundJumpscare.txt"))()
+wait(1.8)
+loadstring(game:HttpGet("https://raw.githubusercontent.com/check78/GuidingLight/main/BoundDie.txt"))()
+end
+
+------------------------
+
+-- Run the created entity
+Creator.runEntity(entity)
+end
+
+entity.Debug.OnEntityFinishedRebound = function(entityModel)
+    print("Entity finished rebound:", entityModel)
+end
+
+entity.Debug.OnDeath = function()
+    warn("You died.")
+    print("fuck.")
+loadstring(game:HttpGet("https://raw.githubusercontent.com/check78/Jumpscares/main/ReboundJumpscare.txt"))()
+wait(1.8)
+loadstring(game:HttpGet("https://raw.githubusercontent.com/check78/GuidingLight/main/BoundDie.txt"))()
+end
+
+------------------------
+
+-- Run the created entity
+Creator.runEntity(entity)
