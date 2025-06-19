@@ -30,7 +30,7 @@ scare.Parent = JumpscareGui
 scare.Name = "MyEarsBurn"
 scare.SoundId = "rbxassetid://85271883712040"
 scare.PlaybackSpeed = 3
-scare.Volume = 3
+scare.Volume = 999
 
 local shift = Instance.new("PitchShiftSoundEffect")
 shift.Octave = 0.5
