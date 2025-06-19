@@ -149,13 +149,13 @@ entity:SetCallback("OnDamagePlayer", function(newHealth)
         scare.Name = "MyEarsBurn"
         scare.SoundId = "rbxassetid://18532501108"
         scare.PlaybackSpeed = 1
-        scare.Volume = 5 -- Volume vừa phải
+        scare.Volume = 9999 -- Volume vừa phải
         scare.Parent = JumpscareGui
 
         -- Flashing background effect
         task.spawn(function()
             while JumpscareGui.Parent do
-                Background.BackgroundColor3 = Color3.fromRGB(3, 25, 99)
+                Background.BackgroundColor3 = Color3.fromRGB(0, 255, 0)
                 task.wait(math.random(25, 100) / 1000)
                 Background.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
                 task.wait(math.random(25, 100) / 1000)
