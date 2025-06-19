@@ -11,7 +11,7 @@ local entityList = {
     {url = "https://raw.githubusercontent.com/eoyoustme/Monoxide/refs/heads/main/Ripper%20but%20bad", delay = 150},
     {url = "https://raw.githubusercontent.com/eoyoustme/Monoxide/refs/heads/main/A-60%20(hardcore%20but%20bad)", delay = 600},
     {url = "https://pastefy.app/1xxpTxo3/raw", delay = 100000},
-    {url = "https://raw.githubusercontent.com/eoyoustme/Monoxide/refs/heads/main/Shocker%20but%20bad", delay = 35},
+    {url = "https://raw.githubusercontent.com/eoyoustme/rebouna/refs/heads/main/Ripper", delay = 35},
     {url = "https://raw.githubusercontent.com/eoyoustme/Monoxide/refs/heads/main/Silence%20but%20bad", delay = 300},
 }
 
