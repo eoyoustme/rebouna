@@ -36,6 +36,7 @@ cue2.Parent = game.Workspace
 cue2.Name = "Spawn"
 cue2.SoundId = "rbxassetid://9114221327"
 cue2.Volume = 3
+cue2.PlaybackSpeed = 0.5
 cue2:Play()
 local CameraShaker = require(game.ReplicatedStorage.CameraShaker)
 local camara = game.Workspace.CurrentCamera
@@ -47,7 +48,7 @@ camShake:ShakeOnce(10,3,0.1,6,2,0.5)
 local speed = math.random(50,150)
 local delay = {"2", "2.5", "1.5", "1", "2.1"}
 local fuck = delay[math.random(1, #delay)]
-wait(2.8)
+wait(7)
 
 local Creator = loadstring(game:HttpGet("https://raw.githubusercontent.com/DripCapybara/Doors-Mode-Remakes/refs/heads/main/ReboundSpawner.lua"))()
 
