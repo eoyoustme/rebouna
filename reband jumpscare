@@ -20,7 +20,7 @@ Face.BackgroundTransparency = 1
 Face.Position = UDim2.new(0.5, 0, 0.5, 0)
 Face.ResampleMode = Enum.ResamplerMode.Pixelated
 Face.Size = UDim2.new(0, 150, 0, 150)
-Face.Image = "rbxassetid://11306695974"
+Face.Image = "rbxassetid://18940647468"
 
 Background.Parent = JumpscareGui
 Face.Parent = Background
@@ -59,7 +59,7 @@ end)
 
 -- Jumpscare effect
 game.TweenService:Create(Face, TweenInfo.new(0.01), {
-    Size = UDim2.new(0, 2850, 0, 2050),
+    Size = UDim2.new(0, 1950, 0, 1150),
     ImageTransparency = 0
 }):Play()
 
