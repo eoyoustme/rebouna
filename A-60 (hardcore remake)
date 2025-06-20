@@ -6,8 +6,8 @@ local spawner = loadstring(game:HttpGet("https://raw.githubusercontent.com/Regul
 
 local entity = spawner.Create({
 	Entity = {
-		Name = "Template Entity",
-		Asset = "https://github.com/RegularVynixu/Utilities/raw/main/Doors/Entity%20Spawner/Assets/Entities/Rush.rbxm",
+		Name = "A-60",
+		Asset = "rbxassetid://81593078329011",
 		HeightOffset = 0
 	},
 	Lights = {
