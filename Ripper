@@ -1,3 +1,4 @@
+
 --====== Load spawner ======--
 local spawner = loadstring(game:HttpGet("https://raw.githubusercontent.com/RegularVynixu/Utilities/main/Doors/Entity%20Spawner/V2/Source.lua"))()
 
@@ -18,7 +19,10 @@ local entity = spawner.Create({
         Range = 100,
         Values = {1.5, 20, 0.1, 1}
     },
-    Movement = { Speed = 0, Delay = 0, Reversed = false }, -- Đặt Speed và Delay về 0 để entity không di chuyển
+    -- Để tham số Movement này như ban đầu hoặc xóa hẳn nếu spawner gây lỗi.
+    -- Nếu spawner cần một giá trị hợp lệ, hãy để tốc độ mặc định của nó hoặc một số nhỏ.
+    -- Trong trường hợp này, chúng ta sẽ dựa vào việc "neo" (Anchored) entity để đóng băng nó.
+    Movement = { Speed = 185, Delay = 5, Reversed = false }, -- Đặt lại giá trị mặc định nếu bạn đã đổi nó
     Rebounding = { Enabled = false },
     Damage = { Enabled = true, Range = 40, Amount = 125 },
     Crucifixion = { Enabled = true, Range = 40, Resist = false, Break = true },
@@ -71,20 +75,23 @@ entity:SetCallback("OnSpawned", function()
     entityModel = entity.Model
     entityPart = entityModel and (entityModel.PrimaryPart or entityModel:FindFirstChildWhichIsA("BasePart"))
 
-    -- Nếu entityModel và entityPart tồn tại, hãy neo nó lại để nó không di chuyển
-    if entityPart then
-        entityPart.Anchored = true
-        -- Để đảm bảo toàn bộ model được neo, bạn có thể lặp qua các phần của nó
-        -- hoặc nếu spawner đã xử lý việc này, thì chỉ cần PrimaryPart là đủ.
-        -- Đối với một số model, việc neo PrimaryPart có thể không neo toàn bộ model phụ thuộc vào cách nó được rigging.
-        -- Tuy nhiên, với config Movement.Speed = 0, nó sẽ không di chuyển anyway.
+    -- *** QUAN TRỌNG: Đảm bảo neo entity sau khi nó xuất hiện để đóng băng nó ***
+    if entityModel then
+        for _, part in ipairs(entityModel:GetDescendants()) do
+            if part:IsA("BasePart") then
+                part.Anchored = true
+            end
+        end
+        print("Entity đã được neo lại (đóng băng).")
+    else
+        warn("Không tìm thấy entityModel sau khi spawn! Camera có thể không khóa đúng.")
     end
 end)
 
 entity:SetCallback("OnStartMoving", function() 
     print("Thực thể đã bắt đầu di chuyển") 
-    -- Nếu bạn muốn nó đóng băng hoàn toàn, callback này có thể không bao giờ được gọi
-    -- hoặc bạn có thể thêm logic neo tại đây nếu nó được gỡ neo ở đâu đó.
+    -- Nếu entity được neo đúng cách, callback này có thể không được gọi,
+    -- hoặc nó chỉ chạy một lần nếu spawner có cơ chế di chuyển khởi tạo.
 end)
 entity:SetCallback("OnEnterRoom", function(room, firstTime)
     print(("Thực thể đã vào phòng: %s (%s)"):format(room.Name, firstTime and "lần đầu" or "lần nữa"))
@@ -97,9 +104,14 @@ entity:SetCallback("OnRebounding", function(start)
 end)
 entity:SetCallback("OnDespawning", function() 
     print("Thực thể đang biến mất") 
-    -- Khi despawn, nó sẽ được gỡ neo nếu cần để di chuyển ra
-    if entityPart then
-        entityPart.Anchored = false
+    -- Khi despawn, gỡ neo tất cả các phần để nó có thể di chuyển ra
+    if entityModel then
+        for _, part in ipairs(entityModel:GetDescendants()) do
+            if part:IsA("BasePart") then
+                part.Anchored = false
+            end
+        end
+        print("Entity đã được gỡ neo.")
     end
 end)
 entity:SetCallback("OnDespawned", function()
@@ -147,7 +159,7 @@ local function executeRealJumpscare()
 
     -- Khóa camera vào vị trí của entityPart trong suốt jumpscare
     cameraConn = RunService.RenderStepped:Connect(function()
-        if entityPart then -- Đảm bảo entityPart vẫn tồn tại
+        if player.Character and player.Character:FindFirstChild("Head") and entityPart then -- Đảm bảo entityPart và đầu người chơi tồn tại
             camera.CFrame = CFrame.new(player.Character.Head.Position, entityPart.Position)
         end
     end)
