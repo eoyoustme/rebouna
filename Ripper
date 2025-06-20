@@ -275,20 +275,17 @@ local function doJumpscareWithEffect()
     camera.CameraType = Enum.CameraType.Scriptable
     if cameraConn then cameraConn:Disconnect() end
     cameraConn = RunService.RenderStepped:Connect(function()
-        if player.Character and player.Character:FindFirstChild("Head") and entityPart and entityModel and entityModel.Parent then
-            camera.CFrame = CFrame.new(player.Character.Head.Position, entityPart.Position)
+        if entityPart and entityModel and entityModel.Parent then
+            camera.CFrame = CFrame.new(camera.CFrame.Position, entityPart.Position)
         else
-            warn("Không thể khóa camera: entityPart, đầu người chơi hoặc entityModel không tồn tại.")
+            warn("Không thể khóa camera: entityPart hoặc entityModel không tồn tại.")
             if cameraConn then cameraConn:Disconnect() end
         end
     end)
     print("Camera đã được khóa vào entity ngay khi người chơi bị đóng băng.")
 
-    -- **Thay đổi tại đây: Thực thể lao tới camera người chơi và dừng lại ở khoảng cách 6 stud**
+    -- **THAY ĐỔI LỚN TẠI ĐÂY: Thực thể sẽ lao thẳng tới camera và dừng lại ở khoảng cách 6 stud**
     if entityModel and entityPart then
-        -- Hủy bỏ kết nối neo entity cũ nếu có
-        if anchorConn then anchorConn:Disconnect() end
-        
         -- Gỡ neo entity để nó có thể di chuyển
         for _, part in ipairs(entityModel:GetDescendants()) do
             if part:IsA("BasePart") then
@@ -296,30 +293,39 @@ local function doJumpscareWithEffect()
             end
         end
 
-        local targetCFrame = camera.CFrame * CFrame.new(0, 0, -6) -- Điểm đích cách camera 6 stud về phía trước
-        local duration = (entityPart.Position - targetCFrame.Position).Magnitude / 200 -- Thời gian di chuyển (khoảng cách / tốc độ 200)
+        local camLookVector = camera.CFrame.LookVector -- Hướng nhìn của camera
+        local targetPosition = camera.CFrame.Position + camLookVector * 6 -- Vị trí đích cách camera 6 stud về phía trước
+        
+        -- Đảm bảo thực thể luôn hướng về camera khi di chuyển
+        local currentEntityCFrame = entityPart.CFrame
+        local lookAtCameraCFrame = CFrame.new(currentEntityCFrame.Position, camera.CFrame.Position)
+        
+        -- Tính toán CFrame đích để entity hướng về camera và dừng ở vị trí mong muốn
+        local finalEntityCFrame = CFrame.new(targetPosition, camera.CFrame.Position)
 
-        -- Tạo tween để di chuyển entity
-        local entityTween = TweenService:Create(entityPart, TweenInfo.new(duration, Enum.EasingStyle.Linear), {CFrame = targetCFrame})
+        local distance = (entityPart.Position - finalEntityCFrame.Position).Magnitude
+        local speed = 200 -- Tốc độ lao tới của entity
+        local duration = distance / speed -- Thời gian di chuyển
+
+        local entityTween = TweenService:Create(entityPart, TweenInfo.new(duration, Enum.EasingStyle.Linear), {CFrame = finalEntityCFrame})
         entityTween:Play()
 
-        -- Neo lại entity sau khi tween hoàn tất
+        -- Gây sát thương chết người chơi khi tween hoàn tất
         entityTween.Completed:Connect(function()
             if entityModel and entityModel.Parent then
                 for _, part in ipairs(entityModel:GetDescendants()) do
                     if part:IsA("BasePart") then
-                        part.Anchored = true
+                        part.Anchored = true -- Neo lại entity
                     end
                 end
             end
-            print("Entity đã hoàn tất di chuyển và được neo lại.")
-            -- Gây sát thương chết người chơi sau khi entity lao đến
+            print("Entity đã hoàn tất di chuyển và được neo lại. Gây sát thương chết người chơi.")
             local hum = player.Character:FindFirstChild("Humanoid")
             if hum then
-                hum.Health = 0
+                hum.Health = 0 -- Đảm bảo người chơi chết
             end
         end)
-        print("Bắt đầu di chuyển entity tới vị trí camera người chơi.")
+        print("Bắt đầu di chuyển entity tới vị trí cách camera 6 stud.")
     end
 
     -- *** ĐIỀU CHỈNH TẠI ĐÂY: Đóng băng Particle Emitters và theo dõi âm thanh ***
