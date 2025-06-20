@@ -1,4 +1,3 @@
-
 --====== Load spawner ======--
 local spawner = loadstring(game:HttpGet("https://raw.githubusercontent.com/RegularVynixu/Utilities/main/Doors/Entity%20Spawner/V2/Source.lua"))()
 
@@ -19,10 +18,8 @@ local entity = spawner.Create({
         Range = 100,
         Values = {1.5, 20, 0.1, 1}
     },
-    -- Để tham số Movement này như ban đầu hoặc xóa hẳn nếu spawner gây lỗi.
-    -- Nếu spawner cần một giá trị hợp lệ, hãy để tốc độ mặc định của nó hoặc một số nhỏ.
-    -- Trong trường hợp này, chúng ta sẽ dựa vào việc "neo" (Anchored) entity để đóng băng nó.
-    Movement = { Speed = 185, Delay = 5, Reversed = false }, -- Đặt lại giá trị mặc định nếu bạn đã đổi nó
+    -- *** ĐIỀU CHỈNH TẠI ĐÂY: Đặt tốc độ rất nhỏ để spawner không cố gắng di chuyển nó ***
+    Movement = { Speed = 0.001, Delay = 0, Reversed = false }, -- Đặt tốc độ rất nhỏ, hy vọng tránh lỗi "invalid number"
     Rebounding = { Enabled = false },
     Damage = { Enabled = true, Range = 40, Amount = 125 },
     Crucifixion = { Enabled = true, Range = 40, Resist = false, Break = true },
@@ -45,11 +42,14 @@ local camera = workspace.CurrentCamera
 
 --====== Jumpscare Setup ======--
 local isJumpscareActive = false 
-local entityModel, entityPart
+local entityModel, entityPart -- entityPart sẽ được sử dụng để khóa camera và neo
 local cameraConn, inputConn1, inputConn2
 local healthChangedConn 
 local originalTintColor = Lighting.MainColorCorrection.TintColor
 local originalContrast = Lighting.MainColorCorrection.Contrast
+
+-- CONNECTION ĐỂ LIÊN TỤC NEO ENTITY TRONG SUỐT JUMPSCARE
+local anchorConn = nil
 
 --====== Callbacks ======--
 entity:SetCallback("OnSpawned", function()
@@ -75,23 +75,21 @@ entity:SetCallback("OnSpawned", function()
     entityModel = entity.Model
     entityPart = entityModel and (entityModel.PrimaryPart or entityModel:FindFirstChildWhichIsA("BasePart"))
 
-    -- *** QUAN TRỌNG: Đảm bảo neo entity sau khi nó xuất hiện để đóng băng nó ***
+    -- *** QUAN TRỌNG: Neo entity ngay lập tức sau khi spawn ***
     if entityModel then
         for _, part in ipairs(entityModel:GetDescendants()) do
-            if part:IsA("BasePart") then
+            if part:IsA("BasePart") then -- Không cần kiểm tra CanCollide, neo tất cả các bộ phận
                 part.Anchored = true
             end
         end
-        print("Entity đã được neo lại (đóng băng).")
+        print("Entity đã được neo lại ban đầu.")
     else
-        warn("Không tìm thấy entityModel sau khi spawn! Camera có thể không khóa đúng.")
+        warn("Không tìm thấy entityModel sau khi spawn!")
     end
 end)
 
 entity:SetCallback("OnStartMoving", function() 
-    print("Thực thể đã bắt đầu di chuyển") 
-    -- Nếu entity được neo đúng cách, callback này có thể không được gọi,
-    -- hoặc nó chỉ chạy một lần nếu spawner có cơ chế di chuyển khởi tạo.
+    print("Thực thể đã bắt đầu di chuyển (nếu không bị neo, điều này không mong muốn).") 
 end)
 entity:SetCallback("OnEnterRoom", function(room, firstTime)
     print(("Thực thể đã vào phòng: %s (%s)"):format(room.Name, firstTime and "lần đầu" or "lần nữa"))
@@ -158,11 +156,29 @@ local function executeRealJumpscare()
     end
 
     -- Khóa camera vào vị trí của entityPart trong suốt jumpscare
+    if cameraConn then cameraConn:Disconnect() end -- Ngắt kết nối cũ nếu có để tránh trùng lặp
     cameraConn = RunService.RenderStepped:Connect(function()
-        if player.Character and player.Character:FindFirstChild("Head") and entityPart then -- Đảm bảo entityPart và đầu người chơi tồn tại
+        if player.Character and player.Character:FindFirstChild("Head") and entityPart then 
             camera.CFrame = CFrame.new(player.Character.Head.Position, entityPart.Position)
+        else
+            warn("Không thể khóa camera: entityPart hoặc đầu người chơi không tồn tại.")
+            if cameraConn then cameraConn:Disconnect() end 
         end
     end)
+    print("Camera đã được khóa vào entity.")
+
+    -- *** ĐIỀU CHỈNH TẠI ĐÂY: Liên tục neo entity trong jumpscare ***
+    if anchorConn then anchorConn:Disconnect() end -- Ngắt kết nối cũ nếu có
+    anchorConn = RunService.RenderStepped:Connect(function()
+        if entityModel then
+            for _, part in ipairs(entityModel:GetDescendants()) do
+                if part:IsA("BasePart") then
+                    part.Anchored = true
+                end
+            end
+        end
+    end)
+    print("Bắt đầu liên tục neo entity.")
 
     -- Ngay lập tức chặn tất cả input của người chơi
     inputConn1 = UIS.InputBegan:Connect(function() return Enum.ContextActionResult.Sink end)
@@ -198,12 +214,12 @@ local function executeRealJumpscare()
 
     -- Bắt đầu hiển thị hình đầu lâu sau khi jumpscare Ripper hoàn tất
     jumpscareImg.ImageTransparency = 1 -- Ẩn ảnh Ripper đi
-    jumpscareImg.Image = "rbxassetid://12737595583" -- **THAY THẾ BẰNG ID HÌNH ĐẦU LÂU CỦA BẠN**
+    jumpscareImg.Image = "rbxassetid://YOUR_SKULL_IMAGE_ID_HERE" -- **THAY THẾ BẰNG ID HÌNH ĐẦU LÂU CỦA BẠN**
     jumpscareImg.ZIndex = 12 -- Đảm bảo nó nằm trên tất cả các UI khác
     TweenService:Create(jumpscareImg, TweenInfo.new(0.5), {ImageTransparency = 0}):Play() -- Hiện đầu lâu
     
     local skullSound = Instance.new("Sound", workspace)
-    skullSound.SoundId = "rbxassetid://7017782324" -- **THAY THẾ BẰNG ID ÂM THANH ĐẦU LÂU CỦA BẠN**
+    skullSound.SoundId = "rbxassetid://YOUR_SKULL_SOUND_ID_HERE" -- **THAY THẾ BẰNG ID ÂM THANH ĐẦU LÂU CỦA BẠN**
     skullSound.Volume = 2
     skullSound:Play()
 
@@ -212,7 +228,8 @@ local function executeRealJumpscare()
     -- Dọn dẹp
     TweenService:Create(jumpscareImg, TweenInfo.new(0.5), {ImageTransparency = 1}):Play().Completed:Wait() -- Ẩn đầu lâu
     
-    if cameraConn then cameraConn:Disconnect() end
+    if cameraConn then cameraConn:Disconnect() end -- Ngắt kết nối camera sau khi hoàn tất
+    if anchorConn then anchorConn:Disconnect() end -- *** QUAN TRỌNG: Ngắt kết nối neo sau khi hoàn tất jumpscare ***
     if inputConn1 then inputConn1:Disconnect() end
     if inputConn2 then inputConn2:Disconnect() end
     camera.CameraType = Enum.CameraType.Custom -- Khôi phục điều khiển camera
@@ -257,6 +274,10 @@ local function doJumpscareWithEffect()
         end
     end
     camera.CameraType = Enum.CameraType.Scriptable
+    -- Trong giai đoạn nhiễu, camera chỉ cần giữ nguyên vị trí hiện tại
+    if player.Character and player.Character:FindFirstChild("Head") then
+         camera.CFrame = player.Character.Head.CFrame -- Đặt camera tại đầu người chơi
+    end
     
     -- Chặn input
     inputConn1 = UIS.InputBegan:Connect(function() return Enum.ContextActionResult.Sink end)
@@ -295,7 +316,7 @@ local function doJumpscareWithEffect()
 
     -- Đảm bảo camera trở về vị trí người chơi và phòng có màu đỏ trở lại
     if player.Character and player.Character:FindFirstChild("Head") then
-        camera.CFrame = player.Character.Head.CFrame 
+        camera.CFrame = player.Character.Head.CFrame -- Camera về vị trí đầu người chơi
     end
     -- Khôi phục màu sắc phòng về đỏ như khi Ripper xuất hiện
     Lighting.MainColorCorrection.TintColor = Color3.fromRGB(250, 0, 0) 
