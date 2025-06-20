@@ -20,7 +20,7 @@ local entity = spawner.Create({
     },
     -- Đặt tốc độ rất nhỏ để spawner không cố gắng di chuyển nó theo logic của riêng nó.
     -- Việc neo (Anchoring) entity sẽ đảm bảo nó đứng yên.
-    Movement = { Speed = 0.001, Delay = 0, Reversed = false },
+    Movement = { Speed = 185, Delay = 0, Reversed = false },
     Rebounding = { Enabled = false },
     Damage = { Enabled = true, Range = 40, Amount = 125 },
     Crucifixion = { Enabled = true, Range = 40, Resist = false, Break = true },
