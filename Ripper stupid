@@ -1,0 +1,190 @@
+--!strict
+local killed = false
+local Plr = game.Players.LocalPlayer
+local ReSt = game.ReplicatedStorage
+local val = 80 -- Giá trị để kích hoạt camera shake tầm gần
+
+local events = require(game.ReplicatedStorage.ClientModules.Module_Events)
+local cameraShaker = require(game.ReplicatedStorage.CameraShaker)
+local camera = workspace.CurrentCamera
+local TweenService = game:GetService("TweenService") -- Lấy TweenService một lần
+
+local camShake = cameraShaker.new(Enum.RenderPriority.Camera.Value, function(cf)
+    camera.CFrame = camera.CFrame * cf
+end)
+
+camShake:Start()
+
+function GetTime(Distance, Speed)
+    -- Time = Distance / Speed
+    local Time = Distance / Speed
+    return Time
+end
+
+local DEF_SPEED = 99999 -- Tốc độ mặc định của "Ambush"
+local function THEHORROR()
+    --- configs
+    local ambruhspeed = 100 -- Tốc độ ban đầu của "Ambush"
+    local storer = ambruhspeed -- Lưu trữ tốc độ ban đầu
+    local ambushheight = Vector3.new(0, 5, 0) -- Chiều cao cộng thêm cho CFrame của Ambush
+    local redtweeninfo = TweenInfo.new(3)
+    local redinfo = {Color = Color3.new(1, 0, 0.133333)} -- Màu đỏ
+
+    camShake:Shake(cameraShaker.Presets.Earthquake)
+
+    -- Đổi màu đèn thành đỏ
+    for i, v in pairs(game.Workspace.CurrentRooms:GetDescendants()) do
+        if v:IsA("Light") then
+            TweenService:Create(v, redtweeninfo, redinfo):Play()
+            if v.Parent and v.Parent.Name == "LightFixture" then -- Kiểm tra Parent tồn tại
+                TweenService:Create(v.Parent, redtweeninfo, redinfo):Play()
+            end
+        end
+    end
+
+    -- ***** LỖI ĐÃ SỬA: Cách tải Model từ Asset ID *****
+    -- Bạn không thể dùng game:GetObjects trong Local Script để tải asset.
+    -- Giả định rằng Model "Ambush" đã được tải vào game (ví dụ: bởi Server Script)
+    -- và bạn đang tìm nó trong Workspace.
+    local s = workspace:FindFirstChild("AmbushModel") -- THAY THẾ "AmbushModel" bằng tên model thực tế của bạn nếu nó được load vào workspace
+    if not s then
+        warn("Model 'AmbushModel' (Asset ID 13515035) không tìm thấy trong Workspace. Không thể tiếp tục.")
+        return -- Dừng hàm nếu không tìm thấy model
+    end
+
+    local ambush = s.Ripe -- Giả sử "Ripe" là part chính của Ambush
+    if not ambush then
+        warn("Part 'Ripe' không tìm thấy trong model 'AmbushModel'.")
+        return
+    end
+
+    -- Khởi tạo và phát âm thanh Spawn
+    local amb = ambush.Spawn:Clone()
+    amb.Parent = workspace
+    amb.TimePosition = 0
+    amb:Play()
+    amb.Volume = 6
+    ambush.Ambush.Volume = 0 -- Đảm bảo âm thanh Ambush ban đầu không phát
+
+    ----------------------
+    -- Hàm kiểm tra tầm nhìn
+    local function canSeeTarget(target: Model, size: number): boolean?
+        if killed then -- Nếu đã chết, không cần kiểm tra nữa
+            return nil
+        end
+        local origin = ambush.Position
+        local targetHumanoidRootPart = target:FindFirstChild("HumanoidRootPart")
+        if not targetHumanoidRootPart then return nil end -- Kiểm tra HumanoidRootPart
+
+        local direction = (targetHumanoidRootPart.Position - ambush.Position).unit * size
+        local ray = Ray.new(origin, direction)
+
+        local hit, _ = workspace:FindPartOnRay(ray, ambush) -- _ để bỏ qua pos
+
+        if hit then
+            if hit:IsDescendantOf(target) then
+                killed = true -- Đặt trạng thái killed
+                return true
+            else
+                return false -- Thấy vật cản, không thấy mục tiêu
+            end
+        else
+            return false -- Không thấy gì trên đường đi
+        end
+    end
+
+    -------------------------
+    -- Vòng lặp kiểm tra tầm nhìn và gây sát thương
+    --_SHAKER DO NOT MODIFY
+    task.spawn(function() -- Dùng task.spawn thay vì spawn
+        while ambush and ambush.Parent == s do -- Đảm bảo ambush còn tồn tại và là con của s
+            task.wait(0.2) -- Dùng task.wait thay vì wait
+            local v = game.Players.LocalPlayer
+            if v.Character and v.Character:FindFirstChild("HumanoidRootPart") and not v.Character:GetAttribute("Hiding") then -- Kiểm tra Character và HRP
+                if canSeeTarget(v.Character, 50) then
+                    ambush.Ambush:Stop()
+                    local humanoid = v.Character:FindFirstChildOfClass("Humanoid")
+                    if humanoid then -- Kiểm tra Humanoid tồn tại
+                        humanoid:TakeDamage(100)
+                    end
+                    ReSt.GameStats["Player_" .. Plr.Name].Total.DeathCause.Value = "Ripper"
+                    -- firesignal là hàm không chuẩn, giả định executor cung cấp
+                    firesignal(game.ReplicatedStorage.RemotesFolder.DeathHint.OnClientEvent, {"You died to who you call Ripper...", "You can tell his presence by the lights and his scream.", "Hide when he does this!"}, "Blue")
+                end
+            end
+            if v.Character and v.Character:FindFirstChild("HumanoidRootPart") then -- Kiểm tra Character và HRP
+                if (ambush.Position - v.Character:FindFirstChild("HumanoidRootPart").Position).magnitude <= val then
+                    camShake:ShakeOnce(15, 8.8, 0, 2, 1, 6)
+                end
+            end
+        end
+    end)
+    ----------------------
+    game.Debris:AddItem(amb, 10) -- Thêm âm thanh spawn vào Debris
+    ambush.Ambush:Stop() -- Dừng âm thanh Ambush (nếu nó đang phát)
+    local h = ambush.Ambush -- Lấy lại tham chiếu đến âm thanh Ambush
+    h.SoundId = "rbxassetid://6963538865"
+    h.Volume = 10 -- Đặt âm lượng cao
+    h.RollOffMinDistance = 5
+    h.PlaybackSpeed = 0.37
+    h.TimePosition = 0
+
+    task.wait(8) -- Dùng task.wait
+    h:Play() -- Phát âm thanh Ambush sau 8 giây
+    TweenService:Create(h, TweenInfo.new(6), {Volume = 0.8}):Play() -- Giảm âm lượng từ 10 xuống 0.8 trong 6 giây
+
+    local gruh = workspace.CurrentRooms
+    ambruhspeed = DEF_SPEED -- Reset tốc độ về DEF_SPEED trước khi bắt đầu Pathfind
+
+    -- Vòng lặp Pathfind của Ambush
+    for i = 1, ReSt.GameData.LatestRoom.Value do
+        if gruh:FindFirstChild(tostring(i)) then -- Đảm bảo tìm phòng theo tên string
+            local room = gruh:FindFirstChild(tostring(i))
+            print("Room " .. i)
+            if room and room:FindFirstChild("PathfindNodes") then -- Kiểm tra room tồn tại
+                local nodes = room:FindFirstChild("PathfindNodes")
+                -- ***** LỖI ĐÃ SỬA: Cách duyệt nodes *****
+                for _, waypoint in pairs(nodes:GetChildren()) do -- Duyệt bằng pairs(GetChildren()) an toàn hơn
+                    if waypoint:IsA("BasePart") then -- Chỉ xử lý nếu là Part
+                        local Distance = (ambush.Position - waypoint.Position).magnitude
+                        local fakejays = TweenService:Create(ambush, TweenInfo.new(GetTime(Distance, ambruhspeed), Enum.EasingStyle.Linear, Enum.EasingDirection.Out, 0, false, 0), {CFrame = waypoint.CFrame + ambushheight})
+                        fakejays:Play()
+                        fakejays.Completed:Wait() -- Chờ Tween hoàn thành
+                        ambruhspeed = storer -- Reset tốc độ cho waypoint tiếp theo
+                    end
+                end
+            end
+        end
+        print("Looping through rooms...")
+    end
+
+    ----------------------
+    -- Hiệu ứng kết thúc
+    local slam = Instance.new("Sound")
+    slam.Volume = 10
+    slam.SoundId = "rbxassetid://1837829565"
+    slam.Parent = ambush -- Đặt parent của sound vào ambush
+    camShake:Shake(cameraShaker.Presets.Explosion)
+    slam:Play()
+    task.wait(1) -- Dùng task.wait
+
+    ambush.Anchored = false
+    ambush.CanCollide = false
+    game.Debris:AddItem(s, 5) -- Thêm cả model 's' vào Debris để xóa sau 5 giây
+
+    ---====== Load achievement giver ======---
+    -- Loadstring và HttpGet chỉ hoạt động với Executor
+    local achievementGiver = loadstring(game:HttpGet("https://raw.githubusercontent.com/RegularVynixu/Utilities/main/Doors/Custom%20Achievements/Source.lua"))()
+
+    ---====== Display achievement ======---
+    if achievementGiver then -- Đảm bảo achievementGiver được tải thành công
+        achievementGiver({
+            Title = "Torn Appart",
+            Desc = "Don't leave **too** early..",
+            Reason = "Encounter Ripper.",
+            Image = "rbxassetid://12231244970"
+        })
+    end
+end
+
+pcall(THEHORROR) -- Sử dụng pcall để bắt lỗi nếu có
