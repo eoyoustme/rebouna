@@ -18,9 +18,9 @@ local entity = spawner.Create({
         Range = 100,
         Values = {1.5, 20, 0.1, 1}
     },
-    -- Đặt tốc độ rất nhỏ để spawner không cố gắng di chuyển nó theo logic của riêng nó.
-    -- Việc neo (Anchoring) entity sẽ đảm bảo nó đứng yên.
-    Movement = { Speed = 185, Delay = 0, Reversed = false },
+    -- *** ĐIỀU CHỈNH TẠI ĐÂY: Đặt lại tốc độ di chuyển bình thường của entity ***
+    -- Ví dụ: Speed = 185 (như một số entity trong Doors)
+    Movement = { Speed = 185, Delay = 5, Reversed = false }, 
     Rebounding = { Enabled = false },
     Damage = { Enabled = true, Range = 40, Amount = 125 },
     Crucifixion = { Enabled = true, Range = 40, Resist = false, Break = true },
@@ -49,7 +49,7 @@ local healthChangedConn
 local originalTintColor = Lighting.MainColorCorrection.TintColor
 local originalContrast = Lighting.MainColorCorrection.Contrast
 
--- CONNECTION ĐỂ LIÊN TỤC NEO ENTITY TRONG SUỐT JUMPSCARE
+-- CONNECTION ĐỂ LIÊN TỤC NEO ENTITY TRONG SUỐT JUMPSCARE (khi jumpscare kích hoạt)
 local anchorConn = nil
 
 --====== Callbacks ======--
@@ -76,21 +76,13 @@ entity:SetCallback("OnSpawned", function()
     entityModel = entity.Model
     entityPart = entityModel and (entityModel.PrimaryPart or entityModel:FindFirstChildWhichIsA("BasePart"))
 
-    -- *** Neo entity ngay lập tức sau khi spawn ***
-    if entityModel then
-        for _, part in ipairs(entityModel:GetDescendants()) do
-            if part:IsA("BasePart") then
-                part.Anchored = true
-            end
-        end
-        print("Entity đã được neo lại ban đầu.")
-    else
-        warn("Không tìm thấy entityModel sau khi spawn!")
-    end
+    -- *** ĐIỀU CHỈNH TẠI ĐÂY: KHÔNG NỮA KHI entity xuất hiện. ***
+    -- entity sẽ di chuyển bình thường cho đến khi jumpscare kích hoạt.
+    print("Entity đã xuất hiện và di chuyển bình thường.")
 end)
 
 entity:SetCallback("OnStartMoving", function() 
-    print("Thực thể đã bắt đầu di chuyển (nếu không bị neo, điều này không mong muốn).") 
+    print("Thực thể đã bắt đầu di chuyển.") 
 end)
 entity:SetCallback("OnEnterRoom", function(room, firstTime)
     print(("Thực thể đã vào phòng: %s (%s)"):format(room.Name, firstTime and "lần đầu" or "lần nữa"))
@@ -134,11 +126,11 @@ entity:SetCallback("OnDamagePlayer", function(newHealth)
     print(newHealth == 0 and "Thực thể đã giết người chơi" or "Thực thể đã gây sát thương cho người chơi")
 end)
 
---====== Logic Jumpscare Thực sự ======--
+--====== Logic Jumpscare Thực sự (chỉ hình ảnh và âm thanh jumpscare chính) ======--
 local function executeRealJumpscare()
-    -- Ngay lập tức chặn tất cả input của người chơi
-    inputConn1 = UIS.InputBegan:Connect(function() return Enum.ContextActionResult.Sink end)
-    inputConn2 = UIS.InputChanged:Connect(function() return Enum.ContextActionResult.Sink end)
+    -- Ngay lập tức chặn tất cả input của người chơi (nếu chưa bị chặn)
+    if not inputConn1 then inputConn1 = UIS.InputBegan:Connect(function() return Enum.ContextActionResult.Sink end) end
+    if not inputConn2 then inputConn2 = UIS.InputChanged:Connect(function() return Enum.ContextActionResult.Sink end) end
 
     -- Phần tử Jumpscare Hình ảnh (Ảnh toàn màn hình Ripper)
     local jumpscareGui = Instance.new("ScreenGui", player:WaitForChild("PlayerGui"))
@@ -185,7 +177,7 @@ local function executeRealJumpscare()
     TweenService:Create(jumpscareImg, TweenInfo.new(0.5), {ImageTransparency = 1}):Play().Completed:Wait() -- Ẩn đầu lâu
     
     if cameraConn then cameraConn:Disconnect() end -- Ngắt kết nối camera sau khi hoàn tất
-    if anchorConn then anchorConn:Disconnect() end -- Ngắt kết nối neo sau khi hoàn tất jumpscare
+    if anchorConn then anchorConn:Disconnect() end -- Ngắt kết nối neo entity sau khi hoàn tất jumpscare
     if inputConn1 then inputConn1:Disconnect() end
     if inputConn2 then inputConn2:Disconnect() end
     camera.CameraType = Enum.CameraType.Custom -- Khôi phục điều khiển camera
@@ -212,7 +204,7 @@ local function executeRealJumpscare()
     end
 end
 
---====== Logic Jumpscare Trung gian (Màn hình nhiễu) - BÂY GIỜ SẼ KHÓA CAMERA VÀO ENTITY TẠI ĐÂY ======--
+--====== Logic Jumpscare Trung gian (Màn hình nhiễu) - KHÓA NGƯỜI CHƠI VÀ ENTITY TẠI ĐÂY ======--
 local function doJumpscareWithEffect()
     if isJumpscareActive then return end
     isJumpscareActive = true
@@ -247,7 +239,7 @@ local function doJumpscareWithEffect()
     end)
     print("Camera đã được khóa vào entity ngay khi người chơi bị đóng băng.")
 
-    -- *** Bắt đầu liên tục neo entity ngay khi người chơi bị đóng băng ***
+    -- *** ĐIỀU CHỈNH TẠI ĐÂY: Bắt đầu liên tục neo entity NGAY KHI người chơi bị đóng băng ***
     if anchorConn then anchorConn:Disconnect() end -- Ngắt kết nối cũ nếu có
     anchorConn = RunService.RenderStepped:Connect(function()
         if entityModel then
@@ -295,10 +287,7 @@ local function doJumpscareWithEffect()
     -- Khôi phục độ sáng
     TweenService:Create(Lighting, TweenInfo.new(0.5), {Brightness = currentBrightness}):Play()
 
-    -- Không cần đặt camera lại ở đây vì nó đã được khóa vào entity rồi
-    -- camera.CFrame = player.Character.Head.CFrame 
-    
-    -- Khôi phục màu sắc phòng về đỏ như khi Ripper xuất hiện
+    -- Khôi phục màu sắc phòng về đỏ như khi Ripper xuất hiện (cho jumpscare chính)
     Lighting.MainColorCorrection.TintColor = Color3.fromRGB(250, 0, 0) 
     Lighting.MainColorCorrection.Contrast = 0 
     
@@ -318,7 +307,7 @@ local function onCharacterAdded(character)
         end
         healthChangedConn = humanoid.HealthChanged:Connect(function(health)
             if health <= 0 and not isJumpscareActive then
-                -- Kích hoạt jumpscare với hiệu ứng nhiễu và khóa camera vào entity
+                -- Kích hoạt jumpscare với hiệu ứng nhiễu, khóa camera và đóng băng entity
                 doJumpscareWithEffect()
             end
         end)
