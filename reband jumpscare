@@ -39,7 +39,7 @@ shift.Parent = scare
 
 local distort = Instance.new("DistortionSoundEffect")
 distort.Parent = scare
-distort.Level = 0.75
+distort.Level = 1
 
 local distort2 = Instance.new("DistortionSoundEffect")
 distort2.Parent = scare
