@@ -48,7 +48,7 @@ camShake:ShakeOnce(10,3,0.1,6,2,0.5)
 local speed = math.random(80,95)
 local delay = {"2", "2.5", "1.5", "1", "2.1"}
 local fuck = delay[math.random(1, #delay)]
-wait(2.8)
+wait(3.8)
 
 local Creator = loadstring(game:HttpGet("https://raw.githubusercontent.com/DripCapybara/Doors-Mode-Remakes/refs/heads/main/ReboundSpawner.lua"))()
 
