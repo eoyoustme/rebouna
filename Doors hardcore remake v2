@@ -14,7 +14,7 @@ local entityList = {
     {url = "https://raw.githubusercontent.com/eoyoustme/rebouna/refs/heads/main/Shocker", delay = 35},
     {url = "https://raw.githubusercontent.com/eoyoustme/rebouna/refs/heads/main/SIlence", delay = 300},
     {url = "https://raw.githubusercontent.com/eoyoustme/rebouna/refs/heads/main/HC%20Ambush", delay = 360},
-    {url = "https://raw.githubusercontent.com/eoyoustme/rebouna/refs/heads/main/HC%20Ambush", delay = 600},
+    {url = "https://raw.githubusercontent.com/eoyoustme/rebouna/refs/heads/main/A-60%20(hardcore%20remake)", delay = 600},
 }
 
 for _, entity in ipairs(entityList) do
