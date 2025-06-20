@@ -18,8 +18,7 @@ local entity = spawner.Create({
         Range = 100,
         Values = {1.5, 20, 0.1, 1}
     },
-    -- *** ĐIỀU CHỈNH TẠI ĐÂY: Đặt lại tốc độ di chuyển bình thường của entity ***
-    -- Ví dụ: Speed = 185 (như một số entity trong Doors)
+    -- *** ĐIỀU CHỈNH TẠI ĐÂY: Đặt tốc độ của entity, nó sẽ di chuyển bình thường cho đến jumpscare. ***
     Movement = { Speed = 185, Delay = 5, Reversed = false }, 
     Rebounding = { Enabled = false },
     Damage = { Enabled = true, Range = 40, Amount = 125 },
@@ -74,10 +73,23 @@ entity:SetCallback("OnSpawned", function()
 
     -- Lấy model và primary part của thực thể
     entityModel = entity.Model
-    entityPart = entityModel and (entityModel.PrimaryPart or entityModel:FindFirstChildWhichIsA("BasePart"))
+    -- *** ĐIỀU CHỈNH TẠI ĐÂY: Đảm bảo entityPart được gán đúng cách ***
+    if entityModel then
+        entityPart = entityModel.PrimaryPart or entityModel:FindFirstChildWhichIsA("BasePart")
+        if not entityPart then
+            warn("Entity model không có PrimaryPart hoặc BasePart nào! Khóa camera và neo có thể không hoạt động.")
+            -- Tìm một phần bất kỳ nếu PrimaryPart không có để ít nhất có thể khóa camera
+            for _, child in ipairs(entityModel:GetChildren()) do
+                if child:IsA("BasePart") then
+                    entityPart = child
+                    break
+                end
+            end
+        end
+    else
+        warn("entity.Model là nil sau khi spawn!")
+    end
 
-    -- *** ĐIỀU CHỈNH TẠI ĐÂY: KHÔNG NỮA KHI entity xuất hiện. ***
-    -- entity sẽ di chuyển bình thường cho đến khi jumpscare kích hoạt.
     print("Entity đã xuất hiện và di chuyển bình thường.")
 end)
 
@@ -220,32 +232,39 @@ local function doJumpscareWithEffect()
             hum.PlatformStand = true
             for _, part in ipairs(char:GetDescendants()) do
                 if part:IsA("BasePart") then
-                    part.Anchored = true
+                    part.Anchored = true 
                 end
             end
         end
     end
     
-    -- *** ĐIỀU CHỈNH TẠI ĐÂY: Khóa camera vào entity NGAY KHI người chơi bị đóng băng ***
+    -- *** KHÓA CAMERA VÀO ENTITY NGAY KHI người chơi bị đóng băng ***
     camera.CameraType = Enum.CameraType.Scriptable
     if cameraConn then cameraConn:Disconnect() end -- Ngắt kết nối cũ nếu có
     cameraConn = RunService.RenderStepped:Connect(function()
-        if player.Character and player.Character:FindFirstChild("Head") and entityPart then 
+        if player.Character and player.Character:FindFirstChild("Head") and entityPart and entityModel and entityModel.Parent then 
+            -- Chỉ khóa camera nếu entityModel vẫn tồn tại trong workspace
             camera.CFrame = CFrame.new(player.Character.Head.Position, entityPart.Position)
         else
-            warn("Không thể khóa camera: entityPart hoặc đầu người chơi không tồn tại.")
+            warn("Không thể khóa camera: entityPart, đầu người chơi hoặc entityModel không tồn tại.")
             if cameraConn then cameraConn:Disconnect() end 
         end
     end)
     print("Camera đã được khóa vào entity ngay khi người chơi bị đóng băng.")
 
-    -- *** ĐIỀU CHỈNH TẠI ĐÂY: Bắt đầu liên tục neo entity NGAY KHI người chơi bị đóng băng ***
+    -- *** BẮT ĐẦU LIÊN TỤC NEO ENTITY NGAY KHI người chơi bị đóng băng ***
+    -- Đây là phần quan trọng nhất để entity không di chuyển
     if anchorConn then anchorConn:Disconnect() end -- Ngắt kết nối cũ nếu có
     anchorConn = RunService.RenderStepped:Connect(function()
-        if entityModel then
+        if entityModel and entityModel.Parent then -- Chỉ cố gắng neo nếu model vẫn còn trong workspace
             for _, part in ipairs(entityModel:GetDescendants()) do
                 if part:IsA("BasePart") then
                     part.Anchored = true
+                    -- Thêm một lớp bảo vệ: nếu nó vẫn di chuyển, thử đặt lại vị trí
+                    -- (Chỉ nên sử dụng nếu neo không hoạt động, có thể gây giật cục)
+                    -- if part.Anchored == false and part.Parent == entityModel then
+                    --     part.CFrame = part.CFrame -- Đặt lại CFrame của chính nó (hiệu quả là không di chuyển)
+                    -- end
                 end
             end
         end
