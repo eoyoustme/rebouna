@@ -103,6 +103,13 @@ entity:SetCallback("OnDamagePlayer", function(newHealth)
 		print("Entity has killed the player")
 	else
 		print("Entity has damaged the player")
+   local cue2 = Instance.new("Sound")
+    cue2.Parent = game.Workspace
+    cue2.Name = "Spawn"
+    cue2.SoundId = "rbxassetid://7861818231"
+    cue2.Volume = 99999
+    cue2.PlaybackSpeed = 0.9
+    cue2:Play()
 	end
 end)
 
