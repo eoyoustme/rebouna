@@ -135,7 +135,7 @@ local function doJumpscare()
     img.Size = UDim2.new(1, 0, 1, 0)
     img.BackgroundTransparency = 1
     img.ImageTransparency = 1
-    img.Image = "rbxassetid://14865476959"
+    img.Image = "rbxassetid://11826279208"
 
     TweenService:Create(img, TweenInfo.new(0.5), {ImageTransparency = 0}):Play()
 
