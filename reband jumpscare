@@ -41,6 +41,10 @@ local distort = Instance.new("DistortionSoundEffect")
 distort.Parent = scare
 distort.Level = 0.75
 
+local distort2 = Instance.new("DistortionSoundEffect")
+distort2.Parent = scare
+distort2.Level = 1
+
 local eq = Instance.new("EqualizerSoundEffect")
 eq.HighGain = 10
 eq.MidGain = 10
