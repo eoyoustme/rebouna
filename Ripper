@@ -18,7 +18,7 @@ local entity = spawner.Create({
         Range = 100,
         Values = {1.5, 20, 0.1, 1}
     },
-    Movement = { Speed = 185, Delay = 5, Reversed = false },
+    Movement = { Speed = 0, Delay = 0, Reversed = false }, -- Đặt Speed và Delay về 0 để entity không di chuyển
     Rebounding = { Enabled = false },
     Damage = { Enabled = true, Range = 40, Amount = 125 },
     Crucifixion = { Enabled = true, Range = 40, Resist = false, Break = true },
@@ -70,9 +70,22 @@ entity:SetCallback("OnSpawned", function()
     -- Lấy model và primary part của thực thể
     entityModel = entity.Model
     entityPart = entityModel and (entityModel.PrimaryPart or entityModel:FindFirstChildWhichIsA("BasePart"))
+
+    -- Nếu entityModel và entityPart tồn tại, hãy neo nó lại để nó không di chuyển
+    if entityPart then
+        entityPart.Anchored = true
+        -- Để đảm bảo toàn bộ model được neo, bạn có thể lặp qua các phần của nó
+        -- hoặc nếu spawner đã xử lý việc này, thì chỉ cần PrimaryPart là đủ.
+        -- Đối với một số model, việc neo PrimaryPart có thể không neo toàn bộ model phụ thuộc vào cách nó được rigging.
+        -- Tuy nhiên, với config Movement.Speed = 0, nó sẽ không di chuyển anyway.
+    end
 end)
 
-entity:SetCallback("OnStartMoving", function() print("Thực thể đã bắt đầu di chuyển") end)
+entity:SetCallback("OnStartMoving", function() 
+    print("Thực thể đã bắt đầu di chuyển") 
+    -- Nếu bạn muốn nó đóng băng hoàn toàn, callback này có thể không bao giờ được gọi
+    -- hoặc bạn có thể thêm logic neo tại đây nếu nó được gỡ neo ở đâu đó.
+end)
 entity:SetCallback("OnEnterRoom", function(room, firstTime)
     print(("Thực thể đã vào phòng: %s (%s)"):format(room.Name, firstTime and "lần đầu" or "lần nữa"))
 end)
@@ -82,7 +95,13 @@ end)
 entity:SetCallback("OnRebounding", function(start)
     print(start and "Bật lại bắt đầu" or "Bật lại kết thúc")
 end)
-entity:SetCallback("OnDespawning", function() print("Thực thể đang biến mất") end)
+entity:SetCallback("OnDespawning", function() 
+    print("Thực thể đang biến mất") 
+    -- Khi despawn, nó sẽ được gỡ neo nếu cần để di chuyển ra
+    if entityPart then
+        entityPart.Anchored = false
+    end
+end)
 entity:SetCallback("OnDespawned", function()
     print("Thực thể đã biến mất")
 
@@ -126,9 +145,9 @@ local function executeRealJumpscare()
         end
     end
 
-    -- Kết nối camera để nhìn vào thực thể ngay lập tức
+    -- Khóa camera vào vị trí của entityPart trong suốt jumpscare
     cameraConn = RunService.RenderStepped:Connect(function()
-        if player.Character and player.Character:FindFirstChild("Head") and entityPart then
+        if entityPart then -- Đảm bảo entityPart vẫn tồn tại
             camera.CFrame = CFrame.new(player.Character.Head.Position, entityPart.Position)
         end
     end)
