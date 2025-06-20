@@ -198,12 +198,12 @@ local function executeRealJumpscare()
 
     -- Bắt đầu hiển thị hình đầu lâu sau khi jumpscare Ripper hoàn tất
     jumpscareImg.ImageTransparency = 1 -- Ẩn ảnh Ripper đi
-    jumpscareImg.Image = "rbxassetid://YOUR_SKULL_IMAGE_ID_HERE" -- **THAY THẾ BẰNG ID HÌNH ĐẦU LÂU CỦA BẠN**
+    jumpscareImg.Image = "rbxassetid://12737595583" -- **THAY THẾ BẰNG ID HÌNH ĐẦU LÂU CỦA BẠN**
     jumpscareImg.ZIndex = 12 -- Đảm bảo nó nằm trên tất cả các UI khác
     TweenService:Create(jumpscareImg, TweenInfo.new(0.5), {ImageTransparency = 0}):Play() -- Hiện đầu lâu
     
     local skullSound = Instance.new("Sound", workspace)
-    skullSound.SoundId = "rbxassetid://YOUR_SKULL_SOUND_ID_HERE" -- **THAY THẾ BẰNG ID ÂM THANH ĐẦU LÂU CỦA BẠN**
+    skullSound.SoundId = "rbxassetid://7017782324" -- **THAY THẾ BẰNG ID ÂM THANH ĐẦU LÂU CỦA BẠN**
     skullSound.Volume = 2
     skullSound:Play()
 
