@@ -59,7 +59,7 @@ end)
 
 -- Jumpscare effect
 game.TweenService:Create(Face, TweenInfo.new(0.01), {
-    Size = UDim2.new(0, 6850, 0, 6050),
+    Size = UDim2.new(0, 2850, 0, 2050),
     ImageTransparency = 0
 }):Play()
 
