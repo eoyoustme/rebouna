@@ -3,17 +3,18 @@ wait(2)
 require(game.Players.LocalPlayer.PlayerGui.MainUI.Initiator.Main_Game).caption("real hardcore make by by noonie and ping this is my remake v2 version", true)
 
 pcall(function()
-    loadstring(game:HttpGet("https://raw.githubusercontent.com/vct0721/Doors-Stuff/refs/heads/main/Sprint.lua"))()
+    loadstring(game:HttpGet("https://pastefy.app/EpqLU3vm/raw"))()
 end)
 
 local entityList = {
-    {url = "in problem", delay = 325},
+    {url = "https://raw.githubusercontent.com/eoyoustme/rebouna/refs/heads/main/Cease%20remake", delay = 325},
     {url = "https://raw.githubusercontent.com/eoyoustme/rebouna/refs/heads/main/Ripper", delay = 150},
     {url = "https://raw.githubusercontent.com/eoyoustme/rebouna/refs/heads/main/reband", delay = 210},
     {url = "https://pastefy.app/1xxpTxo3/raw", delay = 100000},
     {url = "https://raw.githubusercontent.com/eoyoustme/rebouna/refs/heads/main/Shocker", delay = 35},
     {url = "https://raw.githubusercontent.com/eoyoustme/rebouna/refs/heads/main/SIlence", delay = 300},
     {url = "https://raw.githubusercontent.com/eoyoustme/rebouna/refs/heads/main/HC%20Ambush", delay = 360},
+    {url = "https://raw.githubusercontent.com/eoyoustme/rebouna/refs/heads/main/HC%20Ambush", delay = 600},
 }
 
 for _, entity in ipairs(entityList) do
