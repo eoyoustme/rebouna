@@ -1,5 +1,4 @@
----====== Load spawner ======---
-
+--====== Load spawner ======--
 local spawner = loadstring(game:HttpGet("https://raw.githubusercontent.com/RegularVynixu/Utilities/main/Doors/Entity%20Spawner/V2/Source.lua"))()
 
 local entity = spawner.Create({
@@ -21,17 +20,16 @@ local entity = spawner.Create({
     },
     Movement = { Speed = 185, Delay = 5, Reversed = false },
     Rebounding = { Enabled = false },
-    Damage = { Enabled = false, Range = 40, Amount = 125 },
+    Damage = { Enabled = false, Range = 40, Amount = 5 },
     Crucifixion = { Enabled = true, Range = 40, Resist = false, Break = true },
     Death = {
         Type = "Guiding",
-        Hints = {"You die to Ripper","HE is crazy","IF you see room to red and hear a scream","Hide now he is move"},
+        Hints = {"You die to Ripper", "HE is crazy", "IF you see room to red and hear a scream", "Hide now he is move"},
         Cause = ""
     }
 })
 
----====== Setup  =======---
-
+--====== Services ======--
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local TweenService = game:GetService("TweenService")
@@ -40,41 +38,37 @@ local UIS = game:GetService("UserInputService")
 local player = Players.LocalPlayer
 local camera = workspace.CurrentCamera
 
--- Variables for jumpscare
+--====== Jumpscare Setup ======--
 local canJumpscare = false
 local isJumpscare = false
 local entityModel, entityPart
 local cameraConn, inputConn1, inputConn2
 
----====== Existing Callbacks (unchanged) ======---
-
+--====== Callbacks ======--
 entity:SetCallback("OnSpawned", function()
     print("Entity has spawned")
-    local cue2 = Instance.new("Sound")
-    cue2.Parent = workspace
-    cue2.Name = "Spawn"
-    cue2.SoundId = "rbxassetid://9125713501"
-    cue2.Volume = 9999
-    cue2.PlaybackSpeed = 0.525
-    cue2:Play()
 
-    local lc = workspace:FindFirstChild("Lighting") or game:GetService("Lighting")
-    lc.MainColorCorrection.TintColor = Color3.fromRGB(255,255,255)
-    lc.MainColorCorrection.Contrast = 10
-    TweenService:Create(lc.MainColorCorrection, TweenInfo.new(2.5), {Contrast=0}):Play()
-    TweenService:Create(lc.MainColorCorrection, TweenInfo.new(5), {TintColor = Color3.fromRGB(250,0,0)}):Play()
+    local spawnSound = Instance.new("Sound", workspace)
+    spawnSound.SoundId = "rbxassetid://9125713501"
+    spawnSound.Volume = 9999
+    spawnSound.PlaybackSpeed = 0.525
+    spawnSound:Play()
 
-    -- Setup jumpscare
+    local lighting = game:GetService("Lighting")
+    lighting.MainColorCorrection.TintColor = Color3.fromRGB(255, 255, 255)
+    lighting.MainColorCorrection.Contrast = 10
+    TweenService:Create(lighting.MainColorCorrection, TweenInfo.new(2.5), {Contrast = 0}):Play()
+    TweenService:Create(lighting.MainColorCorrection, TweenInfo.new(5), {TintColor = Color3.fromRGB(250, 0, 0)}):Play()
+
+    -- Setup jumpscare detection
     entityModel = entity.Model
-    if entityModel then
-        entityPart = entityModel.PrimaryPart or entityModel:FindFirstChildWhichIsA("BasePart")
-        canJumpscare = true
-    end
+    entityPart = entityModel and (entityModel.PrimaryPart or entityModel:FindFirstChildWhichIsA("BasePart"))
+    canJumpscare = entityPart ~= nil
 end)
 
 entity:SetCallback("OnStartMoving", function() print("Entity has started moving") end)
 entity:SetCallback("OnEnterRoom", function(room, firstTime)
-    print(("Entity has entered room: %s (%s)"):format(room.Name, firstTime and "firstTime" or "again"))
+    print(("Entity entered room: %s (%s)"):format(room.Name, firstTime and "firstTime" or "again"))
 end)
 entity:SetCallback("OnLookAt", function(los)
     print(los and "Player is looking at entity" or "View obstructed")
@@ -85,28 +79,25 @@ end)
 entity:SetCallback("OnDespawning", function() print("Entity is despawning") end)
 entity:SetCallback("OnDespawned", function()
     print("Entity has despawned")
-    local cue2 = Instance.new("Sound")
-    cue2.Parent = workspace
-    cue2.Name = "Spawn"
-    cue2.SoundId = "rbxassetid://1837829565"
-    cue2.Volume = 9999
-    cue2.PlaybackSpeed = 1
-    cue2:Play()
 
-    wait(3)
-    local lc = workspace:FindFirstChild("Lighting") or game:GetService("Lighting")
-    lc.MainColorCorrection.TintColor = Color3.fromRGB(250,0,0)
-    lc.MainColorCorrection.Contrast = 10
-    TweenService:Create(lc.MainColorCorrection, TweenInfo.new(2.5), {Contrast=0}):Play()
-    TweenService:Create(lc.MainColorCorrection, TweenInfo.new(5), {TintColor = Color3.fromRGB(255,255,255)}):Play()
+    local despawnSound = Instance.new("Sound", workspace)
+    despawnSound.SoundId = "rbxassetid://1837829565"
+    despawnSound.Volume = 9999
+    despawnSound:Play()
+
+    task.wait(3)
+
+    local lighting = game:GetService("Lighting")
+    lighting.MainColorCorrection.TintColor = Color3.fromRGB(250, 0, 0)
+    lighting.MainColorCorrection.Contrast = 10
+    TweenService:Create(lighting.MainColorCorrection, TweenInfo.new(2.5), {Contrast = 0}):Play()
+    TweenService:Create(lighting.MainColorCorrection, TweenInfo.new(5), {TintColor = Color3.fromRGB(255, 255, 255)}):Play()
 end)
 entity:SetCallback("OnDamagePlayer", function(newHealth)
-    print(newHealth == 0 and "Entity has killed the player" or "Entity has damaged the player")
+    print(newHealth == 0 and "Entity killed the player" or "Entity damaged the player")
 end)
 
----====== Jumpscare Logic After Run ======---
-
--- Function to perform jumpscare
+--====== Jumpscare Logic ======--
 local function doJumpscare()
     isJumpscare = true
     camera.CameraType = Enum.CameraType.Scriptable
@@ -118,18 +109,20 @@ local function doJumpscare()
     end)
 
     task.spawn(function()
-        while isJumpscare do
-            local hum = player.Character and player.Character:FindFirstChild("Humanoid")
+        local char = player.Character
+        if char then
+            local hum = char:FindFirstChild("Humanoid")
             if hum then
                 hum.WalkSpeed = 0
                 hum.JumpPower = 0
                 hum.AutoRotate = false
                 hum.PlatformStand = true
-                for _, part in ipairs(player.Character:GetDescendants()) do
-                    if part:IsA("BasePart") then part.Anchored = true end
+                for _, part in ipairs(char:GetDescendants()) do
+                    if part:IsA("BasePart") then
+                        part.Anchored = true
+                    end
                 end
             end
-            task.wait(0.05)
         end
     end)
 
@@ -139,37 +132,40 @@ local function doJumpscare()
     local gui = Instance.new("ScreenGui", player:WaitForChild("PlayerGui"))
     gui.Name = "JumpscareGUI"
     local img = Instance.new("ImageLabel", gui)
-    img.Size = UDim2.new(1,0,1,0)
+    img.Size = UDim2.new(1, 0, 1, 0)
     img.BackgroundTransparency = 1
     img.ImageTransparency = 1
     img.Image = "rbxassetid://14865476959"
 
-    TweenService:Create(img, TweenInfo.new(0.5), {ImageTransparency=0}):Play()
+    TweenService:Create(img, TweenInfo.new(0.5), {ImageTransparency = 0}):Play()
+
     local sound = Instance.new("Sound", workspace)
     sound.SoundId = "rbxassetid://6567183465"
     sound.Volume = 3
     sound:Play()
 
     task.wait(1.2)
+
     local hum = player.Character and player.Character:FindFirstChild("Humanoid")
     if hum then hum.Health = 0 end
 
-    local fade = TweenService:Create(img, TweenInfo.new(0.5), {ImageTransparency=1})
+    local fade = TweenService:Create(img, TweenInfo.new(0.5), {ImageTransparency = 1})
     fade:Play()
     fade.Completed:Wait()
 
-    cameraConn:Disconnect()
-    inputConn1:Disconnect()
-    inputConn2:Disconnect()
+    -- Cleanup
+    if cameraConn then cameraConn:Disconnect() end
+    if inputConn1 then inputConn1:Disconnect() end
+    if inputConn2 then inputConn2:Disconnect() end
     camera.CameraType = Enum.CameraType.Custom
     isJumpscare = false
     gui:Destroy()
 end
 
--- Start entity
+--====== Start Entity ======--
 entity:Run()
 
--- Heartbeat loop for jumpscare
+--====== Heartbeat Jumpscare Trigger ======--
 RunService.Heartbeat:Connect(function()
     if not canJumpscare or isJumpscare then return end
     if not player.Character or not entityPart then return end
@@ -178,9 +174,16 @@ RunService.Heartbeat:Connect(function()
     if not hrp then return end
 
     local dist = (hrp.Position - entityPart.Position).Magnitude
-    if dist <= entity.Config.KillRange then
-        local ray = workspace:Raycast(hrp.Position, entityPart.Position - hrp.Position, RaycastParams.new())
-        if not ray or ray.Instance:IsDescendantOf(entityModel) then
+    if dist <= entity.Config.Damage.Range then
+        -- Use RaycastParams to check if view is clear
+        local rayParams = RaycastParams.new()
+        rayParams.FilterType = Enum.RaycastFilterType.Blacklist
+        rayParams.FilterDescendantsInstances = {player.Character}
+
+        local direction = (entityPart.Position - hrp.Position).Unit * dist
+        local result = workspace:Raycast(hrp.Position, direction, rayParams)
+
+        if not result or result.Instance:IsDescendantOf(entityModel) then
             doJumpscare()
         end
     end
