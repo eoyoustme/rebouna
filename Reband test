@@ -135,7 +135,7 @@ local function createAndRunRebound(name, offsetZ)
             local targetCFrame = entityModel.PrimaryPart.CFrame * CFrame.new(0, 0, offsetZ)
 
             local moveTweenInfo = TweenInfo.new(
-                2, -- Thời gian di chuyển (giây)
+                5, -- Thời gian di chuyển (giây)
                 Enum.EasingStyle.Linear,
                 Enum.EasingDirection.Out,
                 0, -- Số lần lặp lại (0 = 1 lần)
