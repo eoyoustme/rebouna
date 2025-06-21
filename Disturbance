@@ -138,10 +138,10 @@ local initialFaceSize = Face.Size
 local initialFaceTransparency = Face.ImageTransparency
 
 -- Define animation parameters
-local totalJumpscareDuration = 1.2 -- Total duration before GUI is destroyed
-local zoomInDuration = 0.5 -- Time it takes for the image to zoom from initial to full screen
+local totalJumpscareDuration = 0.7 -- Total duration before GUI is destroyed
+local zoomInDuration = 0.8 -- Time it takes for the image to zoom from initial to full screen
 -- Removed choke-related parameters: chokeCycleSpeed, chokeMagnitude
-local rotationMagnitude = 5 -- How much the image tilts left/right in degrees (e.g., 5 degrees)
+local rotationMagnitude = 10 -- How much the image tilts left/right in degrees (e.g., 5 degrees)
 local rotationSpeed = 0.0001-- How fast the rotation oscillates (smaller value = faster oscillation)
 
 local startTime = tick() -- Record the exact start time of the jumpscare animation
@@ -183,7 +183,7 @@ connection = game:GetService("RunService").Heartbeat:Connect(function()
     -- 2. Rotation Effect (Nghiêng trái phải)
     -- Use a sine wave for smooth left-right oscillation.
     -- The result is in degrees.
-    local rotationPhase = (elapsed / rotationSpeed) * math.pi * 5
+    local rotationPhase = (elapsed / rotationSpeed) * math.pi * 12
     Face.Rotation = math.sin(rotationPhase) * rotationMagnitude
 end)
 
