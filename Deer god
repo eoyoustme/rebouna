@@ -140,7 +140,7 @@ Face.Parent = Background
 -- Create the sound object for the jumpscare audio
 local scare = Instance.new("Sound")
 scare.Name = "MyEarsBurn"
-scare.SoundId = "rbxassetid://140225556550357" -- Sound asset ID
+scare.SoundId = "rbxassetid://18459521002" -- Sound asset ID
 scare.PlaybackSpeed = 1 -- Speed up the sound
 scare.Volume = 999 -- Adjusted volume to a more reasonable level (0-1, original 9999 was too loud)
 scare.Parent = JumpscareGui
@@ -161,10 +161,10 @@ local initialFaceTransparency = Face.ImageTransparency
 
 -- Define animation parameters
 local totalJumpscareDuration = 0.7 -- Total duration before GUI is destroyed
-local zoomInDuration = 0.4 -- Time it takes for the image to zoom from initial to full screen
+local zoomInDuration = 0.7 -- Time it takes for the image to zoom from initial to full screen
 -- Removed choke-related parameters: chokeCycleSpeed, chokeMagnitude
 local rotationMagnitude = 5 -- How much the image tilts left/right in degrees (e.g., 5 degrees)
-local rotationSpeed = 0.02-- How fast the rotation oscillates (smaller value = faster oscillation)
+local rotationSpeed = 0.001-- How fast the rotation oscillates (smaller value = faster oscillation)
 
 local startTime = tick() -- Record the exact start time of the jumpscare animation
 
