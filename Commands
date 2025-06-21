@@ -1,7 +1,7 @@
 local textChatService = game:GetService("TextChatService")
 local players = game:GetService("Players")
 
-local isExecutingCommand = false -- Đổi tên biến để rõ ràng hơn về mục đích của nó
+local isExecutingCommand = true -- Đổi tên biến để rõ ràng hơn về mục đích của nó
 
 -- Định nghĩa các lệnh và URL tương ứng của chúng trong một bảng
 local commands = {
