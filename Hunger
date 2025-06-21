@@ -11,6 +11,10 @@ local HASTE_MAX_TIME = 40        -- Thời gian tối đa (02:00)
 local HASTE_SPEED = 130          -- Tốc độ đuổi bắt
 local JUMPSCARE_DURATION = 0.7   -- Thời lượng hiệu ứng jumpscare
 
+-- NEW CONSTANTS FOR HASTE SPAWN/CHASE BEHAVIOR
+local HASTE_SPAWN_DISTANCE = 150 -- Khoảng cách ngẫu nhiên Haste xuất hiện so với người chơi (studs)
+local HASTE_CHASE_DELAY = 20     -- Thời gian chờ (giây) trước khi Haste bắt đầu đuổi theo
+
 -- Asset IDs
 local ASSETS = {
     JUMPSCARE_IMAGE = "11774536576",
@@ -100,19 +104,8 @@ local function hasteAttack()
     
     Character:SetAttribute("Stunned", true)
     
-    -- Gửi gợi ý cái chết
-    if ReplicatedStorage.RemotesFolder and ReplicatedStorage.RemotesFolder.DeathHint then
-        -- Đảm bảo bạn có một cách để kích hoạt OnClientEvent trên client.
-        -- firesignal thường dùng cho server, nếu đây là LocalScript thì cần remote event từ server.
-        -- Giả sử DeathHint là RemoteEvent và bạn muốn kích hoạt nó từ client (chỉ để test hoặc giả lập)
-        -- Thông thường, server sẽ gửi tín hiệu này cho client.
-        -- ReplicatedStorage.RemotesFolder.DeathHint:FireClient(LocalPlayer, {
-        --     "You died to who you call Haste",
-        --     "He will appear after the time is over.",
-        --     "Don't Hide when this happens it will not work, So the best thing to do is find a lever!"
-        -- }, "Yellow")
-        warn("DeathHint fired (client-side simulation, adjust for server usage if needed)")
-    end
+    -- Gửi gợi ý cái chết (chỉ là mô phỏng phía client)
+    warn("DeathHint fired (client-side simulation, adjust for server usage if needed)")
     
     playJumpscare(function()
         local humanoid = Character:FindFirstChildOfClass("Humanoid")
@@ -144,18 +137,22 @@ local function spawnHaste()
     hasteModel.Parent = workspace
     hasteModel.Name = "HasteMoving"
     
-    -- **PHẦN ĐÃ SỬA ĐỔI QUAN TRỌNG:**
-    -- Tính toán vị trí xuất hiện phía sau người chơi và hơi nhấc lên khỏi mặt đất
-    local offsetDistance = 20 -- Khoảng cách (studs) phía sau người chơi
-    local playerLookVector = rootPart.CFrame.LookVector -- Hướng nhìn của người chơi
-    local spawnPosition = rootPart.Position - playerLookVector * offsetDistance + Vector3.new(0, 5, 0) -- Nâng 5 studs để tránh kẹt
+    -- **PHẦN ĐÃ SỬA ĐỔI QUAN TRỌNG: Vị trí xuất hiện ngẫu nhiên**
+    local randomAngle = math.random() * math.pi * 2 -- Góc ngẫu nhiên từ 0 đến 360 độ
+    local offsetX = math.cos(randomAngle) * HASTE_SPAWN_DISTANCE
+    local offsetZ = math.sin(randomAngle) * HASTE_SPAWN_DISTANCE
     
-    -- Đặt vị trí và hướng của Haste: xuất hiện tại spawnPosition và quay 180 độ để đối mặt với người chơi
-    hasteModel:SetPrimaryPartCFrame(CFrame.new(spawnPosition) * CFrame.Angles(0, math.pi, 0))
+    -- Tính toán vị trí xuất hiện: cách người chơi 150 studs theo hướng ngẫu nhiên
+    -- và nhấc lên 5 studs so với mặt đất của người chơi để tránh bị kẹt
+    local spawnPosition = rootPart.Position + Vector3.new(offsetX, 5, offsetZ)
+    
+    -- Đặt vị trí và hướng của Haste
+    -- Haste sẽ hướng về phía người chơi khi xuất hiện
+    hasteModel:SetPrimaryPartCFrame(CFrame.new(spawnPosition, rootPart.Position))
     hasteModel.PrimaryPart.CanCollide = false -- Haste không va chạm
     hasteModel.PrimaryPart.Anchored = false   -- Haste không bị neo, cho phép nó di chuyển
     
-    -- Thiết lập âm thanh
+    -- Setup sounds
     local main = hasteModel:FindFirstChild("Main")
     if main then
         for _, soundData in pairs({
@@ -173,26 +170,32 @@ local function spawnHaste()
     end
     
     _G.MP = hasteModel -- Biến toàn cục để dễ debug
-    task.spawn(function()
-        while wait() do
-            -- Đảm bảo mô hình Haste và người chơi vẫn tồn tại
-            if not (hasteModel and hasteModel.Parent and Character and Character:FindFirstChild("HumanoidRootPart")) then
-                break
+    
+    -- **PHẦN ĐÃ SỬA ĐỔI QUAN TRỌNG: Thêm thời gian chờ trước khi đuổi**
+    task.delay(HASTE_CHASE_DELAY, function()
+        if not (hasteModel and hasteModel.Parent) then return end -- Kiểm tra lại nếu Haste bị hủy trong lúc chờ
+
+        task.spawn(function()
+            while wait() do
+                -- Đảm bảo mô hình Haste và người chơi vẫn tồn tại
+                if not (hasteModel and hasteModel.Parent and Character and Character:FindFirstChild("HumanoidRootPart")) then
+                    break
+                end
+                
+                local playerPos = Character:FindFirstChild("HumanoidRootPart").Position -- Vị trí người chơi hiện tại
+                local hastePos = hasteModel.PrimaryPart.Position
+                local direction = (playerPos - hastePos).Unit -- Hướng từ Haste đến người chơi
+                local distance = (playerPos - hastePos).Magnitude -- Khoảng cách
+                
+                if distance > 0.5 then
+                    -- Di chuyển Haste về phía người chơi
+                    hasteModel.PrimaryPart.CFrame = hasteModel.PrimaryPart.CFrame + direction * HASTE_SPEED * math.min(distance, 1/60)
+                else
+                    hasteAttack() -- Nếu đủ gần, tấn công
+                    break
+                end
             end
-            
-            local playerPos = Character:FindFirstChild("HumanoidRootPart").Position -- Vị trí người chơi hiện tại
-            local hastePos = hasteModel.PrimaryPart.Position
-            local direction = (playerPos - hastePos).Unit -- Hướng từ Haste đến người chơi
-            local distance = (playerPos - hastePos).Magnitude -- Khoảng cách
-            
-            if distance > 0.5 then
-                -- Di chuyển Haste về phía người chơi
-                hasteModel.PrimaryPart.CFrame = hasteModel.PrimaryPart.CFrame + direction * HASTE_SPEED * math.min(distance, 1/60)
-            else
-                hasteAttack() -- Nếu đủ gần, tấn công
-                break
-            end
-        end
+        end)
     end)
 end
 
