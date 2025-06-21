@@ -1,70 +1,48 @@
-local command = "/Rebound"
-local command2 = "/A60"
-local command3 = "/A-120"
-local command4 = "/Claim"
-local command5 = "/A90"
-
 local textChatService = game:GetService("TextChatService")
-local tweenService = game:GetService("TweenService")
-local lighting = game:GetService("Lighting")
-local workspace = game:GetService("Workspace")
-local replicatedStorage = game:GetService("ReplicatedStorage")
 local players = game:GetService("Players")
 
-local mate = false
+local isExecutingCommand = false -- Đổi tên biến để rõ ràng hơn về mục đích của nó
 
-local function executeRebound()
-    if not mate then
-        mate = true
-        loadstring(game:HttpGet("https://raw.githubusercontent.com/eoyoustme/rebouna/refs/heads/main/reband"))()
-        mate = false
+-- Định nghĩa các lệnh và URL tương ứng của chúng trong một bảng
+local commands = {
+    ["/rebound"] = "https://raw.githubusercontent.com/eoyoustme/rebouna/refs/heads/main/reband",
+    ["/a60"] = "https://raw.githubusercontent.com/eoyoustme/rebouna/refs/heads/main/A-60%20(hardcore%20remake)",
+    ["/a90"] = "https://pastebin.com/raw/YTBW2f9A",
+    ["/a-120"] = "https://pastebin.com/raw/Zf2FtxhA",
+    ["/claim"] = "https://pastebin.com/raw/Zi3s2DfK"
+}
+
+-- Hàm chung để thực thi lệnh từ URL
+local function executeExternalScript(url)
+    if not isExecutingCommand then
+        isExecutingCommand = true
+        print("Đang tải và thực thi script từ: " .. url)
+        -- Sử dụng pcall để bắt lỗi nếu loadstring hoặc httpget thất bại
+        local success, err = pcall(function()
+            local scriptContent = game:HttpGet(url)
+            loadstring(scriptContent)()
+        end)
+
+        if not success then
+            warn("Lỗi khi thực thi script từ " .. url .. ": " .. err)
+        end
+        isExecutingCommand = false -- Đặt lại sau khi script đã được tải và thực thi
+    else
+        print("Một lệnh khác đang được thực thi. Vui lòng chờ.")
     end
 end
 
+-- Vòng lặp chính để lắng nghe tin nhắn chat
 while true do
     local message = textChatService.OnIncomingMessage:Wait()
-    
+
     if message.TextSource then
-        local msg = string.lower(message.Text)
+        local msgLower = string.lower(message.Text) -- Chuyển tin nhắn về chữ thường để so sánh
         local player = players:GetPlayerByUserId(message.TextSource.UserId)
-        
-            if msg == command then
-                -- A90 Command
-                if not mate then
-                    mate = true
-                    loadstring(game:HttpGet("https://pastebin.com/raw/YTBW2f9A"))()
-                    mate = false
-                end
-                
-            elseif msg == command2 then
-                -- A120 Command
-                if not mate then
-                    mate = true
-                    loadstring(game:HttpGet("https://pastebin.com/raw/Zf2FtxhA"))()
-                    mate = false
-                end
-                
-            elseif msg == command3 then
-                -- Rebound Command
-                executeRebound()
-                
-            elseif msg == command4 then
-                -- Claim Command
-                if not mate then
-                    mate = true
-                    loadstring(game:HttpGet("https://pastebin.com/raw/Zi3s2DfK"))()
-                    mate = false
-                end
-                
-            elseif msg == command5 then
-                -- A60 Command
-                if not mate then
-                    mate = true
-                    loadstring(game:HttpGet("https://raw.githubusercontent.com/eoyoustme/rebouna/refs/heads/main/A-60%20(hardcore%20remake)"))()
-                    mate = false
-                    end
-                end
-           end
-     end
+
+        -- Kiểm tra xem tin nhắn có phải là một trong các lệnh đã định nghĩa không
+        if commands[msgLower] then
+            executeExternalScript(commands[msgLower])
+        end
+    end
 end
-      
