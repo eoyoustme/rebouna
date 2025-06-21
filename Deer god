@@ -133,24 +133,24 @@ Face.BackgroundTransparency = 1 -- Make background transparent
 Face.Position = UDim2.new(0.5, 0, 0.5, 0) -- Position at the center of the screen
 Face.ResampleMode = Enum.ResamplerMode.Pixelated -- Can give a retro or harsh look
 Face.Size = UDim2.new(0, 150, 0, 150) -- Initial small size (e.g., 150x150 pixels)
-Face.Image = "rbxassetid://11395249132" -- Image asset ID for the entity
+Face.Image = "rbxassetid://12331751893" -- Image asset ID for the entity
 Face.ImageTransparency = 1 -- Start fully transparent, will fade in
 Face.Parent = Background
 
 -- Create the sound object for the jumpscare audio
 local scare = Instance.new("Sound")
 scare.Name = "MyEarsBurn"
-scare.SoundId = "rbxassetid://5710016194" -- Sound asset ID
-scare.PlaybackSpeed = 2 -- Speed up the sound
-scare.Volume = 0.5 -- Adjusted volume to a more reasonable level (0-1, original 9999 was too loud)
+scare.SoundId = "rbxassetid://140225556550357" -- Sound asset ID
+scare.PlaybackSpeed = 1 -- Speed up the sound
+scare.Volume = 999 -- Adjusted volume to a more reasonable level (0-1, original 9999 was too loud)
 scare.Parent = JumpscareGui
 
 -- Flashing background effect: A separate task to handle the rapid color changes
 task.spawn(function()
     while JumpscareGui.Parent do -- Loop as long as the JumpscareGui exists
-        Background.BackgroundColor3 = Color3.fromRGB(255, 0, 0) -- Green flash
+        Background.BackgroundColor3 = Color3.fromRGB(50, 34, 232) -- Green flash
         task.wait(math.random(25, 100) / 1000) -- Random wait between 0.025 and 0.1 seconds
-        Background.BackgroundColor3 = Color3.fromRGB(255, 255, 255) -- White flash
+        Background.BackgroundColor3 = Color3.fromRGB(0, 0, 0) -- White flash
         task.wait(math.random(25, 100) / 1000)
     end
 end)
@@ -164,7 +164,7 @@ local totalJumpscareDuration = 1.656 -- Total duration before GUI is destroyed
 local zoomInDuration = 0.4 -- Time it takes for the image to zoom from initial to full screen
 -- Removed choke-related parameters: chokeCycleSpeed, chokeMagnitude
 local rotationMagnitude = 5 -- How much the image tilts left/right in degrees (e.g., 5 degrees)
-local rotationSpeed = 0.15 -- How fast the rotation oscillates (smaller value = faster oscillation)
+local rotationSpeed = 1 -- How fast the rotation oscillates (smaller value = faster oscillation)
 
 local startTime = tick() -- Record the exact start time of the jumpscare animation
 
