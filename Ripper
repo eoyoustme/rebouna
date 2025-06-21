@@ -110,16 +110,22 @@ end)
 
 entity:SetCallback("OnDespawned", function()
     print("Thực thể đã biến mất")
-    local despawnSound = Instance.new("Sound", workspace)
-    despawnSound.SoundId = "rbxassetid://1837829565"
-    despawnSound.Volume = 9999
-    despawnSound:Play()
-    Debris:AddItem(despawnSound, despawnSound.TimeLength + 1)
-    task.wait(3)
-    Lighting.MainColorCorrection.TintColor = Color3.fromRGB(250, 0, 0)
-    Lighting.MainColorCorrection.Contrast = 10
-    TweenService:Create(Lighting.MainColorCorrection, TweenInfo.new(2.5), {Contrast = 0}):Play()
-    TweenService:Create(Lighting.MainColorCorrection, TweenInfo.new(5), {TintColor = originalTintColor}):Play()
+local cue2 = Instance.new("Sound")
+    cue2.Parent = game.Workspace
+    cue2.Name = "Spawn"
+    cue2.SoundId = "rbxassetid://1837829565"
+    cue2.Volume = 9999
+    cue2.PlaybackSpeed = 1
+    cue2:Play()
+    wait(3)
+game.Lighting.MainColorCorrection.TintColor = Color3.fromRGB(250, 0, 0)
+game.Lighting.MainColorCorrection.Contrast = 10
+local tween = game:GetService("TweenService")
+tween:Create(game.Lighting.MainColorCorrection, TweenInfo.new(2.5), {Contrast = 0}):Play()
+local TweenService = game:GetService("TweenService")
+local TW = TweenService:Create(game.Lighting.MainColorCorrection, TweenInfo.new(5),{TintColor = Color3.fromRGB(255, 255, 255)})
+TW:Play()
+
 end)
 
 entity:SetCallback("OnDamagePlayer", function(newHealth)
