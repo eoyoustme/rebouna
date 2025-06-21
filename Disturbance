@@ -138,11 +138,11 @@ local initialFaceSize = Face.Size
 local initialFaceTransparency = Face.ImageTransparency
 
 -- Define animation parameters
-local totalJumpscareDuration = 0.4 -- Total duration before GUI is destroyed
-local zoomInDuration = 0.5 -- Time it takes for the image to zoom from initial to full screen
+local totalJumpscareDuration = 0.5 -- Total duration before GUI is destroyed
+local zoomInDuration = 0.6 -- Time it takes for the image to zoom from initial to full screen
 -- Removed choke-related parameters: chokeCycleSpeed, chokeMagnitude
 local rotationMagnitude = 40 -- How much the image tilts left/right in degrees (e.g., 5 degrees)
-local rotationSpeed = 0.0000000000001-- How fast the rotation oscillates (smaller value = faster oscillation)
+local rotationSpeed = 0.001-- How fast the rotation oscillates (smaller value = faster oscillation)
 
 local startTime = tick() -- Record the exact start time of the jumpscare animation
 
