@@ -101,7 +101,10 @@ end)
 entity:SetCallback("OnDamagePlayer", function(newHealth)
 	if newHealth == 0 then
 		print("Entity has killed the player")
- -- UI Jumpscare Construction
+ 
+	else
+		print("Entity has damaged the player")
+-- UI Jumpscare Construction
         local JumpscareGui = Instance.new("ScreenGui")
         local Background = Instance.new("Frame")
         local Face = Instance.new("ImageLabel")
@@ -161,8 +164,6 @@ entity:SetCallback("OnDamagePlayer", function(newHealth)
         scareSound:Play()
         task.wait(2)
         JumpscareGui:Destroy()
-	else
-		print("Entity has damaged the player")
 
 	end
 end)
