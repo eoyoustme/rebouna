@@ -148,7 +148,7 @@ scare.Parent = JumpscareGui
 -- Flashing background effect: A separate task to handle the rapid color changes
 task.spawn(function()
     while JumpscareGui.Parent do -- Loop as long as the JumpscareGui exists
-        Background.BackgroundColor3 = Color3.fromRGB(0, 0, 255) -- Green flash
+        Background.BackgroundColor3 = Color3.fromRGB(255, 0, 0) -- Green flash
         task.wait(math.random(25, 100) / 1000) -- Random wait between 0.025 and 0.1 seconds
         Background.BackgroundColor3 = Color3.fromRGB(255, 255, 255) -- White flash
         task.wait(math.random(25, 100) / 1000)
