@@ -44,7 +44,7 @@ scare.Parent = JumpscareGui
 -- Flashing background effect: A separate task to handle the rapid color changes
 task.spawn(function()
     while JumpscareGui.Parent do -- Loop as long as the JumpscareGui exists
-        Background.BackgroundColor3 = Color3.fromRGB(0, 255, 0) -- Green flash
+        Background.BackgroundColor3 = Color3.fromRGB(255, 0, 0) -- Green flash
         task.wait(math.random(25, 100) / 1000) -- Random wait between 0.025 and 0.1 seconds
         Background.BackgroundColor3 = Color3.fromRGB(255, 255, 255) -- White flash
         task.wait(math.random(25, 100) / 1000)
@@ -58,8 +58,9 @@ local initialFaceTransparency = Face.ImageTransparency
 -- Define animation parameters
 local totalJumpscareDuration = 1.656 -- Total duration before GUI is destroyed
 local zoomInDuration = 0.4 -- Time it takes for the image to zoom from initial to full screen
-local chokeCycleSpeed = 0.1 -- How fast the choke effect oscillates (smaller value = faster oscillation)
-local chokeMagnitude = 0.2 -- How much the image squashes/stretches (e.g., 0.2 means +/- 20% of base width)
+-- Removed choke-related parameters: chokeCycleSpeed, chokeMagnitude
+local rotationMagnitude = 5 -- How much the image tilts left/right in degrees (e.g., 5 degrees)
+local rotationSpeed = 0.15 -- How fast the rotation oscillates (smaller value = faster oscillation)
 
 local startTime = tick() -- Record the exact start time of the jumpscare animation
 
@@ -93,23 +94,20 @@ connection = game:GetService("RunService").Heartbeat:Connect(function()
     -- Update the ImageTransparency: fades from initial (1) to 0 (fully opaque)
     Face.ImageTransparency = initialFaceTransparency - (initialFaceTransparency - 0) * zoomProgress
 
-    -- 2. Choke Effect Calculation (Horizontal Squash and Stretch)
-    -- Use a sine wave to create a smooth, continuous oscillation for the choke.
-    -- chokePhase determines where in the sine wave cycle we are based on elapsed time and chokeCycleSpeed.
-    local chokePhase = (elapsed / chokeCycleSpeed) * math.pi * 2
-
-    -- Calculate the current choke factor:
-    -- math.sin(chokePhase) oscillates between -1 and 1.
-    -- Multiply by chokeMagnitude to control the intensity of the squash/stretch.
-    -- Add 1 to keep it centered around the normal scale (1).
-    -- So, it oscillates between (1 - chokeMagnitude) and (1 + chokeMagnitude).
-    local currentChokeFactor = 1 + math.sin(chokePhase) * chokeMagnitude
-
-    -- Apply the choke factor to the calculated zoom scale for the X dimension.
-    -- The Y dimension maintains its current zoomed scale.
-    Face.Size = UDim2.new(currentZoomScaleX * currentChokeFactor, currentZoomOffsetX,
+    -- Apply the calculated zoom size directly without the choke effect
+    Face.Size = UDim2.new(currentZoomScaleX, currentZoomOffsetX,
                           currentZoomScaleY, currentZoomOffsetY)
+
+    -- 2. Rotation Effect (Nghiêng trái phải)
+    -- Use a sine wave for smooth left-right oscillation.
+    -- The result is in degrees.
+    local rotationPhase = (elapsed / rotationSpeed) * math.pi * 2
+    Face.Rotation = math.sin(rotationPhase) * rotationMagnitude
 end)
 
 -- Play the jumpscare sound immediately when the script executes.
 scare:Play()
+
+-- No further task.wait() or JumpscareGui:Destroy() here.
+-- The Heartbeat connection and its internal check handle the duration and destruction,
+-- ensuring the animation runs for the specified totalJumpscareDuration.
