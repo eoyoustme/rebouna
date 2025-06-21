@@ -37,7 +37,7 @@
 					end
 				end
 
-				local s = game:GetObjects("rbxassetid://118750853123155")[1]
+				local s = game:GetObjects("rbxassetid://13515035")[1]
 				s.Parent = workspace
 				local ambush = s.Ripe
 				ambush.Ambush.Volume = 0
