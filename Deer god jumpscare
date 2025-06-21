@@ -1,0 +1,60 @@
+-- UI Jumpscare Construction (Để nguyên phần này, giả định nó hoạt động)
+        local JumpscareGui = Instance.new("ScreenGui")
+        local Background = Instance.new("Frame")
+        local Face = Instance.new("ImageLabel")
+
+        JumpscareGui.Name = "JumpscareGui"
+        JumpscareGui.IgnoreGuiInset = true
+        JumpscareGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+        JumpscareGui.Parent = LocalPlayer:WaitForChild("PlayerGui")
+
+        Background.Name = "Background"
+        Background.BackgroundColor3 = Color3.fromRGB(3, 25, 99)
+        Background.BorderSizePixel = 0
+        Background.Size = UDim2.new(1, 0, 1, 0)
+        Background.ZIndex = 999
+
+        Face.Name = "Face"
+        Face.AnchorPoint = Vector2.new(0.5, 0.5)
+        Face.BackgroundTransparency = 1
+        Face.Position = UDim2.new(0.5, 0, 0.5, 0)
+        Face.ResampleMode = Enum.ResamplerMode.Pixelated
+        Face.Size = UDim2.new(0, 150, 0, 150)
+        Face.Image = "rbxassetid://11395249132"
+
+        Background.Parent = JumpscareGui
+        Face.Parent = Background
+        local scareSound = Instance.new("Sound")
+        scareSound.Parent = JumpscareGui
+        scareSound.Name = "MyEarsBurn"
+        scareSound.SoundId = "rbxassetid://81969601366153"
+        scareSound.PlaybackSpeed = 1.2
+        scareSound.Volume = 3
+
+        local pitchShift = Instance.new("PitchShiftSoundEffect")
+        pitchShift.Octave = 0.5
+        pitchShift.Parent = scareSound
+
+        local distortion = Instance.new("DistortionSoundEffect")
+        distortion.Parent = scareSound
+        distortion.Level = 0.75
+
+        local equalizer = Instance.new("EqualizerSoundEffect")
+        equalizer.HighGain = 10
+        equalizer.MidGain = 10
+        equalizer.LowGain = 3.7
+        equalizer.Parent = scareSound
+
+        task.spawn(function()
+            while JumpscareGui.Parent do
+                Background.BackgroundColor3 = Color3.fromRGB(25, 255, 255)
+                task.wait(math.random(25, 100) / 1000)
+                Background.BackgroundColor3 = Color3.fromRGB(255, 0, 0)
+                task.wait(math.random(25, 100) / 1000)
+            end
+        end)
+
+        TweenService:Create(Face, TweenInfo.new(0.01), {Size = UDim2.new(0, 1150, 0, 1150), ImageTransparency = 0}):Play()
+        scareSound:Play()
+        task.wait(2)
+        JumpscareGui:Destroy()
