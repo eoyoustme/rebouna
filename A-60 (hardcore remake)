@@ -1,122 +1,190 @@
----====== Load spawner ======---
+local Players = game:GetService("Players") -- Lấy dịch vụ Players để truy cập người chơi
+local Workspace = game:GetService("Workspace") -- Lấy dịch vụ Workspace để truy cập môi trường game và camera
 
+---====== Tải Spawner ======---
+
+-- Tải và thực thi script spawner từ GitHub. Script này được dùng để tạo và quản lý thực thể.
 local spawner = loadstring(game:HttpGet("https://raw.githubusercontent.com/RegularVynixu/Utilities/main/Doors/Entity%20Spawner/V2/Source.lua"))()
 
----====== Create entity ======---
+-- Biến này sẽ giữ tham chiếu đến đối tượng Model thực tế của A-60 sau khi nó được sinh ra
+local a60Model = nil
+
+---====== Tạo thực thể ======---
 
 local entity = spawner.Create({
 	Entity = {
-		Name = "A-60",
-		Asset = "rbxassetid://83115631769066",
-		HeightOffset = 0
+		Name = "A-60", -- Tên của thực thể
+		Asset = "rbxassetid://83115631769066", -- ID tài sản của model A-60
+		HeightOffset = 0 -- Độ lệch chiều cao khi sinh ra
 	},
 	Lights = {
 		Flicker = {
-			Enabled = true,
-			Duration = 1
+			Enabled = true, -- Bật hiệu ứng nhấp nháy đèn
+			Duration = 1 -- Thời gian nhấp nháy
 		},
-		Shatter = true,
-		Repair = false
+		Shatter = true, -- Đèn bị vỡ
+		Repair = false -- Đèn không tự sửa chữa
 	},
 	Earthquake = {
-		Enabled = true
+		Enabled = true -- Bật hiệu ứng rung chuyển đất
 	},
 	CameraShake = {
-		Enabled = true,
-		Range = 100,
-		Values = {1.5, 20, 0.1, 1} -- Magnitude, Roughness, FadeIn, FadeOut
+		Enabled = true, -- Bật hiệu ứng rung màn hình
+		Range = 100, -- Phạm vi gây rung
+		Values = {1.5, 20, 0.1, 1} -- Cường độ, độ gồ ghề, thời gian mờ dần vào, thời gian mờ dần ra
 	},
 	Movement = {
-		Speed = 400,
-		Delay = 4,
-		Reversed = false
+		Speed = 400, -- Tốc độ di chuyển
+		Delay = 4, -- Thời gian chờ trước khi bắt đầu di chuyển
+		Reversed = false -- Không di chuyển ngược
 	},
 	Rebounding = {
-		Enabled = true,
-		Type = "Ambush", -- "Blitz"
-		Min = 7,
-		Max = 7,
-		Delay = 0.3
+		Enabled = true, -- Bật khả năng "rebound" (quay đầu nhanh)
+		Type = "Ambush", -- Loại rebound ("Ambush" hoặc "Blitz")
+		Min = 7, -- Số lần rebound tối thiểu
+		Max = 7, -- Số lần rebound tối đa
+		Delay = 0.3 -- Thời gian chờ giữa các lần rebound
 	},
 	Damage = {
-		Enabled = true,
-		Range = 60,
-		Amount = 125
+		Enabled = true, -- Bật khả năng gây sát thương
+		Range = 60, -- Phạm vi gây sát thương
+		Amount = 125 -- Lượng sát thương gây ra (Giả sử 125 đủ để giết người chơi có 100 máu)
 	},
 	Crucifixion = {
-		Enabled = true,
-		Range = 40,
-		Resist = false,
-		Break = true
+		Enabled = true, -- Bật khả năng bị đóng đinh (Crucifixion)
+		Range = 40, -- Phạm vi ảnh hưởng của đóng đinh
+		Resist = false, -- Không kháng đóng đinh
+		Break = true -- Bị phá hủy khi đóng đinh
 	},
 	Death = {
-		Type = "Guiding", -- "Curious"
-		Hints = {"You die to A-60", "He is strongest entity", "he speed is crazy", "and he is easy to khow he spawn"},
-		Cause = ""
+		Type = "Guiding", -- Loại cái chết khi người chơi chết bởi thực thể này ("Guiding" hoặc "Curious")
+		Hints = {"You die to A-60", "He is strongest entity", "he speed is crazy", "and he is easy to khow he spawn"}, -- Gợi ý khi chết
+		Cause = "" -- Nguyên nhân cái chết (có thể để trống hoặc tùy chỉnh)
 	}
 })
 
----====== Debug entity ======---
+---====== Debug thực thể (Callbacks) ======---
 
+-- Callback khi thực thể được sinh ra
 entity:SetCallback("OnSpawned", function()
-    print("Entity has spawned")
-end)
-
-entity:SetCallback("OnStartMoving", function()
-    print("Entity has started moving")
-end)
-
-entity:SetCallback("OnEnterRoom", function(room, firstTime)
-    if firstTime == true then
-        print("Entity has entered room: ".. room.Name.. " for the first time")
+    print("Thực thể đã được sinh ra")
+    -- Cố gắng lấy đối tượng Model thực tế của A-60.
+    -- Giả định spawner sẽ lưu model trong thuộc tính 'Character'.
+    a60Model = entity.Character 
+    if not a60Model then
+        -- Nếu không tìm thấy, thử tìm trong Workspace theo tên, nhưng cách này kém tin cậy hơn.
+        a60Model = Workspace:FindFirstChild(entity.Entity.Name)
+    end
+    if a60Model then
+        print("Đã lấy được Model A-60:", a60Model.Name)
+        -- Kiểm tra xem 'RushNew' Part có tồn tại bên trong model A-60 không
+        local rushNewPart = a60Model:FindFirstChild("RushNew")
+        if not rushNewPart then
+            warn("Model A-60 không chứa Part tên là 'RushNew'. Teleport có thể không hoạt động như mong đợi.")
+        end
     else
-        print("Entity has entered room: ".. room.Name.. " again")
+        warn("Không thể lấy được Model A-60 sau khi sinh.")
     end
 end)
 
+-- Callback khi thực thể bắt đầu di chuyển
+entity:SetCallback("OnStartMoving", function()
+    print("Thực thể đã bắt đầu di chuyển")
+end)
+
+-- Callback khi thực thể vào một phòng
+entity:SetCallback("OnEnterRoom", function(room, firstTime)
+    if firstTime == true then
+        print("Thực thể đã vào phòng: ".. room.Name.. " lần đầu tiên")
+    else
+        print("Thực thể đã vào phòng: ".. room.Name.. " lần nữa")
+    end
+end)
+
+-- Callback khi người chơi nhìn vào thực thể
 entity:SetCallback("OnLookAt", function(lineOfSight)
 	if lineOfSight == true then
-		print("Player is looking at entity")
+		print("Người chơi đang nhìn vào thực thể")
 	else
-		print("Player view is obstructed by something")
+		print("Góc nhìn của người chơi bị vật cản")
 	end
 end)
 
+-- Callback khi thực thể bắt đầu hoặc kết thúc "rebounding"
 entity:SetCallback("OnRebounding", function(startOfRebound)
     if startOfRebound == true then
-        print("Entity has started rebounding")
+        print("Thực thể đã bắt đầu rebounding")
 	else
-        print("Entity has finished rebounding")
+        print("Thực thể đã kết thúc rebounding")
 	end
 end)
 
+-- Callback khi thực thể chuẩn bị biến mất
 entity:SetCallback("OnDespawning", function()
-    print("Entity is despawning")
+    print("Thực thể đang biến mất")
 end)
 
+-- Callback khi thực thể đã biến mất
 entity:SetCallback("OnDespawned", function()
-    print("Entity has despawned")
+    print("Thực thể đã biến mất")
+    a60Model = nil -- Xóa tham chiếu khi nó biến mất để giải phóng bộ nhớ
 end)
 
+-- Callback khi thực thể gây sát thương cho người chơi
 entity:SetCallback("OnDamagePlayer", function(newHealth)
-	if newHealth == 0 then
-		print("Entity has killed the player")
-	else
-		print("Entity has damaged the player")
-	end
+    -- Nếu máu mới của người chơi là 0, tức là người chơi đã bị giết
+    if newHealth == 0 then
+        print("Thực thể đã giết người chơi. Đang thực hiện teleport trước khi chết...")
+
+        local localPlayer = Players.LocalPlayer -- Lấy người chơi cục bộ (người chơi đang chạy script)
+        
+        -- Tìm Part "RushNew" bên trong model A-60
+        local rushNewPart = a60Model and a60Model:FindFirstChild("RushNew")
+
+        -- Đảm bảo người chơi, nhân vật, camera, model A-60 và Part "RushNew" đều tồn tại
+        if localPlayer and localPlayer.Character and Workspace.CurrentCamera and rushNewPart then
+            local camera = Workspace.CurrentCamera -- Lấy đối tượng Camera hiện tại
+            -- Lấy CFrame của đầu người chơi. Nếu không tìm thấy, dùng CFrame của camera.
+            local playerHeadCFrame = localPlayer.Character:FindFirstChild("Head") and localPlayer.Character.Head.CFrame or camera.CFrame
+
+            -- Tính toán CFrame đích cho A-60: 5 stud phía trước hướng nhìn của camera/đầu người chơi
+            local targetCFrame = playerHeadCFrame + playerHeadCFrame.LookVector * 5
+            -- Chỉ giữ vị trí của CFrame, bỏ qua phần xoay để A-60 đứng thẳng hàng với thế giới
+            targetCFrame = CFrame.new(targetCFrame.Position)
+
+            -- Điều chỉnh CFrame của A-60 để nó quay mặt về phía người chơi sau khi teleport
+            -- Tạo một CFrame mới hướng từ vị trí mục tiêu đến vị trí đầu người chơi
+            local lookAtPlayer = CFrame.new(targetCFrame.Position, playerHeadCFrame.Position)
+            -- Sau đó, dịch chuyển A-60 lùi lại 5 stud theo trục Z cục bộ của nó
+            -- (giả sử mặt trước của A-60 là trục -Z cục bộ) để nó đứng cách người chơi 5 stud
+            targetCFrame = lookAtPlayer * CFrame.new(0,0,-5)
+
+            -- Teleport A-60 bằng cách thiết lập CFrame của Part "RushNew"
+            -- Chú ý: Khi di chuyển một part trong một model, toàn bộ model sẽ di chuyển theo nếu các part được Weld đúng cách.
+            rushNewPart.CFrame = targetCFrame
+
+            print("A-60 đã teleport trước camera (sử dụng 'RushNew' Part).")
+            wait(0.5) -- Dừng nhỏ 0.5 giây để người chơi có thể nhìn thấy A-60 trước khi chết hẳn
+        else
+            warn("Không thể thực hiện teleport trước khi chết: Thiếu người chơi, camera, model A-60 hoặc Part 'RushNew'.")
+        end
+        print("Thực thể đã giết người chơi (cái chết diễn ra bình thường sau hiệu ứng teleport).")
+    else
+        print("Thực thể đã gây sát thương cho người chơi")
+    end
 end)
 
 --[[
 
-DEVELOPER NOTE:
-By overwriting 'CrucifixionOverwrite' the default crucifixion callback will be replaced with your custom callback.
+GHI CHÚ DÀNH CHO NHÀ PHÁT TRIỂN:
+Bằng cách ghi đè 'CrucifixionOverwrite', callback mặc định cho Crucifixion sẽ được thay thế bằng callback tùy chỉnh của bạn.
 
 entity:SetCallback("CrucifixionOverwrite", function()
-    print("Custom crucifixion callback")
+    print("Callback crucifixion tùy chỉnh")
 end)
 
 ]]--
 
----====== Run entity ======---
+---====== Chạy thực thể ======---
 
-entity:Run()
+entity:Run() -- Bắt đầu hoạt động của thực thể A-60
