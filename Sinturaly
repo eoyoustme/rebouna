@@ -102,7 +102,7 @@ entity:SetCallback("OnSpawned", function()
     end
 
     -- Hiệu ứng ánh sáng
-    game.Lighting.MainColorCorrection.TintColor = Color3.fromRGB(50, 50, 50)
+    game.Lighting.MainColorCorrection.TintColor = Color3.fromRGB(0, 0, 0)
     game.Lighting.MainColorCorrection.Contrast = 1
     local tween = TweenService:Create(game.Lighting.MainColorCorrection, TweenInfo.new(2.5), {Contrast = 0})
     tween:Play()
