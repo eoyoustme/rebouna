@@ -102,56 +102,121 @@ entity:SetCallback("OnDamagePlayer", function(newHealth)
 	if newHealth == 0 then
 		print("Entity has killed the player")
 
-         -- UI Jumpscare Construction
-        local playerGui = game.Players.LocalPlayer and game.Players.LocalPlayer:FindFirstChild("PlayerGui")
-        if not playerGui then return end
+        -- UI Jumpscare Construction
 
-        local JumpscareGui = Instance.new("ScreenGui")
-        JumpscareGui.Name = "JumpscareGui"
-        JumpscareGui.IgnoreGuiInset = true
-        JumpscareGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
-        JumpscareGui.Parent = playerGui
+-- Get the PlayerGui, where ScreenGuis are parented.
+local playerGui = game.Players.LocalPlayer and game.Players.LocalPlayer:FindFirstChild("PlayerGui")
+-- If PlayerGui doesn't exist (e.g., script running outside a player context), exit.
+if not playerGui then return end
 
-        local Background = Instance.new("Frame")
-        Background.Name = "Background"
-        Background.BackgroundColor3 = Color3.fromRGB(0, 255, 0)
-        Background.BorderSizePixel = 0
-        Background.Size = UDim2.new(1, 0, 1, 0)
-        Background.ZIndex = 999
-        Background.Parent = JumpscareGui
+-- Create the main ScreenGui for the jumpscare
+local JumpscareGui = Instance.new("ScreenGui")
+JumpscareGui.Name = "JumpscareGui"
+JumpscareGui.IgnoreGuiInset = true -- Makes the GUI cover the entire screen, ignoring topbar inset
+JumpscareGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling -- For controlling ZIndex relative to other GUIs
+JumpscareGui.Parent = playerGui
 
-        local Face = Instance.new("ImageLabel")
-        Face.Name = "Face"
-        Face.AnchorPoint = Vector2.new(0.5, 0.5)
-        Face.BackgroundTransparency = 1
-        Face.Position = UDim2.new(0.5, 0, 0.5, 0)
-        Face.ResampleMode = Enum.ResamplerMode.Pixelated
-        Face.Size = UDim2.new(0, 150, 0, 150)
-        Face.Image = "rbxassetid://11395249132"
-        Face.Parent = Background
+-- Create the background frame
+local Background = Instance.new("Frame")
+Background.Name = "Background"
+Background.BackgroundColor3 = Color3.fromRGB(0, 255, 0) -- Initial green color for flashing
+Background.BorderSizePixel = 0
+Background.Size = UDim2.new(1, 0, 1, 0) -- Full screen size
+Background.ZIndex = 999 -- High ZIndex to ensure it's on top of most other UI
+Background.Parent = JumpscareGui
 
-        local scare = Instance.new("Sound")
-        scare.Name = "MyEarsBurn"
-        scare.SoundId = "rbxassetid://5710016194"
-        scare.PlaybackSpeed = 2
-        scare.Volume = 9999 -- Volume vừa phải
-        scare.Parent = JumpscareGui
+-- Create the ImageLabel for the jumpscare face/entity
+local Face = Instance.new("ImageLabel")
+Face.Name = "Face"
+Face.AnchorPoint = Vector2.new(0.5, 0.5) -- Anchor point at the center for scaling from center
+Face.BackgroundTransparency = 1 -- Make background transparent
+Face.Position = UDim2.new(0.5, 0, 0.5, 0) -- Position at the center of the screen
+Face.ResampleMode = Enum.ResamplerMode.Pixelated -- Can give a retro or harsh look
+Face.Size = UDim2.new(0, 150, 0, 150) -- Initial small size (e.g., 150x150 pixels)
+Face.Image = "rbxassetid://11395249132" -- Image asset ID for the entity
+Face.ImageTransparency = 1 -- Start fully transparent, will fade in
+Face.Parent = Background
 
-        -- Flashing background effect
-        task.spawn(function()
-            while JumpscareGui.Parent do
-                Background.BackgroundColor3 = Color3.fromRGB(0, 255, 0)
-                task.wait(math.random(25, 100) / 1000)
-                Background.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-                task.wait(math.random(25, 100) / 1000)
-            end
-        end)
+-- Create the sound object for the jumpscare audio
+local scare = Instance.new("Sound")
+scare.Name = "MyEarsBurn"
+scare.SoundId = "rbxassetid://5710016194" -- Sound asset ID
+scare.PlaybackSpeed = 2 -- Speed up the sound
+scare.Volume = 0.5 -- Adjusted volume to a more reasonable level (0-1, original 9999 was too loud)
+scare.Parent = JumpscareGui
 
-        game.TweenService:Create(Face, TweenInfo.new(0.6), {Size = UDim2.new(0, 1850, 0, 1050), ImageTransparency = 0}):Play()
-        scare:Play()
+-- Flashing background effect: A separate task to handle the rapid color changes
+task.spawn(function()
+    while JumpscareGui.Parent do -- Loop as long as the JumpscareGui exists
+        Background.BackgroundColor3 = Color3.fromRGB(0, 255, 0) -- Green flash
+        task.wait(math.random(25, 100) / 1000) -- Random wait between 0.025 and 0.1 seconds
+        Background.BackgroundColor3 = Color3.fromRGB(255, 255, 255) -- White flash
+        task.wait(math.random(25, 100) / 1000)
+    end
+end)
 
-        task.wait(1.656)
-        JumpscareGui:Destroy()
+-- Store initial properties of the Face for animation calculations
+local initialFaceSize = Face.Size
+local initialFaceTransparency = Face.ImageTransparency
+
+-- Define animation parameters
+local totalJumpscareDuration = 1.656 -- Total duration before GUI is destroyed
+local zoomInDuration = 0.4 -- Time it takes for the image to zoom from initial to full screen
+local chokeCycleSpeed = 0.1 -- How fast the choke effect oscillates (smaller value = faster oscillation)
+local chokeMagnitude = 0.2 -- How much the image squashes/stretches (e.g., 0.2 means +/- 20% of base width)
+
+local startTime = tick() -- Record the exact start time of the jumpscare animation
+
+-- Main animation loop using Heartbeat for smooth, frame-based updates.
+-- Heartbeat fires every frame after physics calculations, providing consistent timing.
+local connection -- Declare connection variable outside to be accessible for disconnection
+connection = game:GetService("RunService").Heartbeat:Connect(function()
+    local elapsed = tick() - startTime -- Time elapsed since the jumpscare started
+
+    -- Check if the GUI is no longer valid or if the total duration has passed
+    if not JumpscareGui.Parent or elapsed >= totalJumpscareDuration then
+        if connection then connection:Disconnect() end -- Disconnect the Heartbeat loop to stop updates
+        JumpscareGui:Destroy() -- Ensure the GUI is destroyed
+        return -- Exit the Heartbeat function
+    end
+
+    -- 1. Zoom and Fade-in Calculation (Progress from 0 to 1 over zoomInDuration)
+    local zoomProgress = math.min(1, elapsed / zoomInDuration) -- Clamps progress at 1 after zoomInDuration
+
+    -- Interpolate the X and Y scale and offset for the zoom effect.
+    -- X Scale: from Face.Size.X.Scale (initial 0) to 1 (full width)
+    local currentZoomScaleX = initialFaceSize.X.Scale + (1 - initialFaceSize.X.Scale) * zoomProgress
+    -- X Offset: from Face.Size.X.Offset (initial 150) to 0 (no pixel offset)
+    local currentZoomOffsetX = initialFaceSize.X.Offset + (0 - initialFaceSize.X.Offset) * zoomProgress
+
+    -- Y Scale: from Face.Size.Y.Scale (initial 0) to 1 (full height)
+    local currentZoomScaleY = initialFaceSize.Y.Scale + (1 - initialFaceSize.Y.Scale) * zoomProgress
+    -- Y Offset: from Face.Size.Y.Offset (initial 150) to 0 (no pixel offset)
+    local currentZoomOffsetY = initialFaceSize.Y.Offset + (0 - initialFaceSize.Y.Offset) * zoomProgress
+
+    -- Update the ImageTransparency: fades from initial (1) to 0 (fully opaque)
+    Face.ImageTransparency = initialFaceTransparency - (initialFaceTransparency - 0) * zoomProgress
+
+    -- 2. Choke Effect Calculation (Horizontal Squash and Stretch)
+    -- Use a sine wave to create a smooth, continuous oscillation for the choke.
+    -- chokePhase determines where in the sine wave cycle we are based on elapsed time and chokeCycleSpeed.
+    local chokePhase = (elapsed / chokeCycleSpeed) * math.pi * 2
+
+    -- Calculate the current choke factor:
+    -- math.sin(chokePhase) oscillates between -1 and 1.
+    -- Multiply by chokeMagnitude to control the intensity of the squash/stretch.
+    -- Add 1 to keep it centered around the normal scale (1).
+    -- So, it oscillates between (1 - chokeMagnitude) and (1 + chokeMagnitude).
+    local currentChokeFactor = 1 + math.sin(chokePhase) * chokeMagnitude
+
+    -- Apply the choke factor to the calculated zoom scale for the X dimension.
+    -- The Y dimension maintains its current zoomed scale.
+    Face.Size = UDim2.new(currentZoomScaleX * currentChokeFactor, currentZoomOffsetX,
+                          currentZoomScaleY, currentZoomOffsetY)
+end)
+
+-- Play the jumpscare sound immediately when the script executes.
+scare:Play()
  
 	else
 		print("Entity has damaged the player") 
