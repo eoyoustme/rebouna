@@ -110,7 +110,7 @@ Face.AnchorPoint = Vector2.new(0.5, 0.5) -- Anchor point at the center for scali
 Face.BackgroundTransparency = 1 -- Make background transparent
 Face.Position = UDim2.new(0.5, 0, 0.5, 0) -- Position at the center of the screen
 Face.ResampleMode = Enum.ResamplerMode.Pixelated -- Can give a retro or harsh look
-Face.Size = UDim2.new(0, 150, 0, 150) -- Initial small size (e.g., 150x150 pixels)
+Face.Size = UDim2.new(0, 75, 0, 75) -- Initial small size (e.g., 150x150 pixels)
 Face.Image = "rbxassetid://101914212937482" -- Image asset ID for the entity
 Face.ImageTransparency = 1 -- Start fully transparent, will fade in
 Face.Parent = Background
@@ -183,7 +183,7 @@ connection = game:GetService("RunService").Heartbeat:Connect(function()
     -- 2. Rotation Effect (Nghiêng trái phải)
     -- Use a sine wave for smooth left-right oscillation.
     -- The result is in degrees.
-    local rotationPhase = (elapsed / rotationSpeed) * math.pi * 2
+    local rotationPhase = (elapsed / rotationSpeed) * math.pi * 5
     Face.Rotation = math.sin(rotationPhase) * rotationMagnitude
 end)
 
