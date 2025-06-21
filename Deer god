@@ -104,66 +104,68 @@ entity:SetCallback("OnDamagePlayer", function(newHealth)
  
 	else
 		print("Entity has damaged the player")
--- UI Jumpscare Construction
-        local JumpscareGui = Instance.new("ScreenGui")
-        local Background = Instance.new("Frame")
-        local Face = Instance.new("ImageLabel")
+    -- UI Construction
 
-        JumpscareGui.Name = "JumpscareGui"
-        JumpscareGui.IgnoreGuiInset = true
-        JumpscareGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
-        JumpscareGui.Parent = LocalPlayer:WaitForChild("PlayerGui")
+    local JumpscareGui = Instance.new("ScreenGui")
+    local Background = Instance.new("Frame")
+    local Face = Instance.new("ImageLabel")
 
-        Background.Name = "Background"
-        Background.BackgroundColor3 = Color3.fromRGB(3, 25, 99)
-        Background.BorderSizePixel = 0
-        Background.Size = UDim2.new(1, 0, 1, 0)
-        Background.ZIndex = 999
+    JumpscareGui.Name = "JumpscareGui"
+    JumpscareGui.IgnoreGuiInset = true
+    JumpscareGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+    JumpscareGui.Parent = game.Players.LocalPlayer:WaitForChild("PlayerGui")
 
-        Face.Name = "Face"
-        Face.AnchorPoint = Vector2.new(0.5, 0.5)
-        Face.BackgroundTransparency = 1
-        Face.Position = UDim2.new(0.5, 0, 0.5, 0)
-        Face.ResampleMode = Enum.ResamplerMode.Pixelated
-        Face.Size = UDim2.new(0, 150, 0, 150)
-        Face.Image = "rbxassetid://11395249132"
+    Background.Name = "Background"
+    Background.BackgroundColor3 = Color3.fromRGB(3, 25, 99)
+    Background.BorderSizePixel = 0
+    Background.Size = UDim2.new(1, 0, 1, 0)
+    Background.ZIndex = 999
 
-        Background.Parent = JumpscareGui
-        Face.Parent = Background
-        local scareSound = Instance.new("Sound")
-        scareSound.Parent = JumpscareGui
-        scareSound.Name = "MyEarsBurn"
-        scareSound.SoundId = "rbxassetid://81969601366153"
-        scareSound.PlaybackSpeed = 1.2
-        scareSound.Volume = 3
+    Face.Name = "Face"
+    Face.AnchorPoint = Vector2.new(0.5, 0.5)
+    Face.BackgroundTransparency = 1
+    Face.Position = UDim2.new(0.5, 0, 0.5, 0)
+    Face.ResampleMode = Enum.ResamplerMode.Pixelated
+    Face.Size = UDim2.new(0, 150, 0, 150)
+    Face.Image = "rbxassetid://10914800940"
 
-        local pitchShift = Instance.new("PitchShiftSoundEffect")
-        pitchShift.Octave = 0.5
-        pitchShift.Parent = scareSound
+    Background.Parent = JumpscareGui
+    Face.Parent = Background
+local scare = Instance.new("Sound")
+scare.Parent = JumpscareGui
+scare.Name = "MyEarsBurn"
+scare.SoundId = "rbxassetid://5567523008"
+scare.PlaybackSpeed = 3
+scare.Volume = 3
 
-        local distortion = Instance.new("DistortionSoundEffect")
-        distortion.Parent = scareSound
-        distortion.Level = 0.75
+local shift = Instance.new("PitchShiftSoundEffect")
+shift.Octave = 0.5
+shift.Parent = scare
 
-        local equalizer = Instance.new("EqualizerSoundEffect")
-        equalizer.HighGain = 10
-        equalizer.MidGain = 10
-        equalizer.LowGain = 3.7
-        equalizer.Parent = scareSound
+local distort = Instance.new("DistortionSoundEffect")
+distort.Parent = scare
+distort.Level = 0.75
 
+local eq = Instance.new("EqualizerSoundEffect")
+eq.HighGain = 10
+eq.MidGain = 10
+eq.LowGain = 3.7
+eq.Parent = scare
+    
         task.spawn(function()
             while JumpscareGui.Parent do
-                Background.BackgroundColor3 = Color3.fromRGB(25, 255, 255)
+                Background.BackgroundColor3 = Color3.fromRGB(3, 25, 99)
                 task.wait(math.random(25, 100) / 1000)
-                Background.BackgroundColor3 = Color3.fromRGB(255, 0, 0)
+                Background.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
                 task.wait(math.random(25, 100) / 1000)
             end
         end)
 
-        TweenService:Create(Face, TweenInfo.new(0.01), {Size = UDim2.new(0, 1150, 0, 1150), ImageTransparency = 0}):Play()
-        scareSound:Play()
-        task.wait(2)
-        JumpscareGui:Destroy()
+    game.TweenService:Create(Face, TweenInfo.new(0.6), {Size = UDim2.new(0, 1850, 0, 1050), ImageTransparency = 0}):Play()
+    scare:Play()
+    task.wait(0.7)
+    JumpscareGui:Destroy()
+    
 
 	end
 end)
