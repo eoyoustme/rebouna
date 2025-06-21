@@ -6,10 +6,10 @@ local SoundService = game:GetService("SoundService")
 local RunService = game:GetService("RunService")
 
 -- Constants
-local HASTE_INITIAL_TIME = 20    -- Starting time (01:00)
-local HASTE_MAX_TIME = 40       -- Maximum time (02:00)
-local HASTE_SPEED = 130          -- Chase speed
-local JUMPSCARE_DURATION = 0.7   -- Duration of jumpscare effect
+local HASTE_INITIAL_TIME = 20    -- Thời gian bắt đầu (01:00)
+local HASTE_MAX_TIME = 40        -- Thời gian tối đa (02:00)
+local HASTE_SPEED = 130          -- Tốc độ đuổi bắt
+local JUMPSCARE_DURATION = 0.7   -- Thời lượng hiệu ứng jumpscare
 
 -- Asset IDs
 local ASSETS = {
@@ -30,7 +30,7 @@ local Config = {
 
 -- Local References
 local LocalPlayer = Players.LocalPlayer
-local Character = LocalPlayer.Character
+local Character = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait() -- Đảm bảo Character tồn tại
 local MainColorCorrection = Lighting:WaitForChild("MainColorCorrection")
 
 -- Utility Functions
@@ -69,7 +69,7 @@ local function playJumpscare(callback)
     local scream = createSound(ASSETS.SCREAM_SOUND, 5)
     local boom = createSound(ASSETS.BOOM_SOUND, 5)
     
-    -- Screen shake effect
+    -- Hiệu ứng rung màn hình
     local basePosition = image.Position
     local connection = RunService.RenderStepped:Connect(function()
         image.Position = basePosition + UDim2.fromOffset(
@@ -100,13 +100,18 @@ local function hasteAttack()
     
     Character:SetAttribute("Stunned", true)
     
-    -- Send death hint
+    -- Gửi gợi ý cái chết
     if ReplicatedStorage.RemotesFolder and ReplicatedStorage.RemotesFolder.DeathHint then
-        firesignal(ReplicatedStorage.RemotesFolder.DeathHint.OnClientEvent, {
-            "You died to who you call Haste",
-            "He will appear after the time is over.",
-            "Don't Hide when this happens it will not work, So the best thing to do is find a lever!"
-        }, "Yellow")
+        -- Đảm bảo bạn có một cách để kích hoạt OnClientEvent trên client.
+        -- firesignal thường dùng cho server, nếu đây là LocalScript thì cần remote event từ server.
+        -- Giả sử DeathHint là RemoteEvent và bạn muốn kích hoạt nó từ client (chỉ để test hoặc giả lập)
+        -- Thông thường, server sẽ gửi tín hiệu này cho client.
+        -- ReplicatedStorage.RemotesFolder.DeathHint:FireClient(LocalPlayer, {
+        --     "You died to who you call Haste",
+        --     "He will appear after the time is over.",
+        --     "Don't Hide when this happens it will not work, So the best thing to do is find a lever!"
+        -- }, "Yellow")
+        warn("DeathHint fired (client-side simulation, adjust for server usage if needed)")
     end
     
     playJumpscare(function()
@@ -121,15 +126,15 @@ local function spawnHaste()
     if Config.hasteSpawned then return end
     
     Config.hasteSpawned = true
-    MainColorCorrection.TintColor = Color3.new(1, 0.5, 0.5)
-    
-    -- Load and setup Haste model
+    MainColorCorrection.TintColor = Color3.new(1, 0.5, 0.5) -- Thay đổi màu sắc môi trường
+
+    -- Tải và thiết lập mô hình Haste
     local success, hasteModel = pcall(function()
         return game:GetObjects("rbxassetid://" .. ASSETS.HASTE_MODEL)[1]
     end)
     
     if not success or not hasteModel then
-        warn("Failed to load Haste model")
+        warn("Không thể tải mô hình Haste")
         return
     end
     
@@ -138,11 +143,19 @@ local function spawnHaste()
     
     hasteModel.Parent = workspace
     hasteModel.Name = "HasteMoving"
-    hasteModel.PrimaryPart.Position = rootPart.Position + Vector3.new(900, 0, 600)
-    hasteModel.PrimaryPart.CanCollide = false
-    hasteModel.PrimaryPart.Anchored = false
     
-    -- Setup sounds
+    -- **PHẦN ĐÃ SỬA ĐỔI QUAN TRỌNG:**
+    -- Tính toán vị trí xuất hiện phía sau người chơi và hơi nhấc lên khỏi mặt đất
+    local offsetDistance = 20 -- Khoảng cách (studs) phía sau người chơi
+    local playerLookVector = rootPart.CFrame.LookVector -- Hướng nhìn của người chơi
+    local spawnPosition = rootPart.Position - playerLookVector * offsetDistance + Vector3.new(0, 5, 0) -- Nâng 5 studs để tránh kẹt
+    
+    -- Đặt vị trí và hướng của Haste: xuất hiện tại spawnPosition và quay 180 độ để đối mặt với người chơi
+    hasteModel:SetPrimaryPartCFrame(CFrame.new(spawnPosition) * CFrame.Angles(0, math.pi, 0))
+    hasteModel.PrimaryPart.CanCollide = false -- Haste không va chạm
+    hasteModel.PrimaryPart.Anchored = false   -- Haste không bị neo, cho phép nó di chuyển
+    
+    -- Thiết lập âm thanh
     local main = hasteModel:FindFirstChild("Main")
     if main then
         for _, soundData in pairs({
@@ -159,20 +172,24 @@ local function spawnHaste()
         end
     end
     
-    _G.MP = hasteModel
+    _G.MP = hasteModel -- Biến toàn cục để dễ debug
     task.spawn(function()
         while wait() do
-            if not (hasteModel and hasteModel.Parent) then break end
+            -- Đảm bảo mô hình Haste và người chơi vẫn tồn tại
+            if not (hasteModel and hasteModel.Parent and Character and Character:FindFirstChild("HumanoidRootPart")) then
+                break
+            end
             
-            local playerPos = rootPart.Position
+            local playerPos = Character:FindFirstChild("HumanoidRootPart").Position -- Vị trí người chơi hiện tại
             local hastePos = hasteModel.PrimaryPart.Position
-            local direction = (playerPos - hastePos).Unit
-            local distance = (playerPos - hastePos).Magnitude
+            local direction = (playerPos - hastePos).Unit -- Hướng từ Haste đến người chơi
+            local distance = (playerPos - hastePos).Magnitude -- Khoảng cách
             
             if distance > 0.5 then
+                -- Di chuyển Haste về phía người chơi
                 hasteModel.PrimaryPart.CFrame = hasteModel.PrimaryPart.CFrame + direction * HASTE_SPEED * math.min(distance, 1/60)
             else
-                hasteAttack()
+                hasteAttack() -- Nếu đủ gần, tấn công
                 break
             end
         end
@@ -188,7 +205,7 @@ local function initializeTimer(lever)
     activatePrompt.RequiresLineOfSight = false
 
     if not (displayTimer and displayPlate and activatePrompt and takeTimer) then
-        warn("Missing required components in lever model")
+        warn("Thiếu các thành phần cần thiết trong mô hình đòn bẩy")
         return
     end
 
@@ -196,12 +213,12 @@ local function initializeTimer(lever)
     local displayLabel = displayTimer:FindFirstChild("TextLabel")
     local takeTimerLabel = takeTimer:FindFirstChild("TextLabel")
 
-    -- Initialize display
+    -- Khởi tạo hiển thị
     if displayLabel then
         updateTimerDisplay(displayLabel, Config.hasteTime)
     end
 
-    -- Timer update loop
+    -- Vòng lặp cập nhật hẹn giờ
     local timerConnection = RunService.RenderStepped:Connect(function()
         if not (lever and lever.Parent) then
             timerConnection:Disconnect()
@@ -210,17 +227,19 @@ local function initializeTimer(lever)
 
         if Config.hasteTime > 0 then
             
-            Config.hasteTime = Config.hasteTime - 12
+            Config.hasteTime = Config.hasteTime - 12 -- Giảm thời gian (giảm nhanh để thấy hiệu ứng)
             updateTimerDisplay(displayLabel, Config.hasteTime)
 
             if timerBeep then
                 timerBeep:Play()
             end
 
-            -- Handle Haste spawning
+            -- Xử lý Haste xuất hiện
             if Config.hasteTime <= 0 then
                 spawnHaste()
             elseif Config.hasteSpawned and Config.hasteTime > 0 then
+                -- Nếu Haste đã xuất hiện và thời gian lại tăng lên (ví dụ do kích hoạt đòn bẩy)
+                -- thì xóa Haste hiện tại
                 local haste = workspace:FindFirstChild("HasteMoving")
                 if haste then
                     haste:Destroy()
@@ -229,17 +248,17 @@ local function initializeTimer(lever)
             end
         end
 
-        wait(1.5)
+        wait(1.5) -- Chờ 1.5 giây giữa mỗi lần cập nhật (làm cho đồng hồ chạy nhanh hơn)
     end)
 
-    -- Handle lever activation
+    -- Xử lý kích hoạt đòn bẩy
     if activatePrompt then
         activatePrompt.Triggered:Connect(function()
             local additionalTime = tonumber(takeTimerLabel.Text) or 0
             Config.hasteTime = math.min(Config.hasteTime + additionalTime, HASTE_MAX_TIME)
             updateTimerDisplay(displayLabel, Config.hasteTime)
             
-            -- Disable prompt after use
+            -- Tắt nhắc nhở sau khi sử dụng
             activatePrompt.Enabled = false
             activatePrompt:Destroy()
         end)
@@ -258,13 +277,13 @@ end
 local function spawnLeverNearDoor(door)
     if Config.leverSpawned then return end
 
-    -- Load lever model
+    -- Tải mô hình đòn bẩy
     local success, leverModel = pcall(function()
         return game:GetObjects("rbxassetid://" .. ASSETS.LEVER_MODEL)[1]
     end)
 
     if not success or not leverModel then
-        warn("Failed to load lever model")
+        warn("Không thể tải mô hình đòn bẩy")
         return
     end
 
@@ -273,14 +292,14 @@ local function spawnLeverNearDoor(door)
 
     local lever = leverModel:FindFirstChild("Lever")
     if not lever then
-        warn("Lever component not found in model")
+        warn("Không tìm thấy thành phần Lever trong mô hình")
         leverModel:Destroy()
         return
     end
 
-    -- Position lever relative to door
+    -- Định vị đòn bẩy so với cửa
     local doorPivot = door.Door.CFrame
-    local offsetCFrame = CFrame.new(3.5, 0, -1)
+    local offsetCFrame = CFrame.new(3.5, 0, -1) -- Điều chỉnh vị trí tương đối
     local leverPosition = doorPivot * offsetCFrame
     lever:PivotTo(leverPosition)
 
@@ -290,12 +309,12 @@ end
 
 local function calculateLeverSpawnChance()
     if Config.hasteTime <= 0 then
-        return 0.9
+        return 0.9 -- Rất cao nếu thời gian hết
     end
 
-    -- Higher chance to spawn lever when time is running out
+    -- Tỷ lệ xuất hiện đòn bẩy cao hơn khi thời gian sắp hết
     local timeRatio = math.clamp(Config.hasteTime / HASTE_MAX_TIME, 0, 1)
-    return math.clamp(1 - timeRatio, 0.1, 0.7) -- Ensures minimum 10% and maximum 90% chance
+    return math.clamp(1 - timeRatio, 0.1, 0.7) -- Đảm bảo tối thiểu 10% và tối đa 70%
 end
 
 local function trySpawnLeverInRoom(door)
@@ -313,15 +332,16 @@ local function handleRoomChange()
     local latestRoomValue = gameData:WaitForChild("LatestRoom").Value
     local currentRooms = workspace:WaitForChild("CurrentRooms")
 
-    -- Check if room has changed
+    -- Kiểm tra xem phòng đã thay đổi chưa
     if latestRoomValue == Config.latestRoom then return end
     
     Config.latestRoom = latestRoomValue
-    Config.leverSpawned = false
+    deleteLever() -- Xóa đòn bẩy cũ khi đổi phòng
+    Config.leverSpawned = false -- Đặt lại trạng thái đòn bẩy
 
     local newRoom = currentRooms:FindFirstChild(tostring(latestRoomValue))
     if not newRoom then
-        warn("Failed to find new room:", latestRoomValue)
+        warn("Không tìm thấy phòng mới:", latestRoomValue)
         return
     end
 
@@ -333,13 +353,13 @@ end
 
 -- Initialize
 local function initialize()
-    -- Setup initial state
+    -- Thiết lập trạng thái ban đầu
     Config.hasteTime = HASTE_INITIAL_TIME
     Config.hasteSpawned = false
     Config.leverSpawned = false
     Config.latestRoom = nil
 
-    -- Start room monitoring
+    -- Bắt đầu giám sát thay đổi phòng
     RunService.RenderStepped:Connect(handleRoomChange)
 end
 
