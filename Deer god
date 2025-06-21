@@ -1,14 +1,41 @@
----====== Load spawner ======---
+-- Khai báo các dịch vụ Roblox cần thiết
+local Players = game:GetService("Players")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local TweenService = game:GetService("TweenService")
+local RunService = game:GetService("RunService")
+local Debris = game:GetService("Debris") -- Để quản lý việc xóa đối tượng
 
-local spawner = loadstring(game:HttpGet("https://raw.githubusercontent.com/RegularVynixu/Utilities/main/Doors/Entity%20Spawner/V2/Source.lua"))()
+local LocalPlayer = Players.LocalPlayer
 
----====== Create entity ======---
+-- **Kiểm tra sớm:** Đảm bảo LocalPlayer đã sẵn sàng trước khi tiếp tục
+if not LocalPlayer then
+    warn("SCRIPT_INIT: LocalPlayer not found. This script might be running too early or in an incorrect context.")
+    return -- Dừng script nếu không có LocalPlayer, vì nhiều chức năng sẽ không hoạt động
+end
+print("SCRIPT_INIT: LocalPlayer found. Starting Deer god script.")
 
-local entity = spawner.Create({
+---====== Tải Spawner ======---
+-- Luôn sử dụng pcall cho loadstring để bắt lỗi từ nguồn bên ngoài
+local success, spawner = pcall(function()
+    return loadstring(game:HttpGet("https://raw.githubusercontent.com/RegularVynixu/Utilities/main/Doors/Entity%20Spawner/V2/Source.lua"))()
+end)
+
+if not success or not spawner then
+    warn("ERROR: Failed to load Entity Spawner module. Make sure the URL is correct and accessible. Error: " .. tostring(spawner))
+    return -- Dừng script nếu không tải được spawner, vì không thể tạo thực thể
+end
+print("STATUS: Entity Spawner module loaded successfully.")
+
+---====== Tạo thực thể ======---
+-- **Lưu ý quan trọng:** Đảm bảo ID tài sản này chính xác và công khai.
+-- rbxassetid://[số ID]
+local DEER_GOD_ASSET_ID = "rbxassetid://75877292391257" 
+
+local entityConfig = {
 	Entity = {
 		Name = "Deer god",
-		Asset = "rbxassetid://75877292391257", -- Đã sửa: Thêm dấu gạch chéo kép //
-		HeightOffset = 0
+		Asset = DEER_GOD_ASSET_ID,
+		HeightOffset = 0 -- Có thể điều chỉnh nếu entity bị chìm hoặc bay lơ lửng
 	},
 	Lights = {
 		Flicker = {
@@ -27,20 +54,20 @@ local entity = spawner.Create({
 		Values = {1.5, 20, 0.1, 1} -- Magnitude, Roughness, FadeIn, FadeOut
 	},
 	Movement = {
-		Speed = 36,
+		Speed = 36, -- Tốc độ di chuyển mặc định
 		Delay = 0,
 		Reversed = false
 	},
 	Rebounding = {
-		Enabled = false,
-		Type = "Ambush", -- "Blitz"
+		Enabled = false, -- Đặt là false để không bật lại tường nếu bạn muốn xuyên tường
+		Type = "Ambush", 
 		Min = 1,
 		Max = 1,
 		Delay = 2
 	},
 	Damage = {
 		Enabled = true,
-		Range = 10,
+		Range = 40, -- Phạm vi gây sát thương
 		Amount = 125
 	},
 	Crucifixion = {
@@ -50,167 +77,222 @@ local entity = spawner.Create({
 		Break = true
 	},
 	Death = {
-		Type = "Guiding", -- "Curious"
+		Type = "Guiding",
 		Hints = {"ME GO PLAY SKIBIDI TOILET", "GOODBYE", "STUPID YOU DIE BY A WEAK ENTITY", "HERE IS NOT FOR NOOB"},
 		Cause = ""
 	}
-})
+}
 
----====== Debug entity ======---
+local entity = spawner.Create(entityConfig)
+
+-- **Kiểm tra tạo thực thể:** Đảm bảo entity object được trả về
+if not entity then
+    warn("ERROR: Failed to create 'Deer god' entity. Check entityConfig for errors.")
+    return -- Dừng script nếu không tạo được entity object
+end
+print("STATUS: 'Deer god' entity object created successfully.")
+
+---====== Thiết lập Callbacks cho thực thể ======---
 
 entity:SetCallback("OnSpawned", function()
-    print("Entity has spawned")
-    local entityModel = entity:GetModel() -- Lấy mô hình của thực thể ngay khi nó spawn
+    print("CALLBACK: 'Deer god' has spawned into the workspace.")
+    local entityModel = entity:GetModel() -- Lấy mô hình thực tế của entity
+
     if entityModel then
-        for _, part in ipairs(entityModel:GetDescendants()) do
-            if part:IsA("BasePart") then -- Chỉ thay đổi các phần là BasePart (Part, MeshPart, UnionOperation, etc.)
-                part.CanCollide = false
-                print("Set CanCollide to false for part: " .. part.Name) -- Để kiểm tra
+        print("STATUS: Processing 'Deer god' model for CanCollide attribute...")
+        local hasPrimaryPart = entityModel.PrimaryPart ~= nil
+        if not hasPrimaryPart then
+            warn("WARNING: 'Deer god' model does NOT have a PrimaryPart assigned! Chase logic might fail.")
+            -- Cố gắng gán HumanoidRootPart làm PrimaryPart nếu có
+            if entityModel:FindFirstChild("HumanoidRootPart") and entityModel:FindFirstChildOfClass("Humanoid") then
+                entityModel.PrimaryPart = entityModel.HumanoidRootPart
+                print("INFO: HumanoidRootPart assigned as PrimaryPart for 'Deer god'.")
+                hasPrimaryPart = true
+            else
+                warn("WARNING: Could not find HumanoidRootPart or Humanoid to assign as PrimaryPart.")
             end
         end
-        print("Entity can now walk through walls.")
+
+        -- Đặt CanCollide = false cho tất cả các BasePart trong mô hình để xuyên tường
+        for _, part in ipairs(entityModel:GetDescendants()) do
+            if part:IsA("BasePart") then
+                if part.Parent then -- Đảm bảo part vẫn còn tồn tại trong hierarchy
+                    part.CanCollide = false
+                    -- print("DEBUG: Set CanCollide to false for part: " .. part.Name) -- Bật/tắt để debug chi tiết
+                end
+            end
+        end
+        print("STATUS: 'Deer god' can now walk through walls (CanCollide set to false for all parts).")
+    else
+        warn("ERROR: OnSpawned: 'Deer god' model not found after spawning. CanCollide might not be set correctly. This means asset loading failed or 'GetModel()' returned nil.")
     end
 end)
 
 entity:SetCallback("OnStartMoving", function()
-    print("Entity has started moving")
+    print("CALLBACK: 'Deer god' has started moving.")
 end)
 
 entity:SetCallback("OnEnterRoom", function(room, firstTime)
     if firstTime == true then
-        print("Entity has entered room: ".. room.Name.. " for the first time")
+        print("CALLBACK: 'Deer god' has entered room: ".. room.Name.. " for the first time.")
     else
-        print("Entity has entered room: ".. room.Name.. " again")
+        print("CALLBACK: 'Deer god' has entered room: ".. room.Name.. " again.")
     end
 end)
 
 entity:SetCallback("OnLookAt", function(lineOfSight)
 	if lineOfSight == true then
-		print("Player is looking at entity")
+		print("CALLBACK: Player is looking at 'Deer god'.")
 	else
-		print("Player view is obstructed by something")
+		print("CALLBACK: Player view of 'Deer god' is obstructed.")
 	end
 end)
 
 entity:SetCallback("OnRebounding", function(startOfRebound)
     if startOfRebound == true then
-        print("Entity has started rebounding")
+        print("CALLBACK: 'Deer god' has started rebounding.")
 	else
-        print("Entity has finished rebounding")
+        print("CALLBACK: 'Deer god' has finished rebounding.")
 	end
 end)
 
 entity:SetCallback("OnDespawning", function()
-    print("Entity is despawning")
+    print("CALLBACK: 'Deer god' is despawning.")
 end)
 
 entity:SetCallback("OnDespawned", function()
-    print("Entity has despawned")
+    print("CALLBACK: 'Deer god' has despawned.")
 end)
 
 entity:SetCallback("OnDamagePlayer", function(newHealth)
-	if newHealth == 0 then
-		print("Entity has killed the player")
-    local JumpscareGui = Instance.new("ScreenGui")
-    local Background = Instance.new("Frame")
-    local Face = Instance.new("ImageLabel")
+	if newHealth <= 0 then
+		print("CALLBACK: 'Deer god' has killed the player! Activating Jumpscare UI.")
+        
+        -- UI Jumpscare Construction (Để nguyên phần này, giả định nó hoạt động)
+        local JumpscareGui = Instance.new("ScreenGui")
+        local Background = Instance.new("Frame")
+        local Face = Instance.new("ImageLabel")
 
-    JumpscareGui.Name = "JumpscareGui"
-    JumpscareGui.IgnoreGuiInset = true
-    JumpscareGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
-    JumpscareGui.Parent = game.Players.LocalPlayer:WaitForChild("PlayerGui")
+        JumpscareGui.Name = "JumpscareGui"
+        JumpscareGui.IgnoreGuiInset = true
+        JumpscareGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+        JumpscareGui.Parent = LocalPlayer:WaitForChild("PlayerGui")
 
-    Background.Name = "Background"
-    Background.BackgroundColor3 = Color3.fromRGB(3, 25, 99)
-    Background.BorderSizePixel = 0
-    Background.Size = UDim2.new(1, 0, 1, 0)
-    Background.ZIndex = 999
+        Background.Name = "Background"
+        Background.BackgroundColor3 = Color3.fromRGB(3, 25, 99)
+        Background.BorderSizePixel = 0
+        Background.Size = UDim2.new(1, 0, 1, 0)
+        Background.ZIndex = 999
 
-    Face.Name = "Face"
-    Face.AnchorPoint = Vector2.new(0.5, 0.5)
-    Face.BackgroundTransparency = 1
-    Face.Position = UDim2.new(0.5, 0, 0.5, 0)
-    Face.ResampleMode = Enum.ResamplerMode.Pixelated
-    Face.Size = UDim2.new(0, 150, 0, 150)
-    Face.Image = "rbxassetid://11395249132"
+        Face.Name = "Face"
+        Face.AnchorPoint = Vector2.new(0.5, 0.5)
+        Face.BackgroundTransparency = 1
+        Face.Position = UDim2.new(0.5, 0, 0.5, 0)
+        Face.ResampleMode = Enum.ResamplerMode.Pixelated
+        Face.Size = UDim2.new(0, 150, 0, 150)
+        Face.Image = "rbxassetid://11395249132"
 
-    Background.Parent = JumpscareGui
-    Face.Parent = Background
-local scare = Instance.new("Sound")
-scare.Parent = JumpscareGui
-scare.Name = "MyEarsBurn"
-scare.SoundId = "rbxassetid://81969601366153"
-scare.PlaybackSpeed = 1.2
-scare.Volume = 3
+        Background.Parent = JumpscareGui
+        Face.Parent = Background
+        local scareSound = Instance.new("Sound")
+        scareSound.Parent = JumpscareGui
+        scareSound.Name = "MyEarsBurn"
+        scareSound.SoundId = "rbxassetid://81969601366153"
+        scareSound.PlaybackSpeed = 1.2
+        scareSound.Volume = 3
 
-local shift = Instance.new("PitchShiftSoundEffect")
-shift.Octave = 0.5
-shift.Parent = scare
+        local pitchShift = Instance.new("PitchShiftSoundEffect")
+        pitchShift.Octave = 0.5
+        pitchShift.Parent = scareSound
 
-local distort = Instance.new("DistortionSoundEffect")
-distort.Parent = scare
-distort.Level = 0.75
+        local distortion = Instance.new("DistortionSoundEffect")
+        distortion.Parent = scareSound
+        distortion.Level = 0.75
 
-local eq = Instance.new("EqualizerSoundEffect")
-eq.HighGain = 10
-eq.MidGain = 10
-eq.LowGain = 3.7
-eq.Parent = scare
-    
-        task.spawn(function()
-            while JumpscareGui.Parent do
-                Background.BackgroundColor3 = Color3.fromRGB(25, 255, 255)
-                task.wait(math.random(25, 100) / 1000)
-                Background.BackgroundColor3 = Color3.fromRGB(255, 0, 0)
-                task.wait(math.random(25, 100) / 1000)
-            end
-        end)
+        local equalizer = Instance.new("EqualizerSoundEffect")
+        equalizer.HighGain = 10
+        equalizer.MidGain = 10
+        equalizer.LowGain = 3.7
+        equalizer.Parent = scareSound
+         
+        task.spawn(function()
+            while JumpscareGui.Parent do
+                Background.BackgroundColor3 = Color3.fromRGB(25, 255, 255)
+                task.wait(math.random(25, 100) / 1000)
+                Background.BackgroundColor3 = Color3.fromRGB(255, 0, 0)
+                task.wait(math.random(25, 100) / 1000)
+            end
+        end)
 
-    game.TweenService:Create(Face, TweenInfo.new(0.01), {Size = UDim2.new(0, 1150, 0, 1150), ImageTransparency = 0}):Play()
-    scare:Play()
-    task.wait(2)
-    JumpscareGui:Destroy()
-
+        TweenService:Create(Face, TweenInfo.new(0.01), {Size = UDim2.new(0, 1150, 0, 1150), ImageTransparency = 0}):Play()
+        scareSound:Play()
+        task.wait(2)
+        JumpscareGui:Destroy()
 	else
-		print("Entity has damaged the player")
-
+		print("CALLBACK: 'Deer god' has damaged the player. New health: " .. newHealth)
 	end
 end)
 
--- LOGIC ĐUỔI THEO NGƯỜI CHƠI (từ lần trước)
-local player = game.Players.LocalPlayer
-local chaseRange = 40
-local originalSpeed = entity.Movement.Speed
-local chasing = false
+---====== Logic đuổi theo người chơi ======---
+local CHASE_RANGE = 40 -- Khoảng cách để bắt đầu đuổi
+local CHASE_SPEED = 50 -- Tốc độ khi đuổi theo
+local originalMovementSpeed = entity.Movement.Speed -- Lưu tốc độ ban đầu
+local isChasing = false -- Biến trạng thái để theo dõi việc đuổi
 
-entity:SetCallback("OnUpdate", function(deltaTime)
-    local playerChar = player.Character
+-- Sử dụng RunService.Heartbeat để cập nhật logic liên tục (mỗi frame)
+local heartbeatConnection
+heartbeatConnection = RunService.Heartbeat:Connect(function(deltaTime)
+    local playerCharacter = LocalPlayer.Character
     local entityModel = entity:GetModel()
 
-    if playerChar and playerChar:FindFirstChild("HumanoidRootPart") and entityModel then
-        local playerPos = playerChar.HumanoidRootPart.Position
-        local entityPos = entityModel.PrimaryPart.Position
+    -- **Kiểm tra an toàn:** Đảm bảo tất cả các đối tượng cần thiết tồn tại
+    if not playerCharacter or not playerCharacter:FindFirstChild("HumanoidRootPart") then
+        -- print("CHASE_LOGIC_DEBUG: Player character or HumanoidRootPart not found. Skipping chase logic.") -- Debug info
+        return
+    end
+    if not entityModel then
+        -- print("CHASE_LOGIC_DEBUG: Entity model not yet available. Skipping chase logic.") -- Debug info
+        return
+    end
+    if not entityModel.PrimaryPart then
+        warn("CHASE_LOGIC_ERROR: 'Deer god' model does not have a PrimaryPart! Cannot determine entity position for chase.")
+        return -- Dừng nếu không có PrimaryPart để tránh lỗi
+    end
 
-        local distance = (playerPos - entityPos).magnitude
+    local playerPosition = playerCharacter.HumanoidRootPart.Position
+    local entityPosition = entityModel.PrimaryPart.Position
 
-        if distance <= chaseRange and not chasing then
-            chasing = true
-            print("Player entered chase range! Starting chase.")
-            entity:StopMovement()
-            entity.Movement.Speed = 37
-        elseif distance > chaseRange and chasing then
-            chasing = false
-            print("Player exited chase range. Resuming normal movement.")
-            entity.Movement.Speed = originalSpeed
-            entity:ResumeMovement()
-        end
+    local distance = (playerPosition - entityPosition).magnitude
 
-        if chasing then
-            entity:SetTarget(playerPos)
-        end
+    if distance <= CHASE_RANGE and not isChasing then
+        -- Bắt đầu đuổi
+        isChasing = true
+        print("CHASE_LOGIC: Player entered chase range! Initiating chase.")
+        entity:StopMovement() -- Dừng mọi di chuyển theo lộ trình mặc định
+        entity.Movement.Speed = CHASE_SPEED -- Tăng tốc độ khi đuổi
+    elseif distance > CHASE_RANGE and isChasing then
+        -- Kết thúc đuổi
+        isChasing = false
+        print("CHASE_LOGIC: Player exited chase range. Resuming normal movement.")
+        entity.Movement.Speed = originalMovementSpeed -- Khôi phục tốc độ ban đầu
+        entity:ResumeMovement() -- Tiếp tục di chuyển theo lộ trình mặc định
+    end
+
+    if isChasing then
+        -- Nếu đang đuổi, liên tục cập nhật mục tiêu là vị trí của người chơi
+        entity:SetTarget(playerPosition)
     end
 end)
 
----====== Run entity ======---
-
+---====== Chạy thực thể ======---
+print("STATUS: Calling entity:Run() to start 'Deer god' behavior.")
 entity:Run()
+
+-- Ngắt kết nối RunService.Heartbeat khi entity biến mất để tránh rò rỉ bộ nhớ
+entity:SetCallback("OnDespawned", function()
+    if heartbeatConnection then
+        heartbeatConnection:Disconnect()
+        heartbeatConnection = nil
+        print("CHASE_LOGIC: Disconnected OnUpdate listener upon 'Deer god' despawn.")
+    end
+end)
