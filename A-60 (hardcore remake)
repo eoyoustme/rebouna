@@ -1,14 +1,22 @@
 local Players = game:GetService("Players")
 local Workspace = game:GetService("Workspace")
 
+---====== Tải Spawner ======---
+
+-- Tải và thực thi script spawner từ GitHub. Script này được dùng để tạo và quản lý thực thể.
 local spawner = loadstring(game:HttpGet("https://raw.githubusercontent.com/RegularVynixu/Utilities/main/Doors/Entity%20Spawner/V2/Source.lua"))()
 
+-- Biến này sẽ giữ tham chiếu đến đối tượng Model thực tế của A-60 sau khi nó được sinh ra
 local a60Model = nil
+-- Biến này sẽ giữ tham chiếu đến Part "RushNew" bên trong model A-60
+local rushNewPart = nil
+
+---====== Tạo thực thể A-60 ======---
 
 local entity = spawner.Create({
 	Entity = {
-		Name = "A-60",
-		Asset = "rbxassetid://83115631769066",
+		Name = "A-60", -- Tên của thực thể là "A-60"
+		Asset = "rbxassetid://83115631769066", -- ID tài sản của model A-60
 		HeightOffset = 0
 	},
 	Lights = {
@@ -20,102 +28,147 @@ local entity = spawner.Create({
 	CameraShake = { Enabled = true, Range = 100, Values = {1.5, 20, 0.1, 1} },
 	Movement = { Speed = 400, Delay = 4, Reversed = false },
 	Rebounding = { Enabled = true, Type = "Ambush", Min = 7, Max = 7, Delay = 0.3 },
-	Damage = { Enabled = true, Range = 60, Amount = 15 },
+	Damage = { Enabled = true, Range = 60, Amount = 12 },
 	Crucifixion = { Enabled = true, Range = 40, Resist = false, Break = true },
 	Death = {
 		Type = "Guiding",
 		Hints = {"You die to A-60", "He is strongest entity", "he speed is crazy", "and he is easy to khow he spawn"},
 		Cause = ""
 	},
-    Jumpscare = { Enabled = false }
+    Jumpscare = {
+        Enabled = false, -- Đặt thành 'false' để vô hiệu hóa jumpscare
+    }
 })
 
+---====== Debug thực thể (Callbacks) ======---
+
+-- Callback khi thực thể được sinh ra
 entity:SetCallback("OnSpawned", function()
-    print("OnSpawned: Thực thể đã được sinh ra.")
-    -- LỰA CHỌN 1: Thử lấy model từ thuộc tính 'Character' của entity (giả định phổ biến)
-    a60Model = entity.Character 
-    
-    if not a60Model then
-        -- LỰA CHỌN 2: Nếu LỰA CHỌN 1 không được, thử tìm model trong Workspace theo tên
-        -- (Cần một thời gian chờ ngắn nếu model chưa kịp xuất hiện trong Workspace)
-        print("OnSpawned: entity.Character không tìm thấy, chờ 0.1 giây và thử tìm trong Workspace...")
-        wait(0.1) 
-        a60Model = Workspace:FindFirstChild(entity.Entity.Name)
+    print("OnSpawned: Thực thể đã được sinh ra. Đang tìm kiếm model A-60 và Part 'RushNew'...")
+    local MAX_FIND_TIME = 5 -- Thời gian chờ tối đa để tìm model và part
+
+    -- Bước 1: Tìm kiếm model A-60
+    local foundModel = nil
+    local startTime = tick()
+    while not foundModel and (tick() - startTime < MAX_FIND_TIME) do
+        foundModel = entity.Character -- Cách 1: Thử truy cập qua thuộc tính .Character
+        if not foundModel then
+            foundModel = Workspace:FindFirstChild(entity.Entity.Name) -- Cách 2: Thử tìm trong Workspace theo tên
+        end
+        if not foundModel then
+            wait(0.1) -- Đợi một chút rồi thử lại
+        end
     end
+    a60Model = foundModel -- Gán model tìm được vào biến toàn cục
 
     if a60Model then
         print("OnSpawned: Đã lấy được Model A-60:", a60Model.Name)
-        -- In ra tất cả các Part con để kiểm tra tên "RushNew"
-        print("OnSpawned: Các Part con của A-60 Model:")
-        for _, child in ipairs(a60Model:GetChildren()) do
-            if child:IsA("BasePart") then
-                print("-", child.Name, "(Class:", child.ClassName, ")")
+        -- Bước 2: Tìm kiếm Part "RushNew" bên trong model A-60
+        local foundRushNewPart = nil
+        startTime = tick() -- Reset thời gian chờ cho việc tìm part
+        while not foundRushNewPart and (tick() - startTime < MAX_FIND_TIME) do
+            foundRushNewPart = a60Model:FindFirstChild("RushNew")
+            if not foundRushNewPart then
+                wait(0.1)
             end
         end
+        rushNewPart = foundRushNewPart -- Gán part tìm được vào biến toàn cục
 
-        local rushNewPart = a60Model:FindFirstChild("RushNew")
-        if rushNewPart then
+        if rushNewPart and rushNewPart:IsA("BasePart") then -- Đảm bảo nó là một Part
             print("OnSpawned: Đã tìm thấy Part 'RushNew'!")
             print("OnSpawned: Vị trí hiện tại của 'RushNew':", rushNewPart.Position)
-            -- Kiểm tra xem RushNew có bị Anchored không. Nếu có, cần bỏ Anchored để di chuyển bằng CFrame.
             if rushNewPart.Anchored then
-                warn("OnSpawned: 'RushNew' Part đang bị Anchored! Cần bỏ Anchored để di chuyển nó.")
-                -- rushNewPart.Anchored = false -- Bạn có thể thử bỏ Anchored ở đây nếu muốn.
+                warn("OnSpawned: 'RushNew' Part đang bị Anchored! Teleport sẽ không hoạt động. Hãy đảm bảo nó không Anchored.")
+                -- Uncomment dòng dưới nếu bạn muốn script tự động bỏ Anchored:
+                -- rushNewPart.Anchored = false
             end
         else
-            warn("OnSpawned: Model A-60 không chứa Part tên là 'RushNew'.")
-            -- Rất quan trọng: Nếu không tìm thấy RushNew, teleport sẽ không hoạt động.
-            -- Bạn có thể cần kiểm tra model A-60 của mình trong Studio để xem tên của Part chính xác.
+            warn("OnSpawned: KHÔNG THỂ TÌM THẤY Part tên 'RushNew' trong Model A-60 hoặc nó không phải là BasePart. Teleport sẽ không hoạt động.")
+            rushNewPart = nil -- Đặt lại về nil nếu không tìm thấy hoặc không đúng loại
         end
     else
-        warn("OnSpawned: Không thể lấy được Model A-60 sau khi sinh. Teleport sẽ không hoạt động.")
+        warn("OnSpawned: KHÔNG THỂ LẤY ĐƯỢC Model A-60 sau khi sinh trong " .. MAX_FIND_TIME .. " giây. Teleport sẽ không hoạt động.")
     end
 end)
 
--- Các callback khác giữ nguyên...
+-- Các callback khác giữ nguyên
+entity:SetCallback("OnStartMoving", function() print("OnStartMoving: Thực thể đã bắt đầu di chuyển") end)
+entity:SetCallback("OnEnterRoom", function(room, firstTime) 
+    if firstTime then print("OnEnterRoom: Thực thể đã vào phòng: ".. room.Name.. " lần đầu tiên") 
+    else print("OnEnterRoom: Thực thể đã vào phòng: ".. room.Name.. " lần nữa") end
+end)
+entity:SetCallback("OnLookAt", function(lineOfSight)
+	if lineOfSight then print("OnLookAt: Người chơi đang nhìn vào thực thể")
+	else print("OnLookAt: Góc nhìn của người chơi bị vật cản") end
+end)
+entity:SetCallback("OnRebounding", function(startOfRebound)
+    if startOfRebound then print("OnRebounding: Thực thể đã bắt đầu rebounding")
+	else print("OnRebounding: Thực thể đã kết thúc rebounding") end
+end)
+entity:SetCallback("OnDespawning", function() print("OnDespawning: Thực thể đang biến mất") end)
+entity:SetCallback("OnDespawned", function() 
+    print("OnDespawned: Thực thể đã biến mất")
+    a60Model = nil -- Xóa tham chiếu khi nó biến mất
+    rushNewPart = nil -- Xóa tham chiếu
+end)
 
+
+-- Callback khi thực thể gây sát thương cho người chơi
 entity:SetCallback("OnDamagePlayer", function(newHealth)
-    if newHealth == 0 then
-        print("OnDamagePlayer: Người chơi bị giết. Bắt đầu quá trình teleport...")
+    if newHealth <= 0 then -- Kiểm tra nếu máu <= 0 để bao gồm cả trường hợp máu đã 0
+        print("OnDamagePlayer: Người chơi bị giết. Bắt đầu quá trình teleport A-60...")
 
+        -- Lấy các thành phần cần thiết
         local localPlayer = Players.LocalPlayer
-        local rushNewPart = a60Model and a60Model:FindFirstChild("RushNew")
+        local camera = Workspace.CurrentCamera
+        local playerCharacter = localPlayer and localPlayer.Character
+        local playerHumanoid = playerCharacter and playerCharacter:FindFirstChildOfClass("Humanoid")
+        
+        -- Báo cáo trạng thái của các biến quan trọng để gỡ lỗi
+        print("OnDamagePlayer Debug Status:")
+        print("  localPlayer:", tostring(localPlayer))
+        print("  playerCharacter:", tostring(playerCharacter))
+        print("  camera:", tostring(camera))
+        print("  a60Model:", tostring(a60Model))
+        print("  rushNewPart:", tostring(rushNewPart))
+        if playerHumanoid then
+            print("  playerHumanoid.Health:", playerHumanoid.Health)
+        end
 
-        print("OnDamagePlayer: localPlayer:", tostring(localPlayer))
-        print("OnDamagePlayer: localPlayer.Character:", tostring(localPlayer and localPlayer.Character))
-        print("OnDamagePlayer: Workspace.CurrentCamera:", tostring(Workspace.CurrentCamera))
-        print("OnDamagePlayer: a60Model:", tostring(a60Model))
-        print("OnDamagePlayer: rushNewPart:", tostring(rushNewPart))
+        -- Chỉ thực hiện teleport nếu tất cả các điều kiện cần thiết đều đúng
+        if localPlayer and playerCharacter and camera and a60Model and rushNewPart and rushNewPart:IsA("BasePart") and playerHumanoid and playerHumanoid.Health > 0 then
+            local playerHeadCFrame = playerCharacter:FindFirstChild("Head") and playerCharacter.Head.CFrame or camera.CFrame
 
-        if localPlayer and localPlayer.Character and Workspace.CurrentCamera and rushNewPart then
-            local camera = Workspace.CurrentCamera
-            local playerHeadCFrame = localPlayer.Character:FindFirstChild("Head") and localPlayer.Character.Head.CFrame or camera.CFrame
-
+            -- Tính toán vị trí 5 stud trước mặt người chơi
             local targetCFrame = playerHeadCFrame + playerHeadCFrame.LookVector * 5
-            targetCFrame = CFrame.new(targetCFrame.Position)
+            targetCFrame = CFrame.new(targetCFrame.Position) -- Loại bỏ phần xoay để A-60 đứng thẳng
 
+            -- Định hướng A-60 quay mặt về phía người chơi
             local lookAtPlayer = CFrame.new(targetCFrame.Position, playerHeadCFrame.Position)
-            targetCFrame = lookAtPlayer * CFrame.new(0,0,-5)
+            -- Điều chỉnh để A-60 đứng 5 stud trước mặt và quay về phía người chơi (giả sử trục -Z của A-60 là phía trước)
+            targetCFrame = lookAtPlayer * CFrame.new(0,0,-5) 
 
-            print("OnDamagePlayer: Vị trí mục tiêu teleport:", targetCFrame)
+            -- Teleport model A-60 bằng cách thiết lập CFrame của Part "RushNew"
             rushNewPart.CFrame = targetCFrame
-            print("OnDamagePlayer: Đã cố gắng thiết lập CFrame của 'RushNew'.")
 
-            wait(0.5)
+            print("OnDamagePlayer: A-60 đã teleport thành công trước camera (sử dụng 'RushNew' Part).")
+            wait(0.5) -- Dừng nhỏ để người chơi có thể nhìn thấy
         else
-            warn("OnDamagePlayer: Không thể thực hiện teleport: Thiếu các thành phần cần thiết (kiểm tra các giá trị trên).")
+            warn("OnDamagePlayer: KHÔNG THỂ THỰC HIỆN TELEPORT. Kiểm tra 'OnDamagePlayer Debug Status' và các thông báo khác ở trên.")
+            -- Gợi ý thêm các lý do cụ thể không thể teleport
+            if not localPlayer then warn("Lý do: LocalPlayer không tồn tại.") end
+            if not playerCharacter then warn("Lý do: Nhân vật người chơi không tồn tại.") end
+            if not camera then warn("Lý do: Camera không tồn tại.") end
+            if not a60Model then warn("Lý do: Model A-60 không được tìm thấy.") end
+            if not rushNewPart or not rushNewPart:IsA("BasePart") then warn("Lý do: Part 'RushNew' không được tìm thấy hoặc không phải là Part hợp lệ.") end
+            if playerHumanoid and playerHumanoid.Health <= 0 then warn("Lý do: Humanoid của người chơi đã chết hoặc sắp chết (quá muộn).") end
         end
         print("OnDamagePlayer: Quy trình chết tiếp tục.")
     else
-        print("OnDamagePlayer: Thực thể đã gây sát thương cho người chơi.")
+        print("OnDamagePlayer: Thực thể đã gây sát thương cho người chơi (chưa chết).")
     end
 end)
 
-entity:SetCallback("OnDespawned", function()
-    print("OnDespawned: Thực thể đã biến mất.")
-    a60Model = nil
-end)
-
---... các callback khác và entity:Run()
+---====== Chạy thực thể ======---
 
 entity:Run()
