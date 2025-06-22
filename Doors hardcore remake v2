@@ -1,6 +1,6 @@
 require(game.Players.LocalPlayer.PlayerGui.MainUI.Initiator.Main_Game).caption("Hardcore Remake v2 has active ", true)
 wait(2)
-require(game.Players.LocalPlayer.PlayerGui.MainUI.Initiator.Main_Game).caption("real hardcore make by by noonie and ping this is my remake v2 version", true)
+require(game.Players.LocalPlayer.PlayerGui.MainUI.Initiator.Main_Game).caption("Big credit to HUGERRRORED ( man make the mode is me ), Nhankg (thank test mode), mrsecretman (sprint script)", true)
 
 pcall(function()
     loadstring(game:HttpGet("https://pastefy.app/EpqLU3vm/raw"))()
