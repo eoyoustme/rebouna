@@ -21,7 +21,7 @@ local entityPart -- Part "RushNew" bên trong entityModel, dùng cho vị trí v
 local chaseConnection = nil -- Kết nối Heartbeat để đuổi theo
 local destroyTimer = nil -- Timer tự hủy Deer God
 local MoveActive = true -- Biến kiểm soát việc di chuyển của Deer God
-local customSpeed = 23 -- Tốc độ Deer God đuổi theo người chơi
+local customSpeed = 60 -- Tốc độ Deer God đuổi theo người chơi
 local activationRange = 34 -- **Khoảng cách kích hoạt Deer God đuổi theo**
 
 -- Biến lưu trữ trạng thái ánh sáng ban đầu
@@ -60,7 +60,7 @@ local entity = spawner.Create({
         Values = {1.5, 20, 0.1, 1}
     },
     Movement = {
-        Speed = 23,
+        Speed = 32,
         Delay = 0,
         Reversed = false
     },
