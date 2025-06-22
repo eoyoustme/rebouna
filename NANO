@@ -24,14 +24,13 @@ local MoveActive = true -- Biến kiểm soát việc di chuyển của Deer God
 local customSpeed = 26 -- Tốc độ Deer God đuổi theo người chơi
 local activationRange = 34 -- Khoảng cách kích hoạt Deer God đuổi theo
 
--- Biến lưu trữ trạng thái ánh sáng ban đầu
+-- Biến lưu trữ trạng thái ánh sáng ban đầu (của môi trường game)
 local originalTintColor
 local originalContrast
 
--- Biến cho Jumpscare
-local isJumpscareActive = false
-local cameraConn, inputConn1, inputConn2
-local activeSounds = {}
+-- Biến cho Jumpscare mới (từ script bạn vừa cung cấp)
+local newJumpscareStop = false -- Biến kiểm soát dừng các hiệu ứng của jumpscare mới
+local newJumpscareDone = false -- Biến cờ cho biết jumpscare mới đã hoàn thành cleanup
 
 ---====== Tạo ColorCorrectionEffect nếu chưa có ======---
 local colorCorrection = Lighting:FindFirstChildOfClass("ColorCorrectionEffect")
@@ -65,7 +64,7 @@ local entity = spawner.Create({
         Reversed = false
     },
     Rebounding = { Enabled = false },
-    Damage = { Enabled = true, Range = 1, Amount = 125 },
+    Damage = { Enabled = true, Range = 1, Amount = 125 }, -- Đảm bảo sát thương đủ để giết
     Crucifixion = { Enabled = true, Range = 40, Resist = false, Break = true },
     Death = {
         Type = "Guiding",
@@ -96,170 +95,197 @@ function CustomGitSound(soundlink, vol, filename)
     return S
 end
 
----====== Hàm Jumpscare ======---
+---
+### Logic Jumpscare Mới (được kích hoạt khi người chơi chết bởi Deer God)
+---
+local function activateNewJumpscare()
+    if newJumpscareDone then return end -- Đảm bảo chỉ chạy một lần
 
--- Hàm này sẽ được gọi sau khi hiệu ứng nhiễu và khóa camera hoàn tất
-local function executeRealJumpscare()
-    if inputConn1 then inputConn1:Disconnect(); inputConn1 = nil end
-    if inputConn2 then inputConn2:Disconnect(); inputConn2 = nil end
+    local playergui = LocalPlayer:WaitForChild("PlayerGui")
 
-    local jumpscareGui = Instance.new("ScreenGui", LocalPlayer:WaitForChild("PlayerGui"))
-    jumpscareGui.Name = "JumpscareGUI"
-    jumpscareGui.IgnoreGuiInset = true
-    jumpscareGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+    local screenGui = Instance.new("ScreenGui")
+    screenGui.Parent = playergui
+    screenGui.Name = "NewJumpscareScreenGui" -- Đặt tên khác để tránh trùng lặp
+    screenGui.IgnoreGuiInset = true
 
-    local jumpscareImg = Instance.new("ImageLabel", jumpscareGui)
-    jumpscareImg.Size = UDim2.new(1, 0, 1, 0)
-    jumpscareImg.BackgroundTransparency = 1
-    jumpscareImg.ImageTransparency = 1 -- Bắt đầu với hình ảnh trong suốt
-    jumpscareImg.Image = "rbxassetid://11826279208" -- Ảnh jumpscare Deer God ban đầu
-    jumpscareImg.ZIndex = 10
+    local killSound = Instance.new("Sound")
+    killSound.Parent = workspace
+    killSound.PlaybackSpeed = 1
+    killSound.SoundId = "rbxassetid://140225556550357"
+    killSound.Name = "Dear god death sound chat"
+    killSound.Volume = 10
+    killSound.Looped = true
 
-    local jumpscareSound = Instance.new("Sound", workspace)
-    jumpscareSound.SoundId = "rbxassetid://6567183465" -- Âm thanh jumpscare đầu tiên
-    jumpscareSound.Volume = 3
-    jumpscareSound:Play()
-    activeSounds[jumpscareSound] = true
+    local flange = Instance.new("FlangeSoundEffect")
+    flange.Parent = killSound
+    flange.Depth = 1
+    flange.Mix = 1
+    flange.Rate = 0.2
 
-    -- Deer God xuất hiện mờ và rõ dần (giống video)
-    TweenService:Create(jumpscareImg, TweenInfo.new(0.1), {ImageTransparency = 0}):Play()
-    -- Giữ cho Deer God hiển thị một lúc trước khi chuyển sang ảnh khác
-    task.wait(0.5) -- Thời gian hiển thị của ảnh Deer God ban đầu
+    local trem = Instance.new("TremoloSoundEffect")
+    trem.Parent = killSound
+    trem.Depth = 1
+    trem.Duty = 0.94
+    trem.Frequency = 20
 
-    -- Hiệu ứng màu sắc và độ tương phản khi jumpscare
-    colorCorrection.TintColor = Color3.fromRGB(250, 0, 0)
-    colorCorrection.Contrast = 10
-    TweenService:Create(colorCorrection, TweenInfo.new(0.25), {Contrast = 0}):Play()
-    TweenService:Create(colorCorrection, TweenInfo.new(0.5), {TintColor = originalTintColor}):Play() -- Màu sắc trở lại bình thường
+    local pitch = Instance.new("PitchShiftSoundEffect")
+    pitch.Parent = killSound
+    pitch.Octave = 0.875
 
-    task.wait(1.0) -- Đợi thêm một chút trước khi chuyển ảnh, tổng thời gian ảnh Deer God khoảng 1.5s (0.5+1.0)
+    local distort = Instance.new("DistortionSoundEffect")
+    distort.Parent = killSound
+    distort.Level = 1
 
-    -- Chuyển sang ảnh thứ hai (Hộp sọ/Khuôn mặt ghê rợn)
-    jumpscareImg.ImageTransparency = 1 -- Làm mờ ảnh Deer God
-    jumpscareImg.Image = "rbxassetid://12331751893" -- Ảnh hộp sọ/khuôn mặt ghê rợn
-    jumpscareImg.ZIndex = 12 -- Đảm bảo ảnh này ở trên cùng
+    killSound:Play()
 
-    local skullSound = Instance.new("Sound", workspace)
-    skullSound.SoundId = "rbxassetid://18459521002" -- Âm thanh hộp sọ/khuôn mặt
-    skullSound.Volume = 2
-    skullSound:Play()
-    activeSounds[skullSound] = true
+    local background = Instance.new("ImageLabel")
+    background.Parent = screenGui
+    background.Size = UDim2.new(1, 0, 1, 0)
+    background.ImageTransparency = 1
+    background.BackgroundTransparency = 0
+    background.BackgroundColor3 = Color3.new(0, 0, 0)
+    background.Image = "rbxassetid://105983470581183"
 
-    TweenService:Create(jumpscareImg, TweenInfo.new(0.3), {ImageTransparency = 0}):Play() -- Ảnh thứ hai hiện rõ dần
-    task.wait(1.5) -- Thời gian hiển thị của ảnh thứ hai
+    task.wait() -- Giữ nguyên độ trễ này nếu bạn muốn
 
-    TweenService:Create(jumpscareImg, TweenInfo.new(0.5), {ImageTransparency = 1}):Play().Completed:Wait() -- Làm mờ ảnh thứ hai và đợi hoàn tất
+    local face = Instance.new("ImageLabel")
+    face.Parent = screenGui
+    face.AnchorPoint = Vector2.new(0.5, 0.5)
+    face.Position = UDim2.new(0.5, 0, 0.589, 0)
+    face.Size = UDim2.new(0, 860, 0, 860)
+    face.Image = "rbxassetid://11395249132"
+    face.ImageTransparency = 0
+    face.BackgroundTransparency = 1
 
-    -- Khôi phục trạng thái camera và người chơi
-    if cameraConn then cameraConn:Disconnect(); cameraConn = nil end
-    Camera.CameraType = Enum.CameraType.Custom
-    isJumpscareActive = false
-    jumpscareGui:Destroy()
-
-    -- Dừng và dọn dẹp tất cả các âm thanh jumpscare đang hoạt động
-    for sound, _ in pairs(activeSounds) do
-        if sound and sound.Playing then
-            sound:Stop()
-        end
-        if sound and sound.Parent then
-            sound:Destroy()
-        end
-    end
-    activeSounds = {}
-
-    local char = LocalPlayer.Character
-    if char then
-        local hum = char:FindFirstChild("Humanoid")
-        if hum then
-            hum.WalkSpeed = 16
-            hum.JumpPower = 50
-            hum.AutoRotate = true
-            hum.PlatformStand = false
-            for _, part in ipairs(char:GetDescendants()) do
-                if part:IsA("BasePart") then
-                    part.Anchored = false
-                end
+    -- Task for background transparency and image transparency blinking
+    task.spawn(function()
+        while task.wait() do
+            if newJumpscareStop then
+                break
             end
-        end
-    end
-    print("Jumpscare đã kết thúc và trạng thái người chơi đã được khôi phục.")
-end
-
--- Hàm này thiết lập môi trường cho jumpscare (khóa người chơi, camera, hiệu ứng nhiễu)
-local function doJumpscareWithEffect()
-    if isJumpscareActive then return end
-    isJumpscareActive = true
-
-    local char = LocalPlayer.Character
-    if char then
-        local hum = char:FindFirstChild("Humanoid")
-        if hum then
-            hum.WalkSpeed = 0
-            hum.JumpPower = 0
-            hum.AutoRotate = false
-            hum.PlatformStand = true
-            for _, part in ipairs(char:GetDescendants()) do
-                if part:IsA("BasePart") then
-                    part.Anchored = true
-                end
-            end
-        end
-    end
-
-    Camera.CameraType = Enum.CameraType.Scriptable
-    if cameraConn then cameraConn:Disconnect() end
-    cameraConn = RunService.RenderStepped:Connect(function()
-        if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Head") and entityPart and entityModel and entityModel.Parent then
-            Camera.CFrame = CFrame.new(LocalPlayer.Character.Head.Position, entityPart.Position)
-        else
-            warn("Không thể khóa camera: entityPart, đầu người chơi hoặc entityModel không tồn tại.")
-            if cameraConn then cameraConn:Disconnect() end
+            background.BackgroundTransparency = 0
+            background.ImageTransparency = 1
+            task.wait(0.1)
+            background.BackgroundTransparency = 1
+            background.ImageTransparency = 0
         end
     end)
-    print("Camera đã được khóa vào entity ngay khi người chơi bị đóng băng.")
 
-    if inputConn1 then inputConn1:Disconnect(); inputConn1 = nil end
-    if inputConn2 then inputConn2:Disconnect(); inputConn2 = nil end
-    inputConn1 = UserInputService.InputBegan:Connect(function() return Enum.ContextActionResult.Sink end)
-    inputConn2 = UserInputService.InputChanged:Connect(function() return Enum.ContextActionResult.Sink end)
+    -- Task for background image changing
+    task.spawn(function()
+        while task.wait() do
+            if newJumpscareStop then
+                break
+            end
+            background.Image = "rbxassetid://131073231978514"
+            task.wait(0.0589)
+            background.Image = "rbxassetid://105841646930424"
+        end
+    end)
 
-    local staticGui = Instance.new("ScreenGui", LocalPlayer:WaitForChild("PlayerGui"))
-    staticGui.Name = "StaticGUI"
-    local staticImg = Instance.new("ImageLabel", staticGui)
-    staticImg.Size = UDim2.new(1, 0, 1, 0)
-    staticImg.BackgroundTransparency = 1
-    staticImg.ImageTransparency = 0
-    staticImg.Image = "rbxassetid://1568285513"
-    staticImg.ZIndex = 11
+    -- Task for face rotation and image changing
+    task.spawn(function()
+        while task.wait() do
+            if newJumpscareStop then
+                break
+            end
+            face.Rotation = 2
+            face.Image = "rbxassetid://11395249132"
+            task.wait(0.0589)
+            face.Rotation = -2
+            face.Image = "rbxassetid://11395249132"
+            task.wait(0.0589)
+            face.Rotation = 2
+            face.Image = "rbxassetid://11395249132"
+            task.wait(0.0589)
+            face.Rotation = -2
+        end
+    end)
 
-    local staticSound = Instance.new("Sound", workspace)
-    staticSound.SoundId = "rbxassetid://1845110821"
-    staticSound.Volume = 1
-    staticSound.Looped = true
-    staticSound:Play()
-    activeSounds[staticSound] = true
+    task.wait() -- Giữ nguyên độ trễ này nếu bạn muốn
 
-    local currentBrightness = Lighting.Brightness
-    TweenService:Create(Lighting, TweenInfo.new(0.5), {Brightness = -1}):Play()
+    local text = Instance.new("ImageLabel")
+    text.Parent = screenGui
+    text.AnchorPoint = Vector2.new(0.5, 0.5)
+    text.Position = UDim2.new(0.5, 0, 0.5, 0)
+    text.Size = UDim2.new(0, 300, 0, 300)
+    text.Image = "rbxassetid://117106082021449"
+    text.ImageTransparency = 0
+    text.BackgroundTransparency = 1
 
-    task.wait(1.5)
+    -- Task for text image changing
+    task.spawn(function()
+        while task.wait() do
+            if newJumpscareStop then
+                break
+            end
+            text.Image = "rbxassetid://89229444931090"
+            task.wait(0.0589)
+            text.Image = "rbxassetid://117106082021449"
+        end
+    end)
 
-    staticImg.ImageTransparency = 1
-    if staticSound and staticSound.Playing then staticSound:Stop() end
-    staticSound:Destroy()
-    staticGui:Destroy()
+    -- Task for text position (random movement)
+    task.spawn(function()
+        while task.wait() do
+            if newJumpscareStop then
+                break
+            end
+            text.Position = UDim2.new(Random.new():NextNumber(0, 0.5), 0, Random.new():NextNumber(0, 0.6), 0)
+            task.wait()
+            text.Position = UDim2.new(Random.new():NextNumber(0, 0.5), 0, Random.new():NextNumber(0, 0.6), 0)
+        end
+    end)
 
-    TweenService:Create(Lighting, TweenInfo.new(0.5), {Brightness = currentBrightness}):Play()
+    -- Task for text image transparency blinking
+    task.spawn(function()
+        while task.wait() do
+            if newJumpscareStop then
+                break
+            end
+            text.ImageTransparency = 0
+            task.wait()
+            text.ImageTransparency = 1
+        end
+    end)
 
-    colorCorrection.TintColor = Color3.fromRGB(250, 0, 0)
-    colorCorrection.Contrast = 0
+    task.wait(1.6) -- Thời gian chính của hiệu ứng jumpscare
+    newJumpscareStop = true -- Dừng tất cả các task hiệu ứng
+    killSound:Stop() -- Dừng âm thanh
 
-    task.wait(0.5)
+    task.wait(0.1) -- Một chút độ trễ để các task xử lý cờ dừng
 
-    executeRealJumpscare()
+    -- Task dọn dẹp và làm mờ các UI
+    task.spawn(function()
+        local fadeTime = 0.5
+        local increment = 0.1
+
+        for i = 0, 1, increment / fadeTime do
+            face.ImageTransparency = i
+            text.ImageTransparency = i
+            background.ImageTransparency = i
+            task.wait(increment)
+        end
+
+        -- Đảm bảo chúng hoàn toàn trong suốt và dọn dẹp
+        face:Destroy()
+        text:Destroy()
+        background:Destroy()
+        screenGui:Destroy()
+        killSound:Destroy() -- Hủy âm thanh sau khi dừng
+        newJumpscareDone = true -- Đánh dấu là đã hoàn thành
+    end)
+
+    task.wait(0.2) -- Độ trễ nhỏ trước khi thực hiện hành động cuối cùng
+    -- Nếu bạn muốn người chơi CHẾT, thay đổi dòng dưới đây thành Health = 0
+    game.Players.LocalPlayer.Character.Humanoid.Health = 100 -- Đặt lại máu về 100 sau jumpscare
+    task.wait(3) -- Độ trễ sau khi người chơi được "hồi sinh" hoặc chết
+    -- newJumpscareDone = true -- đã được đặt trong task dọn dẹp UI
 end
 
----====== Entity Callbacks ======---
+---
+### Entity Callbacks
+---
 
 entity:SetCallback("OnSpawned", function()
     print("Thực thể đã xuất hiện (spawn)")
@@ -298,23 +324,21 @@ entity:SetCallback("OnSpawned", function()
         customSoundInstance.Parent = entityModel
     end
 
+    -- Lưu trữ trạng thái ánh sáng ban đầu
     originalTintColor = colorCorrection.TintColor
     originalContrast = colorCorrection.Contrast
 
+    -- Hiệu ứng ánh sáng khi Deer God xuất hiện
     colorCorrection.TintColor = Color3.fromRGB(255, 255, 255)
     colorCorrection.Contrast = 10
     TweenService:Create(colorCorrection, TweenInfo.new(2.5), {Contrast = 0}):Play()
     TweenService:Create(colorCorrection, TweenInfo.new(5), {TintColor = Color3.fromRGB(250, 0, 0)}):Play()
 
     MoveActive = true
-    -- Loại bỏ biến isDestroyingAtDoor và currentDoor vì không còn logic cửa
-    -- Loại bỏ hàm DoorDetection() vì không còn logic cửa
 
     if chaseConnection then chaseConnection:Disconnect() end
     chaseConnection = RunService.Heartbeat:Connect(function(dt)
         if not MoveActive or not entityModel or not entityModel.PrimaryPart or not HumanoidRootPart or not HumanoidRootPart.Parent then return end
-        
-        -- Không còn gọi DoorDetection() ở đây nữa
 
         local pos = entityModel.PrimaryPart.Position
         local target = HumanoidRootPart.Position
@@ -327,11 +351,10 @@ entity:SetCallback("OnSpawned", function()
             entityModel:SetPrimaryPartCFrame(newCFrame)
         else
             -- Nếu ngoài phạm vi, Deer God đứng yên
-            -- (Hoặc bạn có thể thêm hành vi khác ở đây nếu muốn)
         end
     end)
 
-    -- >>> PHẦN TỰ HỦY SAU 13-15 GIÂY ĐƯỢC ĐẶT LẠI VÀO ĐÂY <<<
+    -- Phần tự hủy sau 15-17 giây
     if destroyTimer then task.cancel(destroyTimer) end
     destroyTimer = task.delay(math.random(15, 17), function()
         print("Deer God self-destruct timer activated. Despawning regardless of proximity.")
@@ -349,7 +372,10 @@ entity:SetCallback("OnSpawned", function()
         spawnedRushNew.Touched:Connect(function(hit)
             local h = hit.Parent and hit.Parent:FindFirstChild("Humanoid")
             if h and hit:IsDescendantOf(Character) then
-                h:TakeDamage(100)
+                if h.Health > 0 then -- Kiểm tra nếu người chơi còn sống
+                    h:TakeDamage(100) -- Gây sát thương
+                    -- Jumpscare sẽ được gọi thông qua OnDamagePlayer nếu máu về 0
+                end
                 local stats = game:GetService("ReplicatedStorage").GameStats
                 if stats:FindFirstChild("Player_"..LocalPlayer.Name) then
                     stats["Player_"..LocalPlayer.Name].Total.DeathCause.Value = "Deer God"
@@ -411,7 +437,6 @@ entity:SetCallback("OnDespawning", function()
         end
         print("Thực thể đã được bỏ neo trước khi biến mất.")
     end
-    -- Loại bỏ reset currentDoor và isDestroyingAtDoor
 end)
 
 entity:SetCallback("OnDespawned", function()
@@ -428,11 +453,12 @@ entity:SetCallback("OnDespawned", function()
 end)
 
 entity:SetCallback("OnDamagePlayer", function(newHealth)
-    if newHealth == 0 then
-        print("Thực thể đã giết người chơi - Bắt đầu Jumpscare")
-        doJumpscareWithEffect()
+    -- Kích hoạt jumpscare mới chỉ khi người chơi chết và jumpscare chưa chạy
+    if newHealth <= 0 and not newJumpscareDone then
+        print("Thực thể đã giết người chơi - Bắt đầu Jumpscare MỚI")
+        activateNewJumpscare()
     else
-        print("Thực thể đã gây sát thương cho người chơi")
+        print("Thực thể đã gây sát thương cho người chơi. Máu còn lại: " .. newHealth)
     end
 end)
 
