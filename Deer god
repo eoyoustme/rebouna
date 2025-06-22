@@ -326,7 +326,7 @@ entity:SetCallback("OnSpawned", function()
         if entityModel and entityModel.PrimaryPart then
             entityModel:SetPrimaryPartCFrame(entityModel.PrimaryPart.CFrame * CFrame.new(0, -100, 0))
         end
-        task.wait(2)
+        task.wait(0)
         entity:Despawn()
     end)
 
