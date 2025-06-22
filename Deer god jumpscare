@@ -1,4 +1,4 @@
- ---====== Load spawner ======---
+---====== Load spawner ======---
 
 local spawner = loadstring(game:HttpGet("https://raw.githubusercontent.com/RegularVynixu/Utilities/main/Doors/Entity%20Spawner/V2/Source.lua"))()
 
@@ -19,7 +19,10 @@ local Camera = workspace.CurrentCamera
 local entityModel -- Sẽ được gán là model "Deer god"
 local entityPart -- Sẽ được gán là phần "RushNew" bên trong model
 local chaseConnection = nil -- Biến để lưu trữ kết nối Heartbeat cho việc đuổi theo
-local originalDeerGodSpeed = 23 -- Tốc độ mặc định của Deer God
+local destroyTimer = nil -- Biến để lưu trữ timer tự hủy của Deer God
+
+local customSpeed = 20 -- Tốc độ bạn muốn Deer God đuổi theo (từ code của bạn)
+local MoveActive = true -- Biến kiểm soát việc di chuyển, tương tự Move của bạn
 
 -- Lưu trữ trạng thái ánh sáng ban đầu (sẽ được cập nhật trong OnSpawned)
 local originalTintColor
@@ -35,7 +38,7 @@ local entity = spawner.Create({
 	},
 	Lights = {
 		Flicker = {
-			Enabled = true,
+			Enabled = true, -- Giữ flicker nếu bạn muốn nó nhấp nháy
 			Duration = 5
 		},
 		Shatter = true,
@@ -50,13 +53,13 @@ local entity = spawner.Create({
 		Values = {1.5, 20, 0.1, 1} -- Magnitude, Roughness, FadeIn, FadeOut
 	},
 	Movement = {
-		Speed = originalDeerGodSpeed,
-		Delay = 0, -- Đặt Delay về 0 để có thể điều khiển di chuyển bằng script
+		Speed = 0, -- Đặt tốc độ của spawner là 0 để chúng ta điều khiển bằng code Heartbeat
+		Delay = 0, -- Đặt Delay về 0
 		Reversed = false
 	},
 	Rebounding = {
 		Enabled = false,
-		Type = "Ambush", -- "Blitz"
+		Type = "Ambush",
 		Min = 1,
 		Max = 1,
 		Delay = 2
@@ -73,32 +76,73 @@ local entity = spawner.Create({
 		Break = true
 	},
 	Death = {
-		Type = "Guiding", -- "Curious"
+		Type = "Guiding",
 		Hints = {"ME GO PLAY SKIBIDI TOILET", "GOODBYE", "STUPID YOU DIE BY A WEAK ENTITY", "HERE IS NOT FOR NOOB"},
 		Cause = ""
 	}
 })
 
----====== Debug entity ======---
+---====== Debug entity and Custom Logic ======---
 
 entity:SetCallback("OnSpawned", function()
     print("Entity has spawned")
     entityModel = entity.Model -- Gán mô hình "Deer god" khi nó spawn
+    entityModel.Parent = workspace -- Đảm bảo Deer God nằm trong workspace nếu chưa
 
-    -- *** ĐIỀU CHỈNH CHÍNH Ở ĐÂY: Tìm phần "RushNew" ***
+    -- *** ĐIỀU CHỈNH ĐỂ TÌM PHẦN "RushNew" và Đặt PrimaryPart ***
     if entityModel then
         entityPart = entityModel:FindFirstChild("RushNew")
         if not entityPart then
-            warn("Deer God model does NOT contain a part named 'RushNew'! Chase and camera logic might not work correctly.")
-            -- Phương án dự phòng: nếu không tìm thấy "RushNew", thử dùng PrimaryPart hoặc bất kỳ BasePart nào.
+            warn("Deer God model does NOT contain a part named 'RushNew'!")
+            -- Fallback: nếu không tìm thấy "RushNew", thử dùng PrimaryPart hoặc BasePart bất kỳ
             entityPart = entityModel.PrimaryPart or entityModel:FindFirstChildOfClass("BasePart")
             if not entityPart then
                 warn("Could not find 'RushNew' or any suitable BasePart for Deer God!")
+                return -- Không thể tiếp tục nếu không có phần nào để di chuyển
             end
         end
+        -- Đặt PrimaryPart của model DeerGod
+        entityModel.PrimaryPart = entityPart
+        print("DeerGod.PrimaryPart set to: " .. entityModel.PrimaryPart.Name)
+
+        -- Di chuyển Deer God đến vị trí ban đầu của bạn
+        entityModel:SetPrimaryPartCFrame(HumanoidRootPart.CFrame * CFrame.new(0, 0, 50))
     else
-        warn("entity.Model is nil after spawning!")
+        warn("entity.Model is nil after spawning! Cannot set up movement or sound.")
+        return
     end
+
+    -- --- Xóa âm mặc định của DeerGod (từ code của bạn) ---
+    coroutine.wrap(function()
+        for i, v in ipairs(entityModel:GetDescendants()) do
+            if v.Name == "RushNew" then
+                pcall(function()
+                    if v:FindFirstChild("Breathing") then v.Breathing:Destroy() end
+                end)
+                pcall(function()
+                    if v:FindFirstChild("Footsteps") then v.Footsteps:Destroy() end
+                end)
+            end
+        end
+    end)()
+
+    -- --- Tải âm thanh từ GitHub và phát (từ code của bạn) ---
+    local function GitAud(soundgit, filename)
+        writefile(filename..".mp3", game:HttpGet(soundgit))
+        return (getcustomasset or getsynasset)(filename..".mp3")
+    end
+
+    local function CustomGitSound(soundlink, vol, filename)
+        local S = Instance.new("Sound")
+        S.SoundId = GitAud(soundlink, filename)
+        S.Volume = vol
+        S.Looped = false
+        S.Parent = entityModel -- Đặt Parent là entityModel
+        S:Play()
+        Debris:AddItem(S, S.TimeLength + 1) -- Đảm bảo âm thanh bị hủy sau khi phát xong
+    end
+
+    CustomGitSound("https://github.com/eoyoustme/Monoxide/blob/main/Hostile.mp3?raw=true", 2, "DeerGod_Hostile")
 
     -- Khởi tạo hoặc lấy ColorCorrectionEffect và lưu trạng thái ban đầu
     local colorCorrection = Lighting:FindFirstChildOfClass("ColorCorrectionEffect")
@@ -116,26 +160,53 @@ entity:SetCallback("OnSpawned", function()
     TweenService:Create(colorCorrection, TweenInfo.new(2.5), {Contrast = 0}):Play() -- Mờ contrast về 0
     TweenService:Create(colorCorrection, TweenInfo.new(5), {TintColor = Color3.fromRGB(250, 0, 0)}):Play() -- Mờ dần về đỏ
 
-    -- Bắt đầu theo dõi và đuổi theo người chơi
+    -- --- Di chuyển theo người chơi bằng tốc độ cố định (từ code của bạn) ---
+    MoveActive = true
     if chaseConnection then chaseConnection:Disconnect() end -- Ngắt kết nối cũ nếu có
-    chaseConnection = RunService.Heartbeat:Connect(function()
-        if entityModel and entityPart and HumanoidRootPart and HumanoidRootPart.Parent then
-            local distance = (entityPart.Position - HumanoidRootPart.Position).Magnitude
-            if distance <= 60 then
-                -- Nếu trong phạm vi 60 stud, đuổi theo người chơi
-                entity:Set("Movement.Target", HumanoidRootPart.Position)
-                entity:Set("Movement.Speed", originalDeerGodSpeed * 1.5) -- Tăng tốc độ khi đuổi (tùy chọn)
-            else
-                -- Nếu ngoài phạm vi, quay lại di chuyển bình thường
-                entity:Set("Movement.Target", nil) -- Xóa mục tiêu để spawner xử lý
-                entity:Set("Movement.Speed", originalDeerGodSpeed) -- Trả về tốc độ gốc
-            end
-        end
+    chaseConnection = RunService.Heartbeat:Connect(function(dt)
+        if not MoveActive or not entityModel or not entityModel.PrimaryPart or not HumanoidRootPart or not HumanoidRootPart.Parent then return end
+        local pos = entityModel.PrimaryPart.Position
+        local target = HumanoidRootPart.Position
+        local dir = (target - pos).Unit
+        local moveVec = dir * customSpeed * dt
+        local newCFrame = CFrame.new(pos + moveVec, target)
+        entityModel:SetPrimaryPartCFrame(newCFrame)
     end)
+
+    -- --- Tự huỷ sau 40–60 giây (từ code của bạn) ---
+    if destroyTimer then task.cancel(destroyTimer) end -- Hủy timer cũ nếu có
+    destroyTimer = task.delay(math.random(20, 40), function()
+        MoveActive = false -- Ngừng di chuyển
+        task.wait(0.5)
+        if entityModel and entityModel.PrimaryPart then
+            entityModel:SetPrimaryPartCFrame(entityModel.PrimaryPart.CFrame * CFrame.new(0, -100, 0)) -- Di chuyển xuống
+        end
+        task.wait(1)
+        entity:Despawn() -- Sử dụng Despawn của Spawner để xử lý việc hủy bỏ và khôi phục ánh sáng
+    end)
+
+    -- Tạo va chạm gây sát thương (từ code của bạn)
+    -- Gắn sự kiện Touched cho RushNew của model DeerGod đã spawn
+    local spawnedRushNew = entityModel:FindFirstChild("RushNew")
+    if spawnedRushNew then
+        spawnedRushNew.Touched:Connect(function(hit)
+            local h = hit.Parent and hit.Parent:FindFirstChild("Humanoid")
+            if h and hit:IsDescendantOf(Character) then -- Sử dụng biến Character đã khai báo
+                h:TakeDamage(10)
+                local stats = game:GetService("ReplicatedStorage").GameStats
+                if stats:FindFirstChild("Player_"..LocalPlayer.Name) then -- Sử dụng biến LocalPlayer
+                    stats["Player_"..LocalPlayer.Name].Total.DeathCause.Value = "Pandemonium"
+                end
+            end
+        end)
+    else
+        warn("Spawned Deer God model does not contain 'RushNew' for Touched event!")
+    end
+
 end)
 
 entity:SetCallback("OnStartMoving", function()
-    print("Entity has started moving")
+    print("Entity has started moving (Spawner's callback, but movement is controlled by Heartbeat)")
 end)
 
 entity:SetCallback("OnEnterRoom", function(room, firstTime)
@@ -164,16 +235,31 @@ end)
 
 entity:SetCallback("OnDespawning", function()
     print("Entity is despawning")
-    -- Ngắt kết nối đuổi theo khi despawn
+    -- Ngắt kết nối đuổi theo và timer tự hủy
     if chaseConnection then
         chaseConnection:Disconnect()
         chaseConnection = nil
     end
+    if destroyTimer then
+        task.cancel(destroyTimer)
+        destroyTimer = nil
+    end
+
     -- Khôi phục ánh sáng về trạng thái ban đầu khi despawn
     local colorCorrection = Lighting:FindFirstChildOfClass("ColorCorrectionEffect")
     if colorCorrection then
         TweenService:Create(colorCorrection, TweenInfo.new(2.5), {Contrast = originalContrast}):Play()
         TweenService:Create(colorCorrection, TweenInfo.new(5), {TintColor = originalTintColor}):Play()
+    end
+
+    -- Nếu Deer God đang bị neo, gỡ neo nó ra trước khi bị hủy
+    if entityModel then
+        for _, part in ipairs(entityModel:GetDescendants()) do
+            if part:IsA("BasePart") then
+                part.Anchored = false
+            end
+        end
+        print("Entity has been unanchored before despawn.")
     end
 end)
 
@@ -187,7 +273,7 @@ entity:SetCallback("OnDespawned", function()
     cue2.PlaybackSpeed = 1
     cue2:Play()
     Debris:AddItem(cue2, cue2.TimeLength + 1)
-    task.wait(3) -- Sử dụng task.wait thay vì wait
+    task.wait(3)
 end)
 
 entity:SetCallback("OnDamagePlayer", function(newHealth)
