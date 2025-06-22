@@ -44,51 +44,39 @@ local entity = spawner.Create({
 
 -- Callback khi thực thể được sinh ra
 entity:SetCallback("OnSpawned", function()
-    print("OnSpawned: Thực thể đã được sinh ra. Đang tìm kiếm model A-60 và Part 'RushNew'...")
-    local MAX_FIND_TIME = 5 -- Thời gian chờ tối đa để tìm model và part
+    
+-- Get a reference to the object and its Attachment in the Workspace
+local part = workspace:WaitForChild("A60")
+local object = part:WaitForChild("RushNew") -- Replace "MyObjectName" with the name of your object
+local attachment = object:WaitForChild("ImageFace")  -- Get the Attachment attached to the object
+local e = attachment:WaitForChild("Face")
 
-    -- Bước 1: Tìm kiếm model A-60
-    local foundModel = nil
-    local startTime = tick()
-    while not foundModel and (tick() - startTime < MAX_FIND_TIME) do
-        foundModel = entity.Character -- Cách 1: Thử truy cập qua thuộc tính .Character
-        if not foundModel then
-            foundModel = Workspace:FindFirstChild(entity.Entity.Name) -- Cách 2: Thử tìm trong Workspace theo tên
-        end
-        if not foundModel then
-            wait(0.1) -- Đợi một chút rồi thử lại
-        end
-    end
-    a60Model = foundModel -- Gán model tìm được vào biến toàn cục
+object.CanCollide = false
+ -- Get the ParticleEmitter attached to the Attachment
+while true do
+    e.Texture = "rbxassetid://16020415559"
+    wait(0)
+    e.Texture = "rbxassetid://16020423090"
+    wait(0)
+    e.Texture = "rbxassetid://16020425703"
+    wait(0)
+    e.Texture = "rbxassetid://16020417711"
+    wait(0)
+    e.Texture = "rbxassetid://16020432826"
+    wait(0)
+    e.Texture = "rbxassetid://16020430685"
+    wait(0)
+    e.Texture = "rbxassetid://16020435171"
+    wait(0)
+    e.Texture = "rbxassetid://11378285585"
+    wait(0)
+end
 
-    if a60Model then
-        print("OnSpawned: Đã lấy được Model A-60:", a60Model.Name)
-        -- Bước 2: Tìm kiếm Part "RushNew" bên trong model A-60
-        local foundRushNewPart = nil
-        startTime = tick() -- Reset thời gian chờ cho việc tìm part
-        while not foundRushNewPart and (tick() - startTime < MAX_FIND_TIME) do
-            foundRushNewPart = a60Model:FindFirstChild("RushNew")
-            if not foundRushNewPart then
-                wait(0.1)
-            end
-        end
-        rushNewPart = foundRushNewPart -- Gán part tìm được vào biến toàn cục
 
-        if rushNewPart and rushNewPart:IsA("BasePart") then -- Đảm bảo nó là một Part
-            print("OnSpawned: Đã tìm thấy Part 'RushNew'!")
-            print("OnSpawned: Vị trí hiện tại của 'RushNew':", rushNewPart.Position)
-            if rushNewPart.Anchored then
-                warn("OnSpawned: 'RushNew' Part đang bị Anchored! Teleport sẽ không hoạt động. Hãy đảm bảo nó không Anchored.")
-                -- Uncomment dòng dưới nếu bạn muốn script tự động bỏ Anchored:
-                -- rushNewPart.Anchored = false
-            end
-        else
-            warn("OnSpawned: KHÔNG THỂ TÌM THẤY Part tên 'RushNew' trong Model A-60 hoặc nó không phải là BasePart. Teleport sẽ không hoạt động.")
-            rushNewPart = nil -- Đặt lại về nil nếu không tìm thấy hoặc không đúng loại
-        end
-    else
-        warn("OnSpawned: KHÔNG THỂ LẤY ĐƯỢC Model A-60 sau khi sinh trong " .. MAX_FIND_TIME .. " giây. Teleport sẽ không hoạt động.")
-    end
+
+
+
+
 end)
 
 -- Các callback khác giữ nguyên
