@@ -1,7 +1,7 @@
----====== Tải Spawner ======---
+---====== Load Spawner ======---
 local spawner = loadstring(game:HttpGet("https://raw.githubusercontent.com/RegularVynixu/Utilities/main/Doors/Entity%20Spawner/V2/Source.lua"))()
 
----====== Các Dịch Vụ (Services) ======---
+---====== Services ======---
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local TweenService = game:GetService("TweenService")
@@ -9,23 +9,20 @@ local Lighting = game:GetService("Lighting")
 local Debris = game:GetService("Debris")
 local UserInputService = game:GetService("UserInputService")
 
----====== Tham Chiếu Người Chơi và Camera ======---
+---====== Player and Camera References ======---
 local LocalPlayer = Players.LocalPlayer
 local Character = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
 local HumanoidRootPart = Character:WaitForChild("HumanoidRootPart")
 local Camera = workspace.CurrentCamera
 
----====== Biến Trạng Thái (State Variables) ======---
-local entityModel -- Model "Deer god" của thực thể
+---====== State Variables ======---
+local entityModel -- Model "Deer god" của entity
 local entityPart -- Part "RushNew" bên trong entityModel, dùng cho vị trí và di chuyển
 local chaseConnection = nil -- Kết nối Heartbeat để đuổi theo
-local destroyTimer = nil -- Timer tự hủy Deer God (Biến này sẽ được dùng cho việc hủy dựa trên cửa)
+local destroyTimer = nil -- Timer tự hủy Deer God
 local MoveActive = true -- Biến kiểm soát việc di chuyển của Deer God
-local customSpeed = 23 -- Tốc độ Deer God đuổi theo người chơi
+local customSpeed = 36 -- Tốc độ Deer God đuổi theo người chơi
 local activationRange = 34 -- Khoảng cách kích hoạt Deer God đuổi theo
-local doorStopRange = 10 -- Khoảng cách mà Deer God dừng lại khi đến gần cửa
-local currentDoor = nil -- Biến để lưu trữ cửa mà Deer God đang đến gần
-local isDestroyingAtDoor = false -- Biến để tránh kích hoạt lại việc hủy
 
 -- Biến lưu trữ trạng thái ánh sáng ban đầu
 local originalTintColor
@@ -44,7 +41,7 @@ if not colorCorrection then
     colorCorrection.Parent = Lighting
 end
 
----====== Tạo Thực Thể (Deer God) ======---
+---====== Create Entity (Deer God) ======---
 local entity = spawner.Create({
     Entity = {
         Name = "Deer god",
@@ -63,7 +60,7 @@ local entity = spawner.Create({
         Values = {1.5, 20, 0.1, 1}
     },
     Movement = {
-        Speed = 23, -- Đặt một giá trị dương nhỏ để tránh lỗi "invalid number"
+        Speed = 36, -- Đặt một giá trị dương nhỏ để tránh lỗi "invalid number"
         Delay = 0,
         Reversed = false
     },
@@ -77,13 +74,13 @@ local entity = spawner.Create({
     }
 })
 
----====== Hàm Hỗ Trợ cho Âm Thanh Tùy Chỉnh (Tùy chọn: chỉ dùng nếu có exploit) ======---
+---====== Helper Functions for Custom Sound (Tùy chọn: chỉ dùng nếu có exploit) ======---
 function GitAud(soundgit, filename)
     if type(getcustomasset) == "function" or type(getsynasset) == "function" then
         writefile(filename..".mp3", game:HttpGet(soundgit))
         return (getcustomasset or getsynasset)(filename..".mp3")
     else
-        warn("Không thể tải âm thanh từ GitHub: getcustomasset/getsynasset không khả dụng. Vui lòng tải âm thanh lên Roblox và sử dụng ID Asset của nó.")
+        warn("Cannot load sound from GitHub: getcustomasset/getsynasset not available. Please upload sound to Roblox and use its Asset ID.")
         return ""
     end
 end
@@ -99,9 +96,7 @@ function CustomGitSound(soundlink, vol, filename)
     return S
 end
 
----====== Hàm Jumpscare ======---
-
--- Hàm này sẽ được gọi sau khi hiệu ứng nhiễu và khóa camera hoàn tất
+---====== Jumpscare Functions ======---
 local function executeRealJumpscare()
     if inputConn1 then inputConn1:Disconnect(); inputConn1 = nil end
     if inputConn2 then inputConn2:Disconnect(); inputConn2 = nil end
@@ -119,26 +114,19 @@ local function executeRealJumpscare()
     jumpscareImg.ZIndex = 10
 
     local jumpscareSound = Instance.new("Sound", workspace)
-    jumpscareSound.SoundId = "rbxassetid://6567183465" -- Âm thanh jumpscare đầu tiên
+    jumpscareSound.SoundId = "rbxassetid://6567183465" -- Âm thanh jumpscare đầu tiên (chắc là tiếng Deer God)
     jumpscareSound.Volume = 3
     jumpscareSound:Play()
     activeSounds[jumpscareSound] = true
 
-    -- Deer God xuất hiện mờ và rõ dần (giống video)
+    -- Deer God xuất hiện mờ và rõ dần (như trong video)
     TweenService:Create(jumpscareImg, TweenInfo.new(0.1), {ImageTransparency = 0}):Play()
-    -- Giữ cho Deer God hiển thị một lúc trước khi chuyển sang ảnh khác
-    task.wait(0.5) -- Thời gian hiển thị của ảnh Deer God ban đầu
+    
+    -- Giữ ảnh Deer God rõ trong một thời gian ngắn trước khi chuyển đổi
+    task.wait(0.5) -- Thời gian hiển thị của ảnh Deer God ban đầu (đã rõ)
 
-    -- Hiệu ứng màu sắc và độ tương phản khi jumpscare
-    colorCorrection.TintColor = Color3.fromRGB(250, 0, 0)
-    colorCorrection.Contrast = 10
-    TweenService:Create(colorCorrection, TweenInfo.new(0.25), {Contrast = 0}):Play()
-    TweenService:Create(colorCorrection, TweenInfo.new(0.5), {TintColor = originalTintColor}):Play() -- Màu sắc trở lại bình thường
-
-    task.wait(1.0) -- Đợi thêm một chút trước khi chuyển ảnh, tổng thời gian ảnh Deer God khoảng 1.5s (0.5+1.0)
-
-    -- Chuyển sang ảnh thứ hai (Hộp sọ/Khuôn mặt ghê rợn)
-    jumpscareImg.ImageTransparency = 1 -- Làm mờ ảnh Deer God
+    -- Chuyển sang ảnh thứ hai (Hộp sọ/Khuôn mặt ghê rợn) một cách đột ngột hơn
+    jumpscareImg.ImageTransparency = 0 -- Đảm bảo ảnh Deer God vẫn còn rõ trước khi thay đổi
     jumpscareImg.Image = "rbxassetid://12331751893" -- Ảnh hộp sọ/khuôn mặt ghê rợn
     jumpscareImg.ZIndex = 12 -- Đảm bảo ảnh này ở trên cùng
 
@@ -147,9 +135,18 @@ local function executeRealJumpscare()
     skullSound.Volume = 2
     skullSound:Play()
     activeSounds[skullSound] = true
+    
+    -- Không cần tween rõ dần cho ảnh thứ 2 nếu muốn đột ngột như video
+    -- Chỉ cần giữ ảnh thứ 2 hiển thị một thời gian
+    task.wait(1.5) -- Thời gian hiển thị của ảnh thứ hai (hộp sọ)
 
-    TweenService:Create(jumpscareImg, TweenInfo.new(0.3), {ImageTransparency = 0}):Play() -- Ảnh thứ hai hiện rõ dần
-    task.wait(1.5) -- Thời gian hiển thị của ảnh thứ hai
+    -- Hiệu ứng màu sắc và độ tương phản khi jumpscare
+    colorCorrection.TintColor = Color3.fromRGB(250, 0, 0)
+    colorCorrection.Contrast = 10
+    TweenService:Create(colorCorrection, TweenInfo.new(0.25), {Contrast = 0}):Play()
+    TweenService:Create(colorCorrection, TweenInfo.new(0.5), {TintColor = originalTintColor}):Play() -- Màu sắc trở lại bình thường
+
+    task.wait(0.5) -- Đợi một chút sau hiệu ứng màu
 
     TweenService:Create(jumpscareImg, TweenInfo.new(0.5), {ImageTransparency = 1}):Play().Completed:Wait() -- Làm mờ ảnh thứ hai và đợi hoàn tất
 
@@ -188,7 +185,6 @@ local function executeRealJumpscare()
     print("Jumpscare đã kết thúc và trạng thái người chơi đã được khôi phục.")
 end
 
--- Hàm này thiết lập môi trường cho jumpscare (khóa người chơi, camera, hiệu ứng nhiễu)
 local function doJumpscareWithEffect()
     if isJumpscareActive then return end
     isJumpscareActive = true
@@ -213,6 +209,7 @@ local function doJumpscareWithEffect()
     if cameraConn then cameraConn:Disconnect() end
     cameraConn = RunService.RenderStepped:Connect(function()
         if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Head") and entityPart and entityModel and entityModel.Parent then
+            -- Giữ camera hướng vào đầu người chơi để tạo cảm giác bị bất ngờ
             Camera.CFrame = CFrame.new(LocalPlayer.Character.Head.Position, entityPart.Position)
         else
             warn("Không thể khóa camera: entityPart, đầu người chơi hoặc entityModel không tồn tại.")
@@ -255,86 +252,15 @@ local function doJumpscareWithEffect()
 
     TweenService:Create(Lighting, TweenInfo.new(0.5), {Brightness = currentBrightness}):Play() -- Khôi phục độ sáng
 
-    -- Hiệu ứng màu sắc ban đầu trước khi jumpscare chính thức
     colorCorrection.TintColor = Color3.fromRGB(250, 0, 0)
     colorCorrection.Contrast = 0
 
-    task.wait(0.5) -- Đợi một chút trước khi gọi jumpscare chính thức
+    task.wait(0.1) -- Giảm thời gian chờ này để jumpscare chính đến nhanh hơn sau khi static kết thúc
 
     executeRealJumpscare() -- Gọi jumpscare chính thức sau khi hiệu ứng nhiễu kết thúc
 end
 
----====== Hàm Phát Hiện Cửa và Hủy Deer God ======---
-local function DoorDetection()
-    if not entityModel or not entityModel.PrimaryPart or not MoveActive or isDestroyingAtDoor then return end
-
-    -- **Đây là nơi bạn cần điều chỉnh để tìm các đối tượng cửa của mình.**
-    -- Ví dụ: Nếu cửa của bạn nằm trong thư mục 'workspace.Rooms.Room1.Door'
-    -- Bạn sẽ cần một vòng lặp hoặc cách để lấy tất cả các cửa trong game.
-    -- Để đơn giản hóa, tôi giả định có một Part tên là "DoorPart" trong Workspace.
-    -- Bạn CẦN thay đổi dòng này để phù hợp với cấu trúc game của bạn!
-    local doors = {} -- Một bảng để chứa tất cả các phần cửa
-    for _, obj in ipairs(workspace:GetDescendants()) do
-        -- Ví dụ: Nếu cửa của bạn có tên "Door" hoặc là một phần của Model tên "Doors"
-        if obj:IsA("BasePart") and obj.Name:find("Door") and obj.Parent ~= entityModel then
-            table.insert(doors, obj)
-        end
-        -- Hoặc nếu bạn có một thư mục chứa tất cả các cửa, ví dụ: workspace.GameDoors
-        -- if obj:IsA("BasePart") and obj.Parent and obj.Parent.Name == "GameDoors" then
-        --     table.insert(doors, obj)
-        -- end
-    end
-
-    local closestDoor = nil
-    local minDistanceToDoor = math.huge
-
-    for _, doorPart in ipairs(doors) do
-        local distanceToDoor = (entityModel.PrimaryPart.Position - doorPart.Position).Magnitude
-        if distanceToDoor < minDistanceToDoor then
-            minDistanceToDoor = distanceToDoor
-            closestDoor = doorPart
-        end
-    end
-
-    if closestDoor and minDistanceToDoor <= doorStopRange then
-        if currentDoor ~= closestDoor then
-            print("Deer God đã đến gần cửa: " .. closestDoor.Name .. ". Dừng di chuyển và bắt đầu đếm ngược hủy.")
-            currentDoor = closestDoor
-            MoveActive = false -- Dừng di chuyển
-            isDestroyingAtDoor = true
-
-            if chaseConnection then
-                chaseConnection:Disconnect()
-                chaseConnection = nil
-            end
-
-            if destroyTimer then task.cancel(destroyTimer) end
-            destroyTimer = task.delay(1.2, function() -- Đợi 1.2 giây
-                if entityModel and entityModel.PrimaryPart then
-                    print("Deer God tự hủy sau khi đến cửa.")
-                    entityModel:SetPrimaryPartCFrame(entityModel.PrimaryPart.CFrame * CFrame.new(0, -100, 0)) -- Di chuyển xuống dưới đất
-                end
-                task.wait(0.5) -- Đợi một chút để model di chuyển xuống
-                entity:Despawn() -- Hủy thực thể
-                isDestroyingAtDoor = false
-                currentDoor = nil
-            end)
-        end
-    elseif currentDoor then
-        -- Nếu Deer God đã rời xa cửa mà nó đang đếm ngược để hủy
-        print("Deer God đã rời xa cửa. Hủy bỏ đếm ngược hủy cửa.")
-        if destroyTimer then
-            task.cancel(destroyTimer)
-            destroyTimer = nil
-        end
-        MoveActive = true -- Cho phép di chuyển lại
-        currentDoor = nil
-        isDestroyingAtDoor = false
-    end
-end
-
-
----====== Callbacks của Thực Thể ======---
+---====== Entity Callbacks ======---
 
 entity:SetCallback("OnSpawned", function()
     print("Thực thể đã xuất hiện (spawn)")
@@ -382,28 +308,34 @@ entity:SetCallback("OnSpawned", function()
     TweenService:Create(colorCorrection, TweenInfo.new(5), {TintColor = Color3.fromRGB(250, 0, 0)}):Play()
 
     MoveActive = true
-    isDestroyingAtDoor = false -- Đảm bảo reset trạng thái khi spawn
-    currentDoor = nil
-
     if chaseConnection then chaseConnection:Disconnect() end
     chaseConnection = RunService.Heartbeat:Connect(function(dt)
         if not MoveActive or not entityModel or not entityModel.PrimaryPart or not HumanoidRootPart or not HumanoidRootPart.Parent then return end
         
-        -- Gọi hàm kiểm tra cửa trong mỗi frame Heartbeat
-        DoorDetection()
+        local pos = entityModel.PrimaryPart.Position
+        local target = HumanoidRootPart.Position
+        local distance = (target - pos).Magnitude
 
-        if MoveActive then -- Chỉ di chuyển nếu MoveActive là true
-            local pos = entityModel.PrimaryPart.Position
-            local target = HumanoidRootPart.Position
-            local distance = (target - pos).Magnitude
-
-            if distance <= activationRange then -- Chỉ đuổi theo nếu trong phạm vi kích hoạt
-                local dir = (target - pos).Unit
-                local moveVec = dir * customSpeed * dt
-                local newCFrame = CFrame.new(pos + moveVec, target)
-                entityModel:SetPrimaryPartCFrame(newCFrame)
-            end
+        if distance <= activationRange then -- Chỉ đuổi theo nếu trong phạm vi kích hoạt
+            local dir = (target - pos).Unit
+            local moveVec = dir * customSpeed * dt
+            local newCFrame = CFrame.new(pos + moveVec, target)
+            entityModel:SetPrimaryPartCFrame(newCFrame)
+        else
+            -- Nếu ngoài phạm vi, Deer God đứng yên
         end
+    end)
+
+    if destroyTimer then task.cancel(destroyTimer) end
+    destroyTimer = task.delay(math.random(13, 15), function()
+        print("Deer God self-destruct timer activated. Despawning regardless of proximity.")
+        MoveActive = false -- Dừng di chuyển trước khi biến mất
+        task.wait(0.5) -- Đợi một chút để tạo hiệu ứng dừng
+        if entityModel and entityModel.PrimaryPart then
+            entityModel:SetPrimaryPartCFrame(entityModel.PrimaryPart.CFrame * CFrame.new(0, -100, 0)) -- Di chuyển xuống dưới đất
+        end
+        task.wait(0) -- Đợi một frame để CFrame cập nhật
+        entity:Despawn() -- Hủy thực thể
     end)
 
     local spawnedRushNew = entityModel:FindFirstChild("RushNew")
@@ -417,9 +349,9 @@ entity:SetCallback("OnSpawned", function()
                     stats["Player_"..LocalPlayer.Name].Total.DeathCause.Value = "Deer God"
                 end
             end
-        })
+        end)
     else
-        warn("Model Deer God vừa spawn không chứa 'RushNew' cho sự kiện Touched!")
+        warn("Spawned Deer God model does not contain 'RushNew' for Touched event!")
     end
 end)
 
@@ -473,8 +405,6 @@ entity:SetCallback("OnDespawning", function()
         end
         print("Thực thể đã được bỏ neo trước khi biến mất.")
     end
-    isDestroyingAtDoor = false -- Reset trạng thái hủy khi thực thể biến mất
-    currentDoor = nil
 end)
 
 entity:SetCallback("OnDespawned", function()
@@ -482,7 +412,7 @@ entity:SetCallback("OnDespawned", function()
     local cue2 = Instance.new("Sound")
     cue2.Parent = game.Workspace
     cue2.Name = "Spawn"
-    cue2.SoundId = "rbxassetid://000000" -- Hãy thay đổi ID âm thanh này nếu bạn muốn một âm thanh đặc biệt
+    cue2.SoundId = "rbxassetid://000000"
     cue2.Volume = 9999
     cue2.PlaybackSpeed = 1
     cue2:Play()
@@ -504,5 +434,5 @@ LocalPlayer.CharacterAdded:Connect(function(char)
     HumanoidRootPart = char:WaitForChild("HumanoidRootPart")
 end)
 
----====== Chạy Thực Thể ======---
+---====== Run Entity ======---
 entity:Run()
