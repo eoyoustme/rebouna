@@ -87,7 +87,7 @@ entity:SetCallback("OnSpawned", function()
 -- Get a reference to the object and its Attachment in the Workspace
 local part = workspace:WaitForChild("A60")
 local object = part:WaitForChild("RushNew") -- Replace "MyObjectName" with the name of your object
-local attachment = object:WaitForChild("Main")  -- Get the Attachment attached to the object
+local attachment = object:WaitForChild("ImageFace")  -- Get the Attachment attached to the object
 local e = attachment:WaitForChild("Face")
 
 object.CanCollide = false
