@@ -27,7 +27,7 @@ local entity = spawner.Create({
 		Values = {1.5, 20, 0.1, 1} -- Magnitude, Roughness, FadeIn, FadeOut
 	},
 	Movement = {
-		Speed = 36,
+		Speed = 23,
 		Delay = 0,
 		Reversed = false
 	},
@@ -163,7 +163,7 @@ local initialFaceTransparency = Face.ImageTransparency
 local totalJumpscareDuration = 1.2 -- Total duration before GUI is destroyed
 local zoomInDuration = 1 -- Time it takes for the image to zoom from initial to full screen
 -- Removed choke-related parameters: chokeCycleSpeed, chokeMagnitude
-local rotationMagnitude = 5 -- How much the image tilts left/right in degrees (e.g., 5 degrees)
+local rotationMagnitude = 10 -- How much the image tilts left/right in degrees (e.g., 5 degrees)
 local rotationSpeed = 0.0001-- How fast the rotation oscillates (smaller value = faster oscillation)
 
 local startTime = tick() -- Record the exact start time of the jumpscare animation
