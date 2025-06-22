@@ -21,8 +21,8 @@ local entityPart -- Part "RushNew" bên trong entityModel, dùng cho vị trí v
 local chaseConnection = nil -- Kết nối Heartbeat để đuổi theo
 local destroyTimer = nil -- Timer tự hủy Deer God
 local MoveActive = true -- Biến kiểm soát việc di chuyển của Deer God
-local customSpeed = 23 -- Tốc độ Deer God đuổi theo người chơi
-local activationRange = 35 -- **Khoảng cách kích hoạt Deer God đuổi theo**
+local customSpeed = 17 -- Tốc độ Deer God đuổi theo người chơi
+local activationRange = 17 -- **Khoảng cách kích hoạt Deer God đuổi theo**
 
 -- Biến lưu trữ trạng thái ánh sáng ban đầu
 local originalTintColor
@@ -269,17 +269,17 @@ entity:SetCallback("OnSpawned", function()
         entityModel.PrimaryPart = entityPart
         print("DeerGod.PrimaryPart set to: " .. entityModel.PrimaryPart.Name)
 
-        -- --- ĐÂY LÀ PHẦN ĐÃ ĐƯỢC THAY ĐỔI ---
-        -- Thiết lập vị trí của Deer God là CFrame của chính Spawner.
-        -- Biến 'spawner' đã được load từ đầu script, và nó mang thông tin vị trí của spawner trong thế giới game.
+        -- --- ĐOẠN CODE ĐÃ ĐƯỢC CHỈNH SỬA ĐỂ SPAWN CỐ ĐỊNH ---
+        -- Đảm bảo Deer God spawn tại vị trí của Entity Spawner đã được đặt.
         if spawner and spawner.CFrame then
             entityModel:SetPrimaryPartCFrame(spawner.CFrame)
             print("Deer God spawned at the Spawner's CFrame.")
         else
-            warn("Could not get Spawner's CFrame. Spawning 50 studs in front of player as fallback.")
+            warn("Spawner's CFrame not found or spawner is nil. Spawning 50 studs in front of player as fallback.")
+            -- Fallback to spawning in front of the player if spawner CFrame isn't available
             entityModel:SetPrimaryPartCFrame(HumanoidRootPart.CFrame * CFrame.new(0, 0, 50))
         end
-        -- --- KẾT THÚC PHẦN THAY ĐỔI ---
+        -- --- KẾT THÚC ĐOẠN ĐÃ CHỈNH SỬA ---
 
         coroutine.wrap(function()
             for i, v in ipairs(entityModel:GetDescendants()) do
