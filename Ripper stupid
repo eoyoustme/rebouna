@@ -1,5 +1,5 @@
 spawn(function() -- ripper
-while task.wait(175) do
+while task.wait(15) do
 if workspace:FindFirstChild("SeekMovingNewClone") 
         or workspace.CurrentRooms:FindFirstChild("50") 
         or workspace.CurrentRooms:FindFirstChild("100") then
