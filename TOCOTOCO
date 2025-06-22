@@ -1,455 +1,523 @@
----====== Load Spawner ======---
-local spawner = loadstring(game:HttpGet("https://raw.githubusercontent.com/RegularVynixu/Utilities/main/Doors/Entity%20Spawner/V2/Source.lua"))()
-
----====== Services ======---
-local Players = game:GetService("Players")
-local RunService = game:GetService("RunService")
-local TweenService = game:GetService("TweenService")
-local Lighting = game:GetService("Lighting")
-local Debris = game:GetService("Debris")
-local UserInputService = game:GetService("UserInputService")
-
----====== Player and Camera References ======---
-local LocalPlayer = Players.LocalPlayer
-local Character = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
-local HumanoidRootPart = Character:WaitForChild("HumanoidRootPart")
-local Camera = workspace.CurrentCamera
-
----====== State Variables ======---
-local entityModel -- Model "Deer god" của entity
-local entityPart -- Part "RushNew" bên trong entityModel, dùng cho vị trí và di chuyển
-local chaseConnection = nil -- Kết nối Heartbeat để đuổi theo
-local destroyTimer = nil -- Timer tự hủy Deer God
-local MoveActive = true -- Biến kiểm soát việc di chuyển của Deer God
-local customSpeed = 36 -- Tốc độ Deer God đuổi theo người chơi
-local activationRange = 34 -- Khoảng cách kích hoạt Deer God đuổi theo
-
--- Biến lưu trữ trạng thái ánh sáng ban đầu
-local originalTintColor
-local originalContrast
-
--- Biến cho Jumpscare
-local isJumpscareActive = false
-local cameraConn, inputConn1, inputConn2
-local activeSounds = {}
-
----====== Tạo ColorCorrectionEffect nếu chưa có ======---
-local colorCorrection = Lighting:FindFirstChildOfClass("ColorCorrectionEffect")
-if not colorCorrection then
-    colorCorrection = Instance.new("ColorCorrectionEffect")
-    colorCorrection.Name = "MainColorCorrection"
-    colorCorrection.Parent = Lighting
-end
-
----====== Create Entity (Deer God) ======---
-local entity = spawner.Create({
-    Entity = {
-        Name = "Deer god",
-        Asset = "rbxassetid://75877292391257",
-        HeightOffset = 0
-    },
-    Lights = {
-        Flicker = { Enabled = true, Duration = 5 },
-        Shatter = true,
-        Repair = false
-    },
-    Earthquake = { Enabled = false },
-    CameraShake = {
-        Enabled = true,
-        Range = 100,
-        Values = {1.5, 20, 0.1, 1}
-    },
-    Movement = {
-        Speed = 36, -- Đặt một giá trị dương nhỏ để tránh lỗi "invalid number"
-        Delay = 0,
-        Reversed = false
-    },
-    Rebounding = { Enabled = false },
-    Damage = { Enabled = true, Range = 1, Amount = 125 },
-    Crucifixion = { Enabled = true, Range = 40, Resist = false, Break = true },
-    Death = {
-        Type = "Guiding",
-        Hints = {"ME GO PLAY SKIBIDI TOILET", "GOODBYE", "STUPID YOU DIE BY A WEAK ENTITY", "HERE IS NOT FOR NOOB"},
-        Cause = ""
-    }
-})
-
----====== Helper Functions for Custom Sound (Tùy chọn: chỉ dùng nếu có exploit) ======---
-function GitAud(soundgit, filename)
-    if type(getcustomasset) == "function" or type(getsynasset) == "function" then
-        writefile(filename..".mp3", game:HttpGet(soundgit))
-        return (getcustomasset or getsynasset)(filename..".mp3")
-    else
-        warn("Cannot load sound from GitHub: getcustomasset/getsynasset not available. Please upload sound to Roblox and use its Asset ID.")
-        return ""
-    end
-end
-
-function CustomGitSound(soundlink, vol, filename)
-    local S = Instance.new("Sound")
-    S.SoundId = GitAud(soundlink, filename)
-    if S.SoundId == "" then return nil end
-    S.Volume = vol
-    S.Looped = false
-    S:Play()
-    Debris:AddItem(S, S.TimeLength + 1)
-    return S
-end
-
----====== Jumpscare Functions ======---
-
-local function executeRealJumpscare()
-    print("DEBUG: executeRealJumpscare() được gọi.")
-    if inputConn1 then inputConn1:Disconnect(); inputConn1 = nil end
-    if inputConn2 then inputConn2:Disconnect(); inputConn2 = nil end
-
-    local jumpscareGui = Instance.new("ScreenGui", LocalPlayer:WaitForChild("PlayerGui"))
-    jumpscareGui.Name = "JumpscareGUI"
-    jumpscareGui.IgnoreGuiInset = true
-    jumpscareGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
-
-    local jumpscareImg = Instance.new("ImageLabel", jumpscareGui)
-    jumpscareImg.Size = UDim2.new(1, 0, 1, 0)
-    jumpscareImg.BackgroundTransparency = 1
-    jumpscareImg.ImageTransparency = 1 -- Bắt đầu với hình ảnh trong suốt
-    jumpscareImg.Image = "rbxassetid://11826279208" -- Ảnh jumpscare Deer God ban đầu
-    jumpscareImg.ZIndex = 10
-
-    local jumpscareSound = Instance.new("Sound", workspace)
-    jumpscareSound.SoundId = "rbxassetid://6567183465" -- Âm thanh jumpscare đầu tiên (chắc là tiếng Deer God)
-    jumpscareSound.Volume = 3
-    jumpscareSound:Play()
-    activeSounds[jumpscareSound] = true
-
-    -- Deer God xuất hiện mờ và rõ dần (như trong video)
-    TweenService:Create(jumpscareImg, TweenInfo.new(0.1), {ImageTransparency = 0}):Play()
-    
-    task.wait(0.5) -- Thời gian hiển thị của ảnh Deer God ban đầu (đã rõ)
-
-    -- Chuyển sang ảnh thứ hai (Hộp sọ/Khuôn mặt ghê rợn) một cách đột ngột hơn
-    -- Không cần tween rõ dần cho ảnh thứ 2 nếu muốn đột ngột như video
-    jumpscareImg.Image = "rbxassetid://12331751893" -- Ảnh hộp sọ/khuôn mặt ghê rợn
-    jumpscareImg.ZIndex = 12 -- Đảm bảo ảnh này ở trên cùng
-    jumpscareImg.ImageTransparency = 0 -- Đảm bảo ảnh thứ hai hiện ra ngay lập tức
-
-    local skullSound = Instance.new("Sound", workspace)
-    skullSound.SoundId = "rbxassetid://18459521002" -- Âm thanh hộp sọ/khuôn mặt
-    skullSound.Volume = 2
-    skullSound:Play()
-    activeSounds[skullSound] = true
-    
-    task.wait(1.5) -- Thời gian hiển thị của ảnh thứ hai (hộp sọ)
-
-    -- Hiệu ứng màu sắc và độ tương phản khi jumpscare
-    colorCorrection.TintColor = Color3.fromRGB(250, 0, 0)
-    colorCorrection.Contrast = 10
-    TweenService:Create(colorCorrection, TweenInfo.new(0.25), {Contrast = 0}):Play()
-    TweenService:Create(colorCorrection, TweenInfo.new(0.5), {TintColor = originalTintColor}):Play() -- Màu sắc trở lại bình thường
-
-    task.wait(0.5) -- Đợi một chút sau hiệu ứng màu
-
-    TweenService:Create(jumpscareImg, TweenInfo.new(0.5), {ImageTransparency = 1}):Play().Completed:Wait() -- Làm mờ ảnh thứ hai và đợi hoàn tất
-
-    -- Khôi phục trạng thái camera và người chơi
-    if cameraConn then cameraConn:Disconnect(); cameraConn = nil end
-    Camera.CameraType = Enum.CameraType.Custom
-    isJumpscareActive = false
-    jumpscareGui:Destroy()
-
-    -- Dừng và dọn dẹp tất cả các âm thanh jumpscare đang hoạt động
-    for sound, _ in pairs(activeSounds) do
-        if sound and sound.Playing then
-            sound:Stop()
+spawn(function() --oh dear god man
+while task.wait(350) do
+        if workspace.CurrentRooms:FindFirstChild("50") 
+        or workspace.CurrentRooms:FindFirstChild("100") 
+or game.ReplicatedStorage.GameData.LatestRoom.Value == 6 then
+            repeat task.wait() until not workspace.CurrentRooms:FindFirstChild("50") 
+                and not workspace.CurrentRooms:FindFirstChild("100")
+and not game.ReplicatedStorage.GameData.LatestRoom.Value == 6
         end
-        if sound and sound.Parent then
-            sound:Destroy()
-        end
-    end
-    activeSounds = {}
+      local gotBadge = false
+local hit = false
+local new = false
+local huh = false
+local found = false
+            local CameraShaker = require(game.ReplicatedStorage.CameraShaker)
+local CameraShaker = require(game.ReplicatedStorage.CameraShaker)
+local camara = game.Workspace.CurrentCamera
 
-    local char = LocalPlayer.Character
-    if char then
-        local hum = char:FindFirstChild("Humanoid")
-        if hum then
-            hum.WalkSpeed = 16
-            hum.JumpPower = 50
-            hum.AutoRotate = true
-            hum.PlatformStand = false
-            for _, part in ipairs(char:GetDescendants()) do
-                if part:IsA("BasePart") then
-                    part.Anchored = false
+local camShake = CameraShaker.new(Enum.RenderPriority.Camera.Value, function(cf)
+    camara.CFrame = camara.CFrame * cf
+end)
+
+
+camShake:Start()
+camShake:Shake(CameraShaker.Presets.Earthquake)
+ local function GetGitSound(GithubSnd, SoundName)
+
+                local url = GithubSnd
+
+                if not isfile(SoundName .. ".mp3") then
+
+                    writefile(SoundName .. ".mp3", game:HttpGet(url))
+
                 end
+
+                local sound = Instance.new("Sound")
+
+                sound.SoundId = (getcustomasset or getsynasset)(SoundName .. ".mp3")
+
+                return sound
+
             end
+
+  local Players = game:GetService("Players")
+
+
+
+local player = Players.LocalPlayer
+
+local character = player.Character or player.CharacterAdded:Wait()
+
+local HumanoidRootPart = character:WaitForChild("HumanoidRootPart")
+
+
+local deer = game:GetObjects("rbxassetid://86055776714285")[1]
+deer.Parent = workspace
+deer.PrimaryPart = deer:FindFirstChildWhichIsA("BasePart")
+deer.PrimaryPart.Anchored = true
+deer.PrimaryPart.CanCollide = false
+deer.Name = "Deer"
+local ambush = deer.PrimaryPart
+
+task.spawn(function()
+        local Spawner = loadstring(game:HttpGet('https://raw.githubusercontent.com/MuhXd/DoorSuff/main/OtherSuff/DoorEntitySpawn%2BSource'))()
+
+        -- Create the entity
+        local entity = Spawner.createEntity({
+            CustomName = "node", -- Custom name of your entity
+            Model = "rbxassetid://83406552862223", -- Can be GitHub file or rbxassetid
+            Speed = 0, -- Percentage, 100 = default Rush speed
+            DelayTime = 0, -- Time before starting cycles (seconds)
+            HeightOffset = 0,
+            CanKill = false,
+            NoDieOnCrouching = false,
+            AntiCrucifix = true,
+            KillRange = 0,
+            OneRoom = false,
+            DieOnLook = false,
+            NoHiding = false,
+            BreakLights = true,
+            BackwardsMovement = false,
+            MovementDeath = {
+                false, -- Turned On?
+                '2', -- '1'= 'Instant Without Being Looked out' | '2' = 'With Being Looked At'
+            },
+            FlickerLights = {
+                true, -- Enabled/Disabled
+                10, -- Time (seconds)
+            },
+            Cycles = {
+                Min = 1,
+                Max = 1,
+                WaitTime = 1,
+            },
+            CamShake = {
+                true, -- Enabled/Disabled
+                {3.5, 20, 0.1, 1}, -- Shake values (don't change if you don't know)
+                100, -- Shake start distance (from Entity to you)
+            },
+            Jumpscare = {
+                false, -- Enabled/Disabled
+                {
+                    Type = "2", -- "Normal" or 1 | "Pop" or 2 | "endlessdoorsrebound" or "Rebound" or 3 | More coming Soon
+                    Image1 = "rbxassetid://10483855823", -- Image1 url
+                    Image2 = "rbxassetid://10483999903", -- Image2 url
+                    Shake = true,
+                    Sound1 = {
+                        "0", -- SoundId Link or Roblox ID
+                        { Volume = 5 }, -- Sound properties
+                    },
+                    Sound2 = {
+                        "0", -- SoundId Link or Roblox ID
+                        { Volume = 3 }, -- Sound properties
+                    },
+                    Flashing = {
+                        true, -- Enabled/Disabled
+                        Color3.fromRGB(255, 255, 255), -- Color
+                    },
+                    Tease = {
+                        true, -- Enabled/Disabled
+                        Min = 1,
+                        Max = 3,
+                    },
+                },
+            },
+            Color = 'GuidingLight', -- CuriousLight ( Yellow ) | GuidingLight ( Blue )
+            DiffrentMessages = false,
+            CustomDialog = {  
+                {"Claim has seen you.", "It will consume anyone on sight.", "It takes a bit to fully spawn in", "so you can use that to your advantage."}, -- Death Messages
+                {"Stop Dieing"},
+                {"Bruh", "Use what you have learned from Rush!"},
+                {"It seems like Template is causing quite the ruckus...", "Hide in a closet or bed as quickly as possible!"},
+                {"I have told You What to do", "YOU JUST HAVE A SKILL ISSUE"}
+            }
+        })
+
+        -----[[ Advanced Scripting ]]-----
+
+        entity.Debug.OnEntityMoving = function(Invincible, Hiding, plrCollisionPoint)
+            print("Invincible: " .. tostring(Invincible))
+            print("Player to Entity Collision (None hiding Point): " .. tostring(plrCollisionPoint))
+            print("Hiding: " .. tostring(Hiding))
         end
-    end
-    print("Jumpscare đã kết thúc và trạng thái người chơi đã được khôi phục.")
-end
 
-local function doJumpscareWithEffect()
-    print("DEBUG: doJumpscareWithEffect() được gọi.")
-    if isJumpscareActive then return end
-    isJumpscareActive = true
-
-    local char = LocalPlayer.Character
-    if char then
-        local hum = char:FindFirstChild("Humanoid")
-        if hum then
-            hum.WalkSpeed = 0
-            hum.JumpPower = 0
-            hum.AutoRotate = false
-            hum.PlatformStand = true
-            for _, part in ipairs(char:GetDescendants()) do
-                if part:IsA("BasePart") then
-                    part.Anchored = true
-                end
-            end
+        entity.Debug.OnEntitySpawned = function()
+            print("Entity has spawned:")
+            game:GetService("RunService").RenderStepped:Connect(function()
+                      workspace.node.Part.CFrame = ambush.CFrame
+             end)
         end
-    end
 
-    Camera.CameraType = Enum.CameraType.Scriptable
-    if cameraConn then cameraConn:Disconnect() end
-    cameraConn = RunService.RenderStepped:Connect(function()
-        if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Head") and entityPart and entityModel and entityModel.Parent then
-            Camera.CFrame = CFrame.new(LocalPlayer.Character.Head.Position, entityPart.Position)
-        else
-            warn("Không thể khóa camera: entityPart, đầu người chơi hoặc entityModel không tồn tại.")
-            if cameraConn then cameraConn:Disconnect() end
+        entity.Debug.OnEntityDespawned = function()
+            print("Entity has despawned:")
         end
-    end)
-    print("Camera đã được khóa vào entity ngay khi người chơi bị đóng băng.")
 
-    if inputConn1 then inputConn1:Disconnect(); inputConn1 = nil end
-    if inputConn2 then inputConn2:Disconnect(); inputConn2 = nil end
-    inputConn1 = UserInputService.InputBegan:Connect(function() return Enum.ContextActionResult.Sink end)
-    inputConn2 = UserInputService.InputChanged:Connect(function() return Enum.ContextActionResult.Sink end)
-
-    local staticGui = Instance.new("ScreenGui", LocalPlayer:WaitForChild("PlayerGui"))
-    staticGui.Name = "StaticGUI"
-    local staticImg = Instance.new("ImageLabel", staticGui)
-    staticImg.Size = UDim2.new(1, 0, 1, 0)
-    staticImg.BackgroundTransparency = 1
-    staticImg.ImageTransparency = 0 -- Ảnh nhiễu hiện ngay lập tức
-    staticImg.Image = "rbxassetid://1568285513" -- Ảnh nhiễu static
-    staticImg.ZIndex = 11
-
-    local staticSound = Instance.new("Sound", workspace)
-    staticSound.SoundId = "rbxassetid://1845110821" -- Âm thanh nhiễu static
-    staticSound.Volume = 1
-    staticSound.Looped = true
-    staticSound:Play()
-    activeSounds[staticSound] = true
-
-    local currentBrightness = Lighting.Brightness
-    TweenService:Create(Lighting, TweenInfo.new(0.5), {Brightness = -1}):Play() -- Giảm độ sáng
-
-    task.wait(1.5) -- Thời gian hiển thị hiệu ứng nhiễu và âm thanh nhiễu
-
-    -- Kết thúc hiệu ứng nhiễu
-    staticImg.ImageTransparency = 1 -- Làm mờ ảnh nhiễu
-    if staticSound and staticSound.Playing then staticSound:Stop() end
-    staticSound:Destroy()
-    staticGui:Destroy()
-
-    TweenService:Create(Lighting, TweenInfo.new(0.5), {Brightness = currentBrightness}):Play() -- Khôi phục độ sáng
-
-    colorCorrection.TintColor = Color3.fromRGB(250, 0, 0)
-    colorCorrection.Contrast = 0
-
-    task.wait(0.1) -- Giảm thời gian chờ này để jumpscare chính đến nhanh hơn sau khi static kết thúc
-
-    executeRealJumpscare() -- Gọi jumpscare chính thức sau khi hiệu ứng nhiễu kết thúc
-end
-
----====== Entity Callbacks ======---
-
-entity:SetCallback("OnSpawned", function()
-    print("Thực thể đã xuất hiện (spawn)")
-    entityModel = entity.Model
-    entityModel.Parent = workspace
-
-    if entityModel then
-        entityPart = entityModel:FindFirstChild("RushNew")
-        if not entityPart then
-            warn("Model Deer God KHÔNG chứa part có tên 'RushNew'!")
-            entityPart = entityModel.PrimaryPart or entityModel:FindFirstChildOfClass("BasePart")
-            if not entityPart then
-                warn("Không tìm thấy 'RushNew' hoặc bất kỳ BasePart nào phù hợp cho Deer God! Thực thể có thể không di chuyển đúng.")
-                return
-            end
+        entity.Debug.OnEntityStartMoving = function()
+            print("Entity has started moving:")
         end
-        entityModel.PrimaryPart = entityPart
-        print("DeerGod.PrimaryPart đã được đặt thành: " .. entityModel.PrimaryPart.Name)
-    end
 
-    coroutine.wrap(function()
-        for i, v in ipairs(entityModel:GetDescendants()) do
-            if v.Name == "RushNew" then
-                pcall(function()
-                    if v:FindFirstChild("Breathing") then v.Breathing:Destroy() end
-                end)
-                pcall(function()
-                    if v:FindFirstChild("Footsteps") then v.Footsteps:Destroy() end
-                end)
-            end
+        entity.Debug.OnEntityFinishedRebound = function()
+            print("Entity has finished rebound:")
         end
-    end)()
 
-    local customSoundInstance = CustomGitSound("https://github.com/Tinkgy111/Bang/blob/main/followed.mp3?raw=true", 2, "DeerGod_Hostile")
-    if customSoundInstance then
-        customSoundInstance.Parent = entityModel
-    end
-
-    originalTintColor = colorCorrection.TintColor
-    originalContrast = colorCorrection.Contrast
-
-    colorCorrection.TintColor = Color3.fromRGB(255, 255, 255)
-    colorCorrection.Contrast = 10
-    TweenService:Create(colorCorrection, TweenInfo.new(2.5), {Contrast = 0}):Play()
-    TweenService:Create(colorCorrection, TweenInfo.new(5), {TintColor = Color3.fromRGB(250, 0, 0)}):Play()
-
-    MoveActive = true
-    if chaseConnection then chaseConnection:Disconnect() end
-    chaseConnection = RunService.Heartbeat:Connect(function(dt)
-        if not MoveActive or not entityModel or not entityModel.PrimaryPart or not HumanoidRootPart or not HumanoidRootPart.Parent then return end
-        
-        local pos = entityModel.PrimaryPart.Position
-        local target = HumanoidRootPart.Position
-        local distance = (target - pos).Magnitude
-
-        if distance <= activationRange then -- Chỉ đuổi theo nếu trong phạm vi kích hoạt
-            local dir = (target - pos).Unit
-            local moveVec = dir * customSpeed * dt
-            local newCFrame = CFrame.new(pos + moveVec, target)
-            entityModel:SetPrimaryPartCFrame(newCFrame)
-        else
-            -- Nếu ngoài phạm vi, Deer God đứng yên
+        entity.Debug.OnEntityEnteredRoom = function(entityTable, room)
+            print("Entity:", "has entered room:", room)
         end
-    end)
 
-    if destroyTimer then task.cancel(destroyTimer) end
-    destroyTimer = task.delay(math.random(13, 15), function()
-        print("Deer God self-destruct timer activated. Despawning regardless of proximity.")
-        MoveActive = false -- Dừng di chuyển trước khi biến mất
-        task.wait(0.5) -- Đợi một chút để tạo hiệu ứng dừng
-        if entityModel and entityModel.PrimaryPart then
-            entityModel:SetPrimaryPartCFrame(entityModel.PrimaryPart.CFrame * CFrame.new(0, -100, 0)) -- Di chuyển xuống dưới đất
+        entity.Debug.OnLookAtEntity = function()
+            print("Player has looked at entity:")
         end
-        task.wait(0) -- Đợi một frame để CFrame cập nhật
-        entity:Despawn() -- Hủy thực thể
-    end)
 
-    local spawnedRushNew = entityModel:FindFirstChild("RushNew")
-    if spawnedRushNew then
-        spawnedRushNew.Touched:Connect(function(hit)
-            local h = hit.Parent and hit.Parent:FindFirstChild("Humanoid")
-            if h and hit:IsDescendantOf(Character) then
-                print("DEBUG: Deer God chạm vào người chơi! Máu hiện tại: " .. h.Health)
-                h:TakeDamage(10)
-                -- Kiểm tra nếu người chơi chết hoặc sắp chết để kích hoạt jumpscare
-                if h.Health <= 0.1 and not isJumpscareActive then -- Sử dụng 0.1 để đảm bảo kích hoạt khi máu về 0 hoặc dưới 0
-                    print("DEBUG: Người chơi chết do Deer God. Kích hoạt Jumpscare!")
-                    doJumpscareWithEffect()
-                    -- Hủy bỏ Deer God ngay lập tức sau khi jumpscare được kích hoạt
-                    if entityModel and entityModel.Parent then
-                         entity:Despawn() -- Đảm bảo Deer God biến mất để không gây thêm lỗi
-                    end
-                end
-                
-                local stats = game:GetService("ReplicatedStorage").GameStats
-                if stats:FindFirstChild("Player_"..LocalPlayer.Name) then
-                    stats["Player_"..LocalPlayer.Name].Total.DeathCause.Value = "Deer God"
-                end
-            end
+        entity.Debug.OnDeath = function()
+            warn("Player has died.")
+        end
+
+        -- Run the created entity
+        Spawner.runEntity(entity)
         end)
-    else
-        warn("Spawned Deer God model does not contain 'RushNew' for Touched event!")
-    end
-end)
 
-entity:SetCallback("OnStartMoving", function()
-    print("Thực thể đã bắt đầu di chuyển (Lưu ý: Di chuyển được kiểm soát bởi Heartbeat, không phải logic mặc định của spawner).")
-end)
 
-entity:SetCallback("OnEnterRoom", function(room, firstTime)
-    if firstTime then
-        print("Thực thể đã vào phòng: ".. room.Name.. " lần đầu tiên")
-    else
-        print("Thực thể đã vào phòng: ".. room.Name.. " lần nữa")
-    end
-end)
 
-entity:SetCallback("OnLookAt", function(lineOfSight)
-    if lineOfSight then
-        print("Người chơi đang nhìn vào thực thể")
-    else
-        print("Góc nhìn của người chơi bị cản trở bởi vật gì đó")
-    end
-end)
-
-entity:SetCallback("OnRebounding", function(startOfRebound)
-    if startOfRebound then
-        print("Thực thể đã bắt đầu phản lực")
-    else
-        print("Thực thể đã kết thúc phản lực")
-    end
-end)
-
-entity:SetCallback("OnDespawning", function()
-    print("Thực thể đang biến mất (despawning)")
-    if chaseConnection then
-        chaseConnection:Disconnect()
-        chaseConnection = nil
-    end
-    if destroyTimer then
-        task.cancel(destroyTimer)
-        destroyTimer = nil
-    end
-
-    TweenService:Create(colorCorrection, TweenInfo.new(2.5), {Contrast = originalContrast}):Play()
-    TweenService:Create(colorCorrection, TweenInfo.new(5), {TintColor = originalTintColor}):Play()
-
-    if entityModel then
-        for _, part in ipairs(entityModel:GetDescendants()) do
-            if part:IsA("BasePart") then
-                part.Anchored = false
-            end
+task.spawn(function()
+while task.wait(1.5) do
+if gotBadge == true then
+   break
+end
+local origin = ambush.Position
+local direction = (HumanoidRootPart.Position - origin).Unit
+local ray = Ray.new(origin, direction * 5050)
+local cast = workspace:Raycast(ray.Origin, ray.Direction)
+if cast and cast.Instance.Parent == character then
+local look, onScreen = workspace.CurrentCamera:WorldToScreenPoint(ambush.Position)
+     if onScreen then
+        game.Players.LocalPlayer.Character.Humanoid:TakeDamage(8)
         end
-        print("Thực thể đã được bỏ neo trước khi biến mất.")
-    end
-end)
-
-entity:SetCallback("OnDespawned", function()
-    print("Thực thể đã biến mất (despawned)")
-    local cue2 = Instance.new("Sound")
-    cue2.Parent = game.Workspace
-    cue2.Name = "Spawn"
-    cue2.SoundId = "rbxassetid://000000" -- Hãy thay đổi ID âm thanh này nếu bạn muốn một âm thanh đặc biệt
-    cue2.Volume = 9999
-    cue2.PlaybackSpeed = 1
-    cue2:Play()
-    Debris:AddItem(cue2, cue2.TimeLength + 1)
-    task.wait(3)
-end)
-
--- Thay đổi logic này để jumpscare luôn kích hoạt khi người chơi chết bởi Deer God
-entity:SetCallback("OnDamagePlayer", function(newHealth)
-    print("DEBUG: OnDamagePlayer được gọi. Máu mới: " .. newHealth)
-    if newHealth <= 0.1 and not isJumpscareActive then -- Kiểm tra máu nhỏ hơn hoặc bằng 0.1 để bắt tất cả các trường hợp chết
-        print("DEBUG: Entity đã giết người chơi - Bắt đầu Jumpscare")
-        doJumpscareWithEffect()
-        -- Hủy bỏ Deer God ngay lập tức sau khi jumpscare được kích hoạt
-        if entityModel and entityModel.Parent then
-            entity:Despawn() -- Đảm bảo Deer God biến mất để không gây thêm lỗi hoặc tương tác
         end
-    else
-        print("DEBUG: Entity đã gây sát thương cho người chơi. Máu còn lại: " .. newHealth)
-    end
+end
 end)
 
-LocalPlayer.CharacterAdded:Connect(function(char)
-    Character = char
-    HumanoidRootPart = char:WaitForChild("HumanoidRootPart")
+task.spawn(function()
+while task.wait(0.5) do
+if hit == true then
+   break
+end
+local hitbox = 9
+local origin = ambush.Position
+local direction = (HumanoidRootPart.Position - origin).Unit
+
+local ray = Ray.new(origin, direction * hitbox)
+
+local result = workspace:Raycast(ray.Origin, ray.Direction)
+
+if result and result.Instance.Parent == character then
+found = true
+hit = true
+workspace.node:Destroy()
+    local player = game.Players.LocalPlayer
+local playergui = player:WaitForChild("PlayerGui")
+
+local screenGui = Instance.new("ScreenGui")
+screenGui.Parent = playergui
+screenGui.Name = "Screen Gui"
+screenGui.IgnoreGuiInset = true
+
+
+local stop = false
+local done = false
+
+local kill = Instance.new("Sound")
+kill.Parent = workspace
+kill.PlaybackSpeed = 3
+kill.SoundId = "rbxassetid://5263560896"
+kill.Name = "Dear god death sound chat"
+kill.Volume = 5
+kill.Looped = true
+
+
+
+local flange = Instance.new("FlangeSoundEffect")
+flange.Parent = kill
+flange.Depth = 1
+flange.Mix = 1
+flange.Rate = 0.2
+
+local trem = Instance.new("TremoloSoundEffect")
+trem.Parent = kill
+trem.Depth = 1
+trem.Duty = 0.94
+trem.Frequency = 20
+
+local pitch = Instance.new("PitchShiftSoundEffect")
+pitch.Parent = kill
+pitch.Octave = 0.5
+
+local distort = Instance.new("DistortionSoundEffect")
+distort.Parent = kill
+distort.Level = 0.98
+
+kill:Play()
+
+local Backgroun = Instance.new("ImageLabel")
+Backgroun.Parent = screenGui
+Backgroun.Size = UDim2.new(1, 0, 1, 0)
+Backgroun.ImageTransparency = 1
+Backgroun.BackgroundTransparency = 0
+Backgroun.BackgroundColor3 = Color3.new(0, 0, 0)
+Backgroun.Image = "rbxassetid://105983470581183"
+
+task.wait()
+
+local face = Instance.new("ImageLabel")
+face.Parent = screenGui
+face.AnchorPoint = Vector2.new(0.5, 0.5)
+face.Position = UDim2.new(0.5, 0, 0.589, 0)
+face.Size = UDim2.new(0, 860, 0, 860)
+face.Image = "rbxassetid://73683518024275"
+face.ImageTransparency = 0
+face.BackgroundTransparency = 1
+
+
+
+
+
+
+task.spawn(function()
+while task.wait() do
+if stop == true then
+    break
+end
+Backgroun.BackgroundTransparency = 0
+Backgroun.ImageTransparency = 1
+task.wait(0.1)
+Backgroun.BackgroundTransparency = 1
+Backgroun.ImageTransparency = 0
+end
 end)
 
----====== Run Entity ======---
-entity:Run()
+task.spawn(function()
+while task.wait() do
+if stop == true then
+    break
+end
+Backgroun.Image = "rbxassetid://131073231978514"
+task.wait(0.0589)
+Backgroun.Image = "rbxassetid://105841646930424"
+end
+end)
+
+task.spawn(function()
+while task.wait() do
+if stop == true then
+    break
+end
+face.Rotation = 2
+face.Image = "rbxassetid://122859819664215"
+task.wait(0.0589)
+face.Rotation = -2
+face.Image = "rbxassetid://84489429478798"
+task.wait(0.0589)
+face.Rotation = 2
+face.Image = "rbxassetid://73683518024275"
+task.wait(0.0589)
+face.Rotation = -2
+end
+end)
+
+
+
+task.wait()
+
+
+local text = Instance.new("ImageLabel")
+text.Parent = screenGui
+text.AnchorPoint = Vector2.new(0.5, 0.5)
+text.Position = UDim2.new(0.5, 0, 0.5, 0)
+text.Size = UDim2.new(0, 300, 0, 300)
+text.Image = "rbxassetid://117106082021449"
+text.ImageTransparency = 0
+text.BackgroundTransparency = 1
+
+task.spawn(function()
+while task.wait() do
+if stop == true then
+    break
+end
+text.Image = "rbxassetid://89229444931090"
+task.wait(0.0589)
+text.Image = "rbxassetid://117106082021449"
+end
+end)
+
+task.spawn(function()
+while task.wait() do
+if stop == true then
+    break
+end
+text.Position = UDim2.new(Random.new():NextNumber(0, 0.5), 0, Random.new():NextNumber(0, 0.6), 0)
+task.wait()
+text.Position = UDim2.new(Random.new():NextNumber(0, 0.5), 0, Random.new():NextNumber(0, 0.6), 0)
+end
+end)
+
+task.spawn(function()
+while task.wait() do
+if stop == true then
+     break
+end
+text.ImageTransparency = 0
+task.wait()
+text.ImageTransparency = 1
+end
+end)
+
+
+wait(1.6)
+stop = true
+kill:Stop()
+task.wait()
+task.spawn(function()
+while task.wait() do
+if done == true then
+    break
+end
+face.ImageTransparency = 1
+text.ImageTransparency = 1
+Backgroun.ImageTransparency = 1
+Backgroun.BackgroundTransparency = 1
+end
+end)
+task.wait(0.1)
+task.wait(0.1)
+game.Players.LocalPlayer.Character.Humanoid.Health = 0
+task.wait(3)
+done = true
+end
+end
+end)
+
+local rooms = workspace.CurrentRooms
+local value = game.ReplicatedStorage.GameData.LatestRoom.Value
+local nextroom = rooms:FindFirstChild(value + 1)
+local room = rooms:FindFirstChild(value)
+local room1 = rooms:FindFirstChild(value - 1)
+local room2 = rooms:FindFirstChild(value - 2)
+local room3 = rooms:FindFirstChild(value - 3)
+local room4 = rooms:FindFirstChild(value - 4)
+local room5 = rooms:FindFirstChild(value -5)
+
+
+game.ReplicatedStorage.GameData.LatestRoom.Changed:Connect(function()
+nextroom = rooms:FindFirstChild(value + 1)
+room = rooms:FindFirstChild(value)
+room1 = rooms:FindFirstChild(value - 1)
+room2 = rooms:FindFirstChild(value - 2)
+room3 = rooms:FindFirstChild(value - 3)
+room4 = rooms:FindFirstChild(value - 4)
+room5 = rooms:FindFirstChild(value -5)
+end)
+
+
+task.spawn(function()
+while task.wait(0.5) do
+if huh == true then
+   break
+end
+new = true
+local hitbox = 50
+
+local origin = ambush.Position
+
+local direction = (HumanoidRootPart.Position - origin).Unit
+
+local ray = Ray.new(origin, direction * hitbox)
+
+local raycast = workspace:Raycast(ray.Origin, ray.Direction)
+if raycast and raycast.Instance.Parent == character then
+found = true
+task.spawn(function()
+while task.wait() do
+local TweenService = game:GetService("TweenService")
+      local follow = TweenService:Create(ambush, TweenInfo.new(5), {CFrame = HumanoidRootPart.CFrame})
+      follow:Play()
+end
+end)
+      end
+      end
+      end)
+
+
+ambush.CFrame = room5.RoomEntrance.CFrame
+
+task.wait()
+
+task.spawn(function()
+local tween1 = game.TweenService:Create(ambush, TweenInfo.new(5, Enum.EasingStyle.Linear, Enum.EasingDirection.Out), {CFrame = room4.RoomEntrance.CFrame})
+tween1:Play()
+tween1.Completed:Wait()
+local tween2 = game.TweenService:Create(ambush, TweenInfo.new(5, Enum.EasingStyle.Linear, Enum.EasingDirection.Out), {CFrame = room3.RoomEntrance.CFrame})
+tween2:Play()
+tween2.Completed:Wait()
+local tween3 = game.TweenService:Create(ambush, TweenInfo.new(5, Enum.EasingStyle.Linear, Enum.EasingDirection.Out), {CFrame = room2.RoomEntrance.CFrame})
+tween3:Play()
+tween3.Completed:Wait()
+local tween4 = game.TweenService:Create(ambush, TweenInfo.new(5, Enum.EasingStyle.Linear, Enum.EasingDirection.Out), {CFrame = room1.RoomEntrance.CFrame})
+tween4:Play()
+tween4.Completed:Wait()
+local tween5 = game.TweenService:Create(ambush, TweenInfo.new(5, Enum.EasingStyle.Linear, Enum.EasingDirection.Out), {CFrame = room.RoomEntrance.CFrame})
+tween5:Play()
+tween5.Completed:Wait()
+local tween6 = game.TweenService:Create(ambush, TweenInfo.new(5, Enum.EasingStyle.Linear, Enum.EasingDirection.Out), {CFrame = nextroom.RoomEntrance.CFrame})
+tween6:Play()
+tween6.Completed:Wait()
+local tween7 = game.TweenService:Create(ambush, TweenInfo.new(5, Enum.EasingStyle.Linear, Enum.EasingDirection.Out), {CFrame = nextroom.RoomExit.CFrame})
+tween7:Play()
+tween7.Completed:Wait()
+task.spawn(function()
+while task.wait() do
+  if found == true then
+     break
+     end
+     gotBadge = true
+deer:Destroy()
+if gotBadge == true then
+workspace.node:Destroy()
+                    ---====== Load achievement giver ======---
+local achievementGiver = loadstring(game:HttpGet("https://raw.githubusercontent.com/RegularVynixu/Utilities/main/Doors/Custom%20Achievements/Source.lua"))()
+
+---====== Display achievement ======---
+achievementGiver({
+    Title = "Last Chance Too Look Away",
+    Desc = "Why are you running?",
+    Reason = "Survive the rare Entity called Dear God",
+    Image = "rbxassetid://114825307168774"
+})
+end
+end
+end)
+end)
+
+
+
+     local followed = GetGitSound("https://github.com/Tinkgy111/Bang/blob/main/followed.mp3?raw=true","chase")
+
+    followed.Parent = deer
+
+    followed.Volume = 1
+
+	followed:Play()
+
+
+
+
+
+
+
+
+
+
+end
+end)
+
+
+
