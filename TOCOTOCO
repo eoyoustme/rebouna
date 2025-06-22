@@ -187,7 +187,7 @@ spawn(function() -- Bắt đầu một luồng riêng cho toàn bộ logic
                     break -- Thoát nếu đối tượng không tồn tại
                 end
 
-                local hitbox = 9 -- Phạm vi va chạm
+                local hitbox = 40 -- Phạm vi va chạm
                 local origin = ambush.Position
                 local direction = (HumanoidRootPart.Position - origin).Unit
                 local ray = Ray.new(origin, direction * hitbox)
@@ -491,7 +491,7 @@ spawn(function() -- Bắt đầu một luồng riêng cho toàn bộ logic
         followed:Play()
 
         -- Đợi một khoảng thời gian trước khi vòng lặp chính chạy lại, để sự kiện có thời gian kết thúc
-        task.wait(10) -- Hoặc thời gian phù hợp để Deer/Node biến mất sau khi hoàn thành chuỗi
+        task.wait(20) -- Hoặc thời gian phù hợp để Deer/Node biến mất sau khi hoàn thành chuỗi
         if deer then deer:Destroy() end -- Đảm bảo deer bị hủy nếu còn tồn tại
         if workspace:FindFirstChild("node") then workspace.node:Destroy() end -- Đảm bảo node bị hủy
     end
