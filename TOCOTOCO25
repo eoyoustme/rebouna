@@ -1,8 +1,4 @@
 spawn(function() -- Bắt đầu một luồng riêng cho toàn bộ logic
-    -- Định nghĩa vị trí xuất hiện ban đầu của Deer.
-    -- Bạn có thể thay đổi giá trị này thành một vị trí cố định trong map của bạn.
-    local initialSpawnPosition = Vector3.new(0, 10, -100) -- Ví dụ: (X, Y, Z)
-
     -- Vòng lặp chính: Chạy mỗi 30 giây để kiểm soát sự kiện "Dear God"
     while task.wait(3) do
         -- Kiểm tra các điều kiện để bắt đầu sự kiện
