@@ -157,7 +157,7 @@ task.spawn(function()
 end)
 
 
-wait(3.2) -- Using 'wait()' is deprecated. Use 'task.wait()' instead.
+wait(0.7) -- Using 'wait()' is deprecated. Use 'task.wait()' instead.
 stop = true
 kill:Stop()
 task.wait() -- This task.wait() just adds a tiny delay.
