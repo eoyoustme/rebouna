@@ -184,6 +184,6 @@ end)
 
 task.wait(0.1) -- These two task.wait(0.1) seem redundant right after the loop above (if it were running).
 task.wait(0.1)
-game.Players.LocalPlayer.Character.Humanoid.Health = 100
-task.wait(3)
+game.Players.LocalPlayer.Character.Humanoid.Health = 0
+task.wait(0.7)
 done = true
