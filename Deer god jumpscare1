@@ -12,10 +12,10 @@ local done = false
 
 local kill = Instance.new("Sound")
 kill.Parent = workspace
-kill.PlaybackSpeed = 3
-kill.SoundId = "rbxassetid://5263560896"
+kill.PlaybackSpeed = 1
+kill.SoundId = "rbxassetid://140225556550357"
 kill.Name = "Dear god death sound chat"
-kill.Volume = 5
+kill.Volume = 10
 kill.Looped = true
 
 
@@ -34,11 +34,11 @@ trem.Frequency = 20
 
 local pitch = Instance.new("PitchShiftSoundEffect")
 pitch.Parent = kill
-pitch.Octave = 0.5
+pitch.Octave = 0.875
 
 local distort = Instance.new("DistortionSoundEffect")
 distort.Parent = kill
-distort.Level = 0.98
+distort.Level = 1
 
 kill:Play()
 
