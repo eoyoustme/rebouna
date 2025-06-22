@@ -65,7 +65,7 @@ local entity = spawner.Create({
 		Reversed = false
 	},
 	Rebounding = { Enabled = false },
-	Damage = { Enabled = true, Range = 8, Amount = 125 },
+	Damage = { Enabled = true, Range = 1, Amount = 125 },
 	Crucifixion = { Enabled = true, Range = 40, Resist = false, Break = true },
 	Death = {
 		Type = "Guiding",
@@ -325,7 +325,7 @@ entity:SetCallback("OnSpawned", function()
     end)
 
     if destroyTimer then task.cancel(destroyTimer) end
-    destroyTimer = task.delay(math.random(20, 40), function()
+    destroyTimer = task.delay(math.random(10, 20), function()
         print("Deer God self-destruct timer activated.")
         MoveActive = false
         task.wait(0.5)
