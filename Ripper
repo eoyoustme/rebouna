@@ -17,132 +17,43 @@ local entity = spawner.Create({
         Range = 100,
         Values = {1.5, 20, 0.1, 1}
     },
-    Movement = { Speed = 185, Delay = 5, Reversed = false }, -- Giữ Delay 5 nếu bạn muốn nó đứng yên một chút khi spawn
+    Movement = { Speed = 185, Delay = 0, Reversed = false }, -- Đặt Delay = 0 để kiểm soát thủ công hơn nếu cần
     Rebounding = { Enabled = false },
     Damage = { Enabled = true, Range = 40, Amount = 125 },
     Crucifixion = { Enabled = true, Range = 40, Resist = false, Break = true },
     Death = {
         Type = "Guiding",
         Hints = {"You die to Ripper", "HE is crazy", "IF you see room to red and hear a scream", "Hide now he is move"},
-        Cause = ""
+        Cause = "Ripper"
     }
 })
 
+-- Services
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local TweenService = game:GetService("TweenService")
-local UIS = game:GetService("UserInputService")
+local UserInputService = game:GetService("UserInputService")
 local Lighting = game:GetService("Lighting")
 local Debris = game:GetService("Debris")
 
-local player = Players.LocalPlayer
-local camera = workspace.CurrentCamera
+-- Player and Camera References
+local LocalPlayer = Players.LocalPlayer
+local Camera = workspace.CurrentCamera
 
+-- State variables for Jumpscare
 local isJumpscareActive = false
-local entityModel, entityPart
-local cameraConn, inputConn1, inputConn2, healthChangedConn
-local originalTintColor = Lighting.MainColorCorrection.TintColor -- Đảm bảo biến này được khởi tạo đúng
-local originalContrast = Lighting.MainColorCorrection.Contrast -- Đảm bảo biến này được khởi tạo đúng
+local entityModel_Global -- Biến global để lưu trữ mô hình thực thể từ spawner
+local entityPart_Global   -- Biến global để lưu trữ PrimaryPart của thực thể
+local cameraConn, inputConn1, inputConn2
+local originalTintColor
+local originalContrast
 local anchorConn = nil
 local particleFreezeConn = nil
 local originalParticleRates = {}
 local activeSounds = {}
 
-entity:SetCallback("OnSpawned", function()
-    print("Thực thể đã xuất hiện")
-    local spawnSound = Instance.new("Sound", workspace)
-    spawnSound.SoundId = "rbxassetid://9125713501"
-    spawnSound.Volume = 9999 -- Giữ nguyên volume cũ của bạn
-    spawnSound.PlaybackSpeed = 0.525
-    spawnSound:Play()
-    Debris:AddItem(spawnSound, spawnSound.TimeLength + 1)
+--- Helper Functions ---
 
-    -- **PHẦN HIỆU ỨNG ÁNH SÁNG MỚI KHI XUẤT HIỆN**
-    -- Lưu lại trạng thái ánh sáng hiện tại (trước khi thay đổi)
-    originalTintColor = Lighting.MainColorCorrection.TintColor
-    originalContrast = Lighting.MainColorCorrection.Contrast
-
-    -- Đặt ánh sáng ban đầu thành màu trắng và độ tương phản cao
-    Lighting.MainColorCorrection.TintColor = Color3.fromRGB(255, 255, 255)
-    Lighting.MainColorCorrection.Contrast = 10
-
-    -- Mờ dần độ tương phản về 0 và màu sắc về màu đỏ mong muốn
-    TweenService:Create(Lighting.MainColorCorrection, TweenInfo.new(2.5), {Contrast = 0}):Play()
-    TweenService:Create(Lighting.MainColorCorrection, TweenInfo.new(5), {TintColor = Color3.fromRGB(250, 0, 0)}):Play()
-
-    entityModel = entity.Model
-    if entityModel then
-        entityPart = entityModel.PrimaryPart or entityModel:FindFirstChildWhichIsA("BasePart")
-        if not entityPart then
-            warn("Entity model không có PrimaryPart hoặc BasePart nào! Khóa camera và neo có thể không hoạt động.")
-            for _, child in ipairs(entityModel:GetChildren()) do
-                if child:IsA("BasePart") then
-                    entityPart = child
-                    break
-                end
-            end
-        end
-    else
-        warn("entity.Model là nil sau khi spawn!")
-    end
-    print("Entity đã xuất hiện và di chuyển bình thường.")
-end)
-
-entity:SetCallback("OnStartMoving", function()
-    print("Thực thể đã bắt đầu di chuyển.")
-end)
-
-entity:SetCallback("OnEnterRoom", function(room, firstTime)
-    print(("Thực thể đã vào phòng: %s (%s)"):format(room.Name, firstTime and "lần đầu" or "lần nữa"))
-end)
-
-entity:SetCallback("OnLookAt", function(los)
-    print(los and "Người chơi đang nhìn vào thực thể" or "Góc nhìn bị cản trở")
-end)
-
-entity:SetCallback("OnRebounding", function(start)
-    print(start and "Bật lại bắt đầu" or "Bật lại kết thúc")
-end)
-
-entity:SetCallback("OnDespawning", function()
-    print("Thực thể đang biến mất")
-    if entityModel then
-        for _, part in ipairs(entityModel:GetDescendants()) do
-            if part:IsA("BasePart") then
-                part.Anchored = false
-            end
-        end
-        print("Entity đã được gỡ neo.")
-    end
-end)
-
-entity:SetCallback("OnDespawned", function()
-    print("Thực thể đã biến mất")
-    local cue2 = Instance.new("Sound")
-    cue2.Parent = game.Workspace
-    cue2.Name = "Spawn"
-    cue2.SoundId = "rbxassetid://1837829565"
-    cue2.Volume = 9999
-    cue2.PlaybackSpeed = 1
-    cue2:Play()
-    Debris:AddItem(cue2, cue2.TimeLength + 1)
-    wait(3)
-
-    -- **PHỤC HỒI ÁNH SÁNG SAU KHI DESPAWN**
-    -- Khôi phục về màu sắc và độ tương phản ban đầu đã lưu
-    game.Lighting.MainColorCorrection.TintColor = originalTintColor
-    game.Lighting.MainColorCorrection.Contrast = originalContrast
-    local tween = game:GetService("TweenService")
-    tween:Create(game.Lighting.MainColorCorrection, TweenInfo.new(2.5), {Contrast = originalContrast}):Play()
-    local TW = TweenService:Create(game.Lighting.MainColorCorrection, TweenInfo.new(5),{TintColor = originalTintColor})
-    TW:Play()
-end)
-
-entity:SetCallback("OnDamagePlayer", function(newHealth)
-    print(newHealth == 0 and "Thực thể đã giết người chơi" or "Thực thể đã gây sát thương cho người chơi")
-end)
-
--- Các hàm jumpscare và logic liên quan đến jumpscare (không thay đổi)
 local function freezeParticles()
     originalParticleRates = {}
     for _, descendant in ipairs(workspace:GetDescendants()) do
@@ -169,11 +80,14 @@ local function unfreezeParticles()
 end
 
 local function executeRealJumpscare()
-    if not inputConn1 then inputConn1 = UIS.InputBegan:Connect(function() return Enum.ContextActionResult.Sink end) end
-    if not inputConn2 then inputConn2 = UIS.InputChanged:Connect(function() return Enum.ContextActionResult.Sink end) end
+    -- Ngắt kết nối UserInputService sớm để tránh xung đột
+    if inputConn1 then inputConn1:Disconnect(); inputConn1 = nil end
+    if inputConn2 then inputConn2:Disconnect(); inputConn2 = nil end
 
-    local jumpscareGui = Instance.new("ScreenGui", player:WaitForChild("PlayerGui"))
+    local jumpscareGui = Instance.new("ScreenGui", LocalPlayer:WaitForChild("PlayerGui"))
     jumpscareGui.Name = "JumpscareGUI"
+    jumpscareGui.IgnoreGuiInset = true
+
     local jumpscareImg = Instance.new("ImageLabel", jumpscareGui)
     jumpscareImg.Size = UDim2.new(1, 0, 1, 0)
     jumpscareImg.BackgroundTransparency = 1
@@ -189,21 +103,20 @@ local function executeRealJumpscare()
 
     TweenService:Create(jumpscareImg, TweenInfo.new(0.1), {ImageTransparency = 0}):Play()
 
-    -- Ánh sáng trong jumpscare (giữ nguyên logic bạn đã có cho jumpscare)
     Lighting.MainColorCorrection.TintColor = Color3.fromRGB(250, 0, 0)
     Lighting.MainColorCorrection.Contrast = 10
     TweenService:Create(Lighting.MainColorCorrection, TweenInfo.new(0.25), {Contrast = 0}):Play()
-    TweenService:Create(Lighting.MainColorCorrection, TweenInfo.new(0.5), {TintColor = originalTintColor}):Play() -- Fade về màu ban đầu
+    TweenService:Create(Lighting.MainColorCorrection, TweenInfo.new(0.5), {TintColor = originalTintColor}):Play()
 
     task.wait(1.5)
 
     jumpscareImg.ImageTransparency = 1
-    jumpscareImg.Image = "rbxassetid://YOUR_SKULL_IMAGE_ID_HERE"
+    jumpscareImg.Image = "rbxassetid://YOUR_SKULL_IMAGE_ID_HERE" -- **Cần thay đổi ID này**
     jumpscareImg.ZIndex = 12
     TweenService:Create(jumpscareImg, TweenInfo.new(0.5), {ImageTransparency = 0}):Play()
 
     local skullSound = Instance.new("Sound", workspace)
-    skullSound.SoundId = "rbxassetid://YOUR_SKULL_SOUND_ID_HERE"
+    skullSound.SoundId = "rbxassetid://YOUR_SKULL_SOUND_ID_HERE" -- **Cần thay đổi ID này**
     skullSound.Volume = 2
     skullSound:Play()
     table.insert(activeSounds, skullSound)
@@ -212,15 +125,15 @@ local function executeRealJumpscare()
 
     TweenService:Create(jumpscareImg, TweenInfo.new(0.5), {ImageTransparency = 1}):Play().Completed:Wait()
 
-    if cameraConn then cameraConn:Disconnect() end
-    if anchorConn then anchorConn:Disconnect() end
-    if particleFreezeConn then particleFreezeConn:Disconnect() end
-    if inputConn1 then inputConn1:Disconnect() end
-    if inputConn2 then inputConn2:Disconnect() end
-    camera.CameraType = Enum.CameraType.Custom
+    -- Dọn dẹp sau jumpscare
+    if cameraConn then cameraConn:Disconnect(); cameraConn = nil end
+    if anchorConn then anchorConn:Disconnect(); anchorConn = nil end -- Ngắt kết nối neo của Ripper
+    if particleFreezeConn then particleFreezeConn:Disconnect(); particleFreezeConn = nil end
+    Camera.CameraType = Enum.CameraType.Custom
     isJumpscareActive = false
     jumpscareGui:Destroy()
 
+    -- Dừng và dọn dẹp tất cả âm thanh đang hoạt động
     for _, sound in ipairs(activeSounds) do
         if sound and sound.Playing then
             sound:Stop()
@@ -231,9 +144,17 @@ local function executeRealJumpscare()
     end
     activeSounds = {}
 
-    unfreezeParticles()
+    unfreezeParticles() -- Khôi phục hiệu ứng hạt
 
-    local char = player.Character
+    -- HỦY BỎ RIPPER TẠI ĐÂY
+    if entityModel_Global and entityModel_Global.Parent then
+        entityModel_Global:Destroy()
+        entityModel_Global = nil -- Đặt lại biến để tránh lỗi tham chiếu cũ
+        entityPart_Global = nil
+        print("Ripper đã bị hủy sau jumpscare.")
+    end
+
+    local char = LocalPlayer.Character
     if char then
         local hum = char:FindFirstChild("Humanoid")
         if hum then
@@ -248,13 +169,15 @@ local function executeRealJumpscare()
             end
         end
     end
+    print("Jumpscare đã kết thúc và trạng thái người chơi đã được khôi phục.")
 end
 
 local function doJumpscareWithEffect()
     if isJumpscareActive then return end
     isJumpscareActive = true
+    print("Bắt đầu hiệu ứng Jumpscare.")
 
-    local char = player.Character
+    local char = LocalPlayer.Character
     if char then
         local hum = char:FindFirstChild("Humanoid")
         if hum then
@@ -270,37 +193,42 @@ local function doJumpscareWithEffect()
         end
     end
 
-    camera.CameraType = Enum.CameraType.Scriptable
+    Camera.CameraType = Enum.CameraType.Scriptable
     if cameraConn then cameraConn:Disconnect() end
     cameraConn = RunService.RenderStepped:Connect(function()
-        if player.Character and player.Character:FindFirstChild("Head") and entityPart and entityModel and entityModel.Parent then
-            camera.CFrame = CFrame.new(player.Character.Head.Position, entityPart.Position)
+        if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Head") and entityPart_Global and entityModel_Global and entityModel_Global.Parent then
+            Camera.CFrame = CFrame.new(LocalPlayer.Character.Head.Position, entityPart_Global.Position)
         else
-            warn("Không thể khóa camera: entityPart, đầu người chơi hoặc entityModel không tồn tại.")
-            if cameraConn then cameraConn:Disconnect() end
+            warn("Không thể khóa camera: entityPart_Global, đầu người chơi hoặc entityModel_Global không tồn tại. Ngắt kết nối camera.")
+            if cameraConn then cameraConn:Disconnect(); cameraConn = nil end
         end
     end)
-    print("Camera đã được khóa vào entity ngay khi người chơi bị đóng băng.")
+    print("Camera đã được khóa vào entity.")
 
+    -- VÒNG LẶP ĐỂ ĐẢM BẢO RIPPER ĐƯỢC NEO KHI JUMPSCARE
     if anchorConn then anchorConn:Disconnect() end
-    anchorConn = RunService.RenderStepped:Connect(function()
-        if entityModel and entityModel.Parent then
-            for _, part in ipairs(entityModel:GetDescendants()) do
+    anchorConn = RunService.Heartbeat:Connect(function() -- Sử dụng Heartbeat cho việc neo liên tục
+        if entityModel_Global and entityModel_Global.Parent then
+            for _, part in ipairs(entityModel_Global:GetDescendants()) do
                 if part:IsA("BasePart") then
                     part.Anchored = true
                 end
             end
+        else
+            -- Nếu entityModel không còn tồn tại, ngắt kết nối neo
+            if anchorConn then anchorConn:Disconnect(); anchorConn = nil end
         end
     end)
-    print("Bắt đầu liên tục neo entity ngay khi người chơi bị đóng băng.")
+    print("Bắt đầu liên tục neo entity.")
 
     freezeParticles()
 
-    inputConn1 = UIS.InputBegan:Connect(function() return Enum.ContextActionResult.Sink end)
-    inputConn2 = UIS.InputChanged:Connect(function() return Enum.ContextActionResult.Sink end)
+    inputConn1 = UserInputService.InputBegan:Connect(function() return Enum.ContextActionResult.Sink end)
+    inputConn2 = UserInputService.InputChanged:Connect(function() return Enum.ContextActionResult.Sink end)
 
-    local staticGui = Instance.new("ScreenGui", player:WaitForChild("PlayerGui"))
+    local staticGui = Instance.new("ScreenGui", LocalPlayer:WaitForChild("PlayerGui"))
     staticGui.Name = "StaticGUI"
+    staticGui.IgnoreGuiInset = true
     local staticImg = Instance.new("ImageLabel", staticGui)
     staticImg.Size = UDim2.new(1, 0, 1, 0)
     staticImg.BackgroundTransparency = 1
@@ -327,7 +255,6 @@ local function doJumpscareWithEffect()
 
     TweenService:Create(Lighting, TweenInfo.new(0.5), {Brightness = currentBrightness}):Play()
 
-    -- Ánh sáng khi chuẩn bị jumpscare
     Lighting.MainColorCorrection.TintColor = Color3.fromRGB(250, 0, 0)
     Lighting.MainColorCorrection.Contrast = 0
 
@@ -336,23 +263,107 @@ local function doJumpscareWithEffect()
     executeRealJumpscare()
 end
 
-local function onCharacterAdded(character)
-    local humanoid = character:FindFirstChildOfClass("Humanoid")
-    if humanoid then
-        if healthChangedConn then
-            healthChangedConn:Disconnect()
-        end
-        healthChangedConn = humanoid.HealthChanged:Connect(function(health)
-            if health <= 0 and not isJumpscareActive then
-                doJumpscareWithEffect()
-            end
-        end)
-    end
-end
+--- Entity Spawner Callbacks ---
 
-player.CharacterAdded:Connect(onCharacterAdded)
-if player.Character then
-    onCharacterAdded(player.Character)
-end
+entity:SetCallback("OnSpawned", function()
+    print("Thực thể đã xuất hiện")
+    local spawnSound = Instance.new("Sound", workspace)
+    spawnSound.SoundId = "rbxassetid://9125713501"
+    spawnSound.Volume = 10
+    spawnSound.PlaybackSpeed = 0.525
+    spawnSound:Play()
+    Debris:AddItem(spawnSound, spawnSound.TimeLength + 1)
+
+    originalTintColor = Lighting.MainColorCorrection.TintColor
+    originalContrast = Lighting.MainColorCorrection.Contrast
+
+    Lighting.MainColorCorrection.TintColor = Color3.fromRGB(255, 255, 255)
+    Lighting.MainColorCorrection.Contrast = 10
+    TweenService:Create(Lighting.MainColorCorrection, TweenInfo.new(2.5), {Contrast = 0}):Play()
+    TweenService:Create(Lighting.MainColorCorrection, TweenInfo.new(5), {TintColor = Color3.fromRGB(250, 0, 0)}):Play()
+
+    entityModel_Global = entity.Model
+    if entityModel_Global then
+        entityPart_Global = entityModel_Global.PrimaryPart or entityModel_Global:FindFirstChildWhichIsA("BasePart")
+        if not entityPart_Global then
+            warn("Entity model không có PrimaryPart hoặc BasePart nào! Khóa camera và neo có thể không hoạt động.")
+            for _, child in ipairs(entityModel_Global:GetChildren()) do
+                if child:IsA("BasePart") then
+                    entityPart_Global = child
+                    break
+                end
+            end
+        end
+    else
+        warn("entity.Model là nil sau khi spawn!")
+    end
+    print("Entity đã xuất hiện và di chuyển bình thường.")
+end)
+
+entity:SetCallback("OnStartMoving", function()
+    print("Thực thể đã bắt đầu di chuyển.")
+end)
+
+entity:SetCallback("OnEnterRoom", function(room, firstTime)
+    print(("Thực thể đã vào phòng: %s (%s)"):format(room.Name, firstTime and "lần đầu" or "lần nữa"))
+end)
+
+entity:SetCallback("OnLookAt", function(los)
+    -- print(los and "Người chơi đang nhìn vào thực thể" or "Góc nhìn bị cản trở")
+end)
+
+entity:SetCallback("OnRebounding", function(start)
+    print(start and "Bật lại bắt đầu" or "Bật lại kết thúc")
+end)
+
+entity:SetCallback("OnDespawning", function()
+    print("Thực thể đang biến mất")
+    -- Đảm bảo Ripper không còn neo khi despawn (nếu nó chưa bị hủy bởi jumpscare)
+    if entityModel_Global and entityModel_Global.Parent then
+        for _, part in ipairs(entityModel_Global:GetDescendants()) do
+            if part:IsA("BasePart") then
+                part.Anchored = false
+            end
+        end
+        print("Entity đã được gỡ neo.")
+    end
+end)
+
+entity:SetCallback("OnDespawned", function()
+    print("Thực thể đã biến mất")
+    -- Nếu Ripper chưa bị hủy bởi jumpscare, thì nó sẽ bị hủy ở đây.
+    -- (Trong trường hợp người chơi trốn thoát Ripper và nó tự despawn)
+    if entityModel_Global and entityModel_Global.Parent then
+        entityModel_Global:Destroy()
+        entityModel_Global = nil
+        entityPart_Global = nil
+        print("Ripper đã bị hủy khi despawn tự nhiên.")
+    end
+
+    local cue2 = Instance.new("Sound")
+    cue2.Parent = workspace
+    cue2.Name = "Spawn"
+    cue2.SoundId = "rbxassetid://1837829565"
+    cue2.Volume = 10
+    cue2.PlaybackSpeed = 1
+    cue2:Play()
+    Debris:AddItem(cue2, cue2.TimeLength + 1)
+
+    task.wait(0.5)
+
+    Lighting.MainColorCorrection.TintColor = originalTintColor
+    Lighting.MainColorCorrection.Contrast = originalContrast
+    TweenService:Create(Lighting.MainColorCorrection, TweenInfo.new(2.5), {Contrast = originalContrast}):Play()
+    TweenService:Create(Lighting.MainColorCorrection, TweenInfo.new(5), {TintColor = originalTintColor}):Play()
+end)
+
+entity:SetCallback("OnDamagePlayer", function(newHealth)
+    if newHealth <= 0 then
+        print("Thực thể đã giết người chơi, kích hoạt jumpscare.")
+        doJumpscareWithEffect()
+    else
+        print("Thực thể đã gây sát thương cho người chơi, máu mới: ", newHealth)
+    end
+end)
 
 entity:Run()
