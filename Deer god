@@ -43,56 +43,48 @@ end
 
 ---====== Create Entity (Deer God) ======---
 local entity = spawner.Create({
-	Entity = {
-		Name = "Deer god",
-		Asset = "rbxassetid://75877292391257",
-		HeightOffset = 0
-	},
-	Lights = {
-		Flicker = { Enabled = true, Duration = 5 },
-		Shatter = true,
-		Repair = false
-	},
-	Earthquake = { Enabled = false },
-	CameraShake = {
-		Enabled = true,
-		Range = 100,
-		Values = {1.5, 20, 0.1, 1}
-	},
-	Movement = {
-		Speed = 23, -- Đặt một giá trị dương nhỏ để tránh lỗi "invalid number"
-		Delay = 0,
-		Reversed = false
-	},
-	Rebounding = { Enabled = false },
-	Damage = { Enabled = true, Range = 1, Amount = 125 },
-	Crucifixion = { Enabled = true, Range = 40, Resist = false, Break = true },
-	Death = {
-		Type = "Guiding",
-		Hints = {"ME GO PLAY SKIBIDI TOILET", "GOODBYE", "STUPID YOU DIE BY A WEAK ENTITY", "HERE IS NOT FOR NOOB"},
-		Cause = ""
-	}
+    Entity = {
+        Name = "Deer god",
+        Asset = "rbxassetid://75877292391257",
+        HeightOffset = 0
+    },
+    Lights = {
+        Flicker = { Enabled = true, Duration = 5 },
+        Shatter = true,
+        Repair = false
+    },
+    Earthquake = { Enabled = false },
+    CameraShake = {
+        Enabled = true,
+        Range = 100,
+        Values = {1.5, 20, 0.1, 1}
+    },
+    Movement = {
+        Speed = 23,
+        Delay = 0,
+        Reversed = false
+    },
+    Rebounding = { Enabled = false },
+    Damage = { Enabled = true, Range = 1, Amount = 125 },
+    Crucifixion = { Enabled = true, Range = 40, Resist = false, Break = true },
+    Death = {
+        Type = "Guiding",
+        Hints = {"ME GO PLAY SKIBIDI TOILET", "GOODBYE", "STUPID YOU DIE BY A WEAK ENTITY", "HERE IS NOT FOR NOOB"},
+        Cause = ""
+    }
 })
 
----====== Helper Functions for Custom Sound (Tùy chọn: chỉ dùng nếu có exploit) ======---
-function GitAud(soundgit, filename)
-    if type(getcustomasset) == "function" or type(getsynasset) == "function" then
-	    writefile(filename..".mp3", game:HttpGet(soundgit))
-	    return (getcustomasset or getsynasset)(filename..".mp3")
-    else
-        warn("Cannot load sound from GitHub: getcustomasset/getsynasset not available. Please upload sound to Roblox and use its Asset ID.")
-        return ""
-    end
-end
-
-function CustomGitSound(soundlink, vol, filename)
-	local S = Instance.new("Sound")
-    S.SoundId = GitAud(soundlink, filename)
-    if S.SoundId == "" then return nil end
-	S.Volume = vol
-	S.Looped = false
-	S:Play()
-	Debris:AddItem(S, S.TimeLength + 1)
+---====== Helper Function for Roblox Sound (Sử dụng Asset ID) ======---
+-- Đã loại bỏ các hàm GitAud và CustomGitSound vì chúng phụ thuộc vào exploit.
+-- Thay vào đó, hãy tải âm thanh lên Roblox và sử dụng Asset ID của chúng.
+function PlayRobloxSound(soundId, volume, looped, parent)
+    local S = Instance.new("Sound")
+    S.SoundId = "rbxassetid://" .. tostring(soundId)
+    S.Volume = math.clamp(volume, 0, 10) -- Giới hạn volume từ 0 đến 10
+    S.Looped = looped or false
+    S.Parent = parent or workspace
+    S:Play()
+    Debris:AddItem(S, S.TimeLength + 1)
     return S
 end
 
@@ -113,10 +105,7 @@ local function executeRealJumpscare()
     jumpscareImg.Image = "rbxassetid://11826279208"
     jumpscareImg.ZIndex = 10
 
-    local jumpscareSound = Instance.new("Sound", workspace)
-    jumpscareSound.SoundId = "rbxassetid://6567183465"
-    jumpscareSound.Volume = 3
-    jumpscareSound:Play()
+    local jumpscareSound = PlayRobloxSound(6567183465, 3, false, workspace)
     activeSounds[jumpscareSound] = true
 
     TweenService:Create(jumpscareImg, TweenInfo.new(0.1), {ImageTransparency = 0}):Play()
@@ -133,10 +122,7 @@ local function executeRealJumpscare()
     jumpscareImg.ZIndex = 12
     TweenService:Create(jumpscareImg, TweenInfo.new(0.5), {ImageTransparency = 0}):Play()
 
-    local skullSound = Instance.new("Sound", workspace)
-    skullSound.SoundId = "rbxassetid://18459521002"
-    skullSound.Volume = 2
-    skullSound:Play()
+    local skullSound = PlayRobloxSound(18459521002, 2, false, workspace)
     activeSounds[skullSound] = true
 
     task.wait(2)
@@ -222,11 +208,7 @@ local function doJumpscareWithEffect()
     staticImg.Image = "rbxassetid://1568285513"
     staticImg.ZIndex = 11
 
-    local staticSound = Instance.new("Sound", workspace)
-    staticSound.SoundId = "rbxassetid://1845110821"
-    staticSound.Volume = 1
-    staticSound.Looped = true
-    staticSound:Play()
+    local staticSound = PlayRobloxSound(1845110821, 1, true, workspace)
     activeSounds[staticSound] = true
 
     local currentBrightness = Lighting.Brightness
@@ -268,7 +250,7 @@ entity:SetCallback("OnSpawned", function()
         end
         entityModel.PrimaryPart = entityPart
         print("DeerGod.PrimaryPart set to: " .. entityModel.PrimaryPart.Name)
-   end
+    end
 
     coroutine.wrap(function()
         for i, v in ipairs(entityModel:GetDescendants()) do
@@ -283,9 +265,11 @@ entity:SetCallback("OnSpawned", function()
         end
     end)()
 
-    local customSoundInstance = CustomGitSound("https://github.com/Tinkgy111/Bang/blob/main/followed.mp3?raw=true", 2, "DeerGod_Hostile")
+    -- Sử dụng PlayRobloxSound thay vì CustomGitSound
+    -- Bạn cần tải "followed.mp3" lên Roblox và thay thế ID bên dưới
+    local customSoundInstance = PlayRobloxSound(0000000000, 2, false, entityModel) -- THAY THẾ '0000000000' bằng Asset ID thật của bạn
     if customSoundInstance then
-        customSoundInstance.Parent = entityModel
+        customSoundInstance.Name = "DeerGod_Hostile" -- Đặt tên cho dễ nhận biết
     end
 
     originalTintColor = colorCorrection.TintColor
@@ -360,19 +344,19 @@ entity:SetCallback("OnEnterRoom", function(room, firstTime)
 end)
 
 entity:SetCallback("OnLookAt", function(lineOfSight)
-	if lineOfSight then
-		print("Player is looking at entity")
-	else
-		print("Player view is obstructed by something")
-	end
+    if lineOfSight then
+        print("Player is looking at entity")
+    else
+        print("Player view is obstructed by something")
+    end
 end)
 
 entity:SetCallback("OnRebounding", function(startOfRebound)
     if startOfRebound then
         print("Entity has started rebounding")
-	else
+    else
         print("Entity has finished rebounding")
-	end
+    end
 end)
 
 entity:SetCallback("OnDespawning", function()
@@ -401,24 +385,18 @@ end)
 
 entity:SetCallback("OnDespawned", function()
     print("Entity has despawned")
-    local cue2 = Instance.new("Sound")
-    cue2.Parent = game.Workspace
-    cue2.Name = "Spawn"
-    cue2.SoundId = "rbxassetid://000000"
-    cue2.Volume = 9999
-    cue2.PlaybackSpeed = 1
-    cue2:Play()
-    Debris:AddItem(cue2, cue2.TimeLength + 1)
+    -- Sử dụng PlayRobloxSound và thay thế ID bên dưới
+    PlayRobloxSound(8967924401, 1, false, workspace) -- THAY THẾ '8967924401' bằng Asset ID thật của bạn, volume đã được điều chỉnh hợp lý
     task.wait(3)
 end)
 
 entity:SetCallback("OnDamagePlayer", function(newHealth)
-	if newHealth == 0 then
-		print("Entity has killed the player - Initiating Jumpscare")
+    if newHealth == 0 then
+        print("Entity has killed the player - Initiating Jumpscare")
         doJumpscareWithEffect()
-	else
-		print("Entity has damaged the player")
-	end
+    else
+        print("Entity has damaged the player")
+    end
 end)
 
 LocalPlayer.CharacterAdded:Connect(function(char)
