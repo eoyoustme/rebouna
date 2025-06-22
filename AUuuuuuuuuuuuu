@@ -1,38 +1,21 @@
--- =========================================================================================
--- SCRIPT CHÍNH: QUẢN LÝ ENTITY A-60 (CHỈ SPAWN MỘT LẦN)
--- =========================================================================================
-
-local A60_Spawned_Once = false -- Biến cờ này đảm bảo A-60 chỉ được spawn MỘT LẦN DUY NHẤT trong suốt phiên chơi game.
+-- A-60 Spawner and Logic
+local A60_Spawned = false -- Flag to ensure A-60 logic only runs once
 
 spawn(function()
-    while task.wait(0) do -- Vòng lặp liên tục kiểm tra điều kiện
-        -- print("A-60 loop is active...") -- Có thể bỏ comment để debug, xem vòng lặp đang chạy
-
-        -- Chỉ tiến hành logic spawn nếu A-60 chưa từng được spawn trước đó
-        -- VÀ (HOẶC) các điều kiện kích hoạt ban đầu được đáp ứng:
-        -- 1. Tìm thấy "SeekMovingNewClone" trong workspace
-        -- 2. Hoặc phòng "50" hiện tại đang hoạt động
-        -- 3. Hoặc phòng "100" hiện tại đang hoạt động
-        if not A60_Spawned_Once and (workspace:FindFirstChild("SeekMovingNewClone")
+    while task.wait(600) do
+        print("A-60 is here!!!!")
+        -- Only proceed if A-60 hasn't been spawned/initialized yet
+        if not A60_Spawned and (workspace:FindFirstChild("SeekMovingNewClone")
             or workspace.CurrentRooms:FindFirstChild("50")
             or workspace.CurrentRooms:FindFirstChild("100")) then
 
-            -- Chờ cho đến khi các vật thể/phòng kích hoạt biến mất hoặc trạng thái phù hợp để spawn.
-            -- Điều này giúp A-60 chỉ xuất hiện sau khi người chơi đã qua các phòng nhất định.
             repeat task.wait() until not workspace:FindFirstChild("SeekMovingNewClone")
                 and not workspace.CurrentRooms:FindFirstChild("50")
                 and not workspace.CurrentRooms:FindFirstChild("100")
 
-            -- QUAN TRỌNG NHẤT: Đặt biến cờ thành TRUE.
-            -- Điều này ngăn chặn toàn bộ khối spawn A-60 chạy lại dù script có được thực thi lại nhiều lần.
-            A60_Spawned_Once = true
-            print("Conditions met! Spawning A-60 for the FIRST AND ONLY TIME this session.")
+            -- Set the flag to true so this block doesn't repeat
+            A60_Spawned = true
 
-            -- =========================================================================
-            -- BẮT ĐẦU LOGIC SPAWN VÀ CẤU HÌNH A-60 (KHỐI NÀY CHỈ CHẠY MỘT LẦN)
-            -- =========================================================================
-
-            -- Hàm tải âm thanh từ GitHub
             local function GetGitSound(GithubSnd, SoundName)
                 local url = GithubSnd
                 if not isfile(SoundName .. ".mp3") then
@@ -43,25 +26,30 @@ spawn(function()
                 return sound
             end
 
-            local debounce = false -- Kiểm soát thời gian chờ giữa các sự kiện
-            local death = false    -- Kiểm soát trạng thái chết của người chơi/jumpscare
+            local debounce = false
+            local death = false
 
-            ---====== Tải bộ spawner entity từ GitHub ======---
+            ---====== Load spawner ======---
             local spawner = loadstring(game:HttpGet("https://raw.githubusercontent.com/RegularVynixu/Utilities/main/Doors/Entity%20Spawner/V2/Source.lua"))()
 
-            ---====== Tạo entity A-60 với các thuộc tính định sẵn ======---
+            ---====== Create entity ======---
             local entity = spawner.Create({
                 Entity = {
                     Name = "A60",
-                    Asset = "rbxassetid://83115631769066", -- ID asset của A-60
+                    Asset = "rbxassetid://83115631769066",
                     HeightOffset = 0
                 },
                 Lights = {
-                    Flicker = { Enabled = false, Duration = 1 },
+                    Flicker = {
+                        Enabled = false,
+                        Duration = 1
+                    },
                     Shatter = false,
                     Repair = false
                 },
-                Earthquake = { Enabled = false }, -- Không kích hoạt động đất
+                Earthquake = {
+                    Enabled = false
+                },
                 CameraShake = {
                     Enabled = true,
                     Range = 50,
@@ -72,39 +60,44 @@ spawn(function()
                     Delay = 5,
                     Reversed = false
                 },
-                Rebounding = { -- Hiệu ứng bật lại
+                Rebounding = {
                     Enabled = true,
-                    Type = "Ambush", -- "Blitz" hoặc "Ambush"
-                    Min = 1, Max = 5, Delay = 2
+                    Type = "Ambush", -- "Blitz"
+                    Min = 1,
+                    Max = 5,
+                    Delay = 2
                 },
                 Damage = {
-                    Enabled = false, -- Tắt sát thương trực tiếp từ A-60 (jumpscare sẽ xử lý sát thương)
+                    Enabled = false,
                     Range = 70,
                     Amount = 1
                 },
-                Crucifixion = { Enabled = false, Range = 40, Resist = false, Break = false },
+                Crucifixion = {
+                    Enabled = false,
+                    Range = 40,
+                    Resist = false,
+                    Break = false
+                },
                 Death = {
-                    Type = "Guiding", -- "Curious" hoặc "Guiding"
+                    Type = "Guiding", -- "Curious"
                     Hints = {"Death", "Hints", "Go", "Here"},
                     Cause = ""
                 }
             })
 
-            ---====== Đặt các Callbacks (sự kiện) cho entity A-60 ======---
-
+            ---====== Debug entity ======---
             entity:SetCallback("OnSpawned", function()
-                print("Entity A60 has spawned successfully!")
+                print("Entity has spawned")
 
-                -- Lấy các phần của A-60 để điều khiển hiệu ứng mắt
+                -- Get a reference to the object and its Attachment in the Workspace
                 local part = workspace:WaitForChild("A60")
-                local object = part:WaitForChild("RushNew")
-                local attachment = object:WaitForChild("ImageFace")
+                local object = part:WaitForChild("RushNew") -- Replace "MyObjectName" with the name of your object
+                local attachment = object:WaitForChild("ImageFace") -- Get the Attachment attached to the object
                 local e = attachment:WaitForChild("Face")
 
-                object.CanCollide = false -- Đảm bảo người chơi có thể đi xuyên qua A-60
-                
-                -- Tạo một luồng riêng để thay đổi texture mắt của A-60 liên tục (hiệu ứng nháy mắt)
-                spawn(function()
+                object.CanCollide = false
+                -- Get the ParticleEmitter attached to the Attachment
+                spawn(function() -- Use spawn for this loop to prevent blocking
                     while true do
                         e.Texture = "rbxassetid://16020423090"
                         task.wait(0)
@@ -127,13 +120,12 @@ spawn(function()
             end)
 
             entity:SetCallback("OnStartMoving", function()
-                print("Entity A60 has started moving.")
-                task.wait(3) -- Chờ một chút sau khi A-60 bắt đầu di chuyển
+                print("Entity has started moving")
+                task.wait(3)
 
-                -- Luồng kiểm tra tầm nhìn người chơi và kích hoạt jumpscare
                 spawn(function()
                     while task.wait() do
-                        if debounce == true then -- Nếu jumpscare đang trong quá trình, thoát khỏi vòng lặp này
+                        if debounce == true then
                             break
                         end
 
@@ -141,28 +133,22 @@ spawn(function()
                         local character = player.Character or player.CharacterAdded:Wait()
                         local HumanoidRootPart = character:WaitForChild("HumanoidRootPart")
                         local womp = workspace:FindFirstChild("A60")
-                        
-                        -- Kiểm tra an toàn: Đảm bảo A60 và RushNew tồn tại
-                        if not womp or not womp:FindFirstChild("RushNew") then break end 
-
                         local wompwomp = womp:FindFirstChild("RushNew")
                         local origin = wompwomp.Position
                         local direction = (HumanoidRootPart.Position - origin).Unit
 
-                        local ray = Ray.new(origin, direction * 50) -- Raycast để kiểm tra tầm nhìn
+                        local ray = Ray.new(origin, direction * 50)
+
                         local canSeeTarget = workspace:Raycast(ray.Origin, ray.Direction)
 
-                        -- Nếu A-60 nhìn thấy người chơi VÀ người chơi không ẩn nấp
                         if canSeeTarget and canSeeTarget.Instance.Parent == character then
                             if not character:GetAttribute("Hiding") then
-                                debounce = true -- Kích hoạt debounce để ngăn jumpscare lặp lại ngay lập tức
-
-                                -- Dừng tất cả âm thanh của A-60
+                                debounce = true
                                 for i, v in pairs(workspace.A60:GetDescendants()) do
-                                    if v:IsA("Sound") then v:Stop() end
+                                    if v:IsA("Sound") then
+                                        v:Stop()
+                                    end
                                 end
-
-                                -- Lắc camera người chơi
                                 local CameraShaker = require(game.ReplicatedStorage.CameraShaker)
                                 local camera = game.Workspace.CurrentCamera
                                 local camShake = CameraShaker.new(Enum.RenderPriority.Camera.Value, function(shakeCf)
@@ -170,59 +156,69 @@ spawn(function()
                                 end)
                                 camShake:Start()
                                 camShake:ShakeOnce(10, 10, 0, 5.5, 1, 0)
-                                
-                                -- Chuẩn bị ScreenGui cho jumpscare image
-                                local playerGui = game.Players.LocalPlayer:WaitForChild("PlayerGui")
+                                local RunService = game:GetService("RunService")
+
+                                -- Get the player and their HumanoidRootPart
+                                local player = game.Players.LocalPlayer
+                                local character = player.Character or player.CharacterAdded:Wait()
+                                local humanoidRootPart = character:WaitForChild("HumanoidRootPart")
+
+                                -- Ensure this script runs as a LocalScript
+                                local player = game.Players.LocalPlayer
+                                local playerGui = player:WaitForChild("PlayerGui")
+
+                                -- Create the ScreenGui
                                 local screenGui = Instance.new("ScreenGui")
                                 screenGui.Name = "RandomImageGui"
                                 screenGui.Parent = playerGui
 
-                                -- Luồng điều khiển vị trí của A-60 trong jumpscare
                                 spawn(function()
                                     while task.wait() do
-                                        if death == true then break end -- Thoát nếu trạng thái death đã được kích hoạt
-                                        local entityObject = workspace:FindFirstChild("A60")
-                                        if not entityObject or not entityObject:FindFirstChild("RushNew") then break end
-
-                                        local entityPrimaryPart = entityObject:FindFirstChild("RushNew")
+                                        if death == true then
+                                            break
+                                        end
+                                        local entity = workspace:WaitForChild("A60")
+                                        local entityPrimaryPart = entity:FindFirstChild("RushNew")
                                         local Camera = workspace.CurrentCamera
-                                        -- Di chuyển A-60 đến trước mặt camera người chơi
                                         game.TweenService:Create(entityPrimaryPart, TweenInfo.new(0), {CFrame = camera.CFrame * CFrame.new(0, -0.5, -6)}):Play()
-                                        game.Players.LocalPlayer.Character.Humanoid.WalkSpeed = 0 -- Giữ người chơi đứng yên
+                                        game.Players.LocalPlayer.Character.Humanoid.WalkSpeed = 0
                                     end
                                 end)
 
-                                -- Phát âm thanh jumpscare
                                 local Jumpscare = GetGitSound("https://github.com/Tinkgy111/Bang/blob/main/lv_0_20250103234053.mp3?raw=true", "r")
                                 Jumpscare.Parent = workspace
                                 Jumpscare.Volume = 5
                                 Jumpscare:Play()
 
-                                task.wait(1.2) -- Chờ một chút sau khi jumpscare bắt đầu
+                                task.wait(1.2)
                                 local TweenService = game:GetService("TweenService")
 
-                                -- Danh sách các Image ID cho jumpscare
                                 local imageIds = {
-                                    "16020415559", "16020423090", "16020417711",
-                                    "16020417711", "16020432826", "16020430685"
+                                    "16020415559",
+                                    "16020423090",
+                                    "16020417711",
+                                    "16020417711",
+                                    "16020432826",
+                                    "16020430685"
                                 }
 
+                                -- Function to pick a random Image ID
                                 local function getRandomImageId()
                                     return imageIds[math.random(1, #imageIds)]
                                 end
 
-                                -- Tạo ImageLabel cho jumpscare
+                                -- Create the ImageLabel for displaying the image
                                 local imageLabel = Instance.new("ImageLabel")
                                 imageLabel.Size = UDim2.new(0, 0, 0, 0)
                                 imageLabel.AnchorPoint = Vector2.new(0.5, 0.5)
                                 imageLabel.Position = UDim2.new(0.5, 0, 0.5, 0)
                                 imageLabel.BackgroundColor3 = Color3.new(1, 0, 0)
                                 imageLabel.BackgroundTransparency = 1
-                                imageLabel.Image = "rbxassetid://" .. getRandomImageId() -- Chọn ảnh ngẫu nhiên
+                                imageLabel.Image = "rbxassetid://" .. getRandomImageId()
                                 imageLabel.ImageTransparency = 1
                                 imageLabel.Parent = screenGui
 
-                                -- Hiệu ứng Tweening cho jumpscare image
+                                -- Animation script
                                 local GetTimeSpeed = TweenInfo.new(0.28, Enum.EasingStyle.Linear, Enum.EasingDirection.Out)
                                 local Anim = TweenService:Create(imageLabel, GetTimeSpeed, {Size = UDim2.new(0, 580, 0, 580)})
                                 local rot = TweenService:Create(imageLabel, GetTimeSpeed, {Rotation = 18})
@@ -231,17 +227,16 @@ spawn(function()
                                 Anim:Play()
                                 tran:Play()
                                 rot:Play()
-                                game.Players.LocalPlayer.Character.Humanoid.Health = 0 -- Gây sát thương chết người chơi
+                                game.Players.LocalPlayer.Character.Humanoid.Health = 0
 
-                                Anim.Completed:Wait() -- Chờ animation hoàn tất
-                                task.wait(0.8) -- Chờ thêm một chút
-                                TweenService:Create(imageLabel, TweenInfo.new(3), {ImageTransparency = 1}):Play() -- Làm mờ ảnh jumpscare
-                                
+                                Anim.Completed:Wait()
+                                task.wait(0.8)
+                                TweenService:Create(imageLabel, TweenInfo.new(3), {ImageTransparency = 1}):Play()
                                 local monster = workspace:FindFirstChild("A60")
                                 task.wait(0.5)
-                                death = true -- Đặt trạng thái death (có thể dùng để dừng các luồng liên quan)
+                                death = true
                                 task.wait(3)
-                                debounce = false -- Đặt lại debounce để jumpscare có thể kích hoạt lại nếu cần (dù A60 chỉ spawn 1 lần)
+                                debounce = false
                             end
                         end
                     end
@@ -266,19 +261,17 @@ spawn(function()
 
             entity:SetCallback("OnRebounding", function(startOfRebound)
                 if startOfRebound == true then
-                    print("Entity is rebounding.")
+                    -- Add any rebounding logic here if needed
                 end
             end)
 
             entity:SetCallback("OnDespawning", function()
-                print("Entity is despawning.")
+                print("Entity is despawning")
             end)
 
             entity:SetCallback("OnDespawned", function()
-                print("Entity has despawned.")
-                death = false -- Reset trạng thái death
-
-                -- Khôi phục hiệu ứng ánh sáng môi trường sau khi A-60 biến mất
+                print("Entity has despawned")
+                death = false
                 game.Lighting.MainColorCorrection.TintColor = Color3.fromRGB(62, 7, 12)
                 game.Lighting.MainColorCorrection.Contrast = 0.2
                 game.Lighting.MainColorCorrection.Saturation = -0.7
@@ -287,58 +280,24 @@ spawn(function()
                 tween:Create(game.Lighting.MainColorCorrection, TweenInfo.new(5), {Contrast = 0}):Play()
                 tween:Create(game.Lighting.MainColorCorrection, TweenInfo.new(5), {Saturation = 0}):Play()
 
+                local TweenService = game:GetService("TweenService")
                 local TW = TweenService:Create(game.Lighting.MainColorCorrection, TweenInfo.new(0),{TintColor = Color3.fromRGB(255, 0, 0)})
                 TW:Play()
 
-                -- !! RẤT QUAN TRỌNG CHO YÊU CẦU CỦA BẠN !!
-                -- Dòng dưới đây (A60_Spawned_Once = false) đã được COMMENT.
-                -- Nếu bạn BỎ COMMENT dòng này, A-60 SẼ CÓ THỂ SPAWN LẠI sau khi nó despawn.
-                -- Hiện tại, với dòng này bị COMMENT, A-60 sẽ chỉ spawn MỘT LẦN DUY NHẤT.
-                -- A60_Spawned_Once = false 
+                -- Reset A60_Spawned flag if A60 can potentially spawn again later
+                -- If A60 is a one-time spawn per game, keep A60_Spawned true
+                -- A60_Spawned = false -- Uncomment this if A60 can re-spawn after despawning
             end)
 
             entity:SetCallback("OnDamagePlayer", function(newHealth)
                 if newHealth == 0 then
-                    print("Entity has killed the player.")
+                    print("Entity has killed the player")
                 else
-                    print("Player took damage from A60.")
+                    print("cok")
                 end
             end)
 
-            entity:Run() -- Bắt đầu chạy entity A60 (kích hoạt các chức năng của nó)
-            -- =========================================================================
-            -- KẾT THÚC LOGIC SPAWN VÀ CẤU HÌNH A-60 (KHỐI NÀY ĐÃ CHẠY XONG MỘT LẦN)
-            -- =========================================================================
+            entity:Run()
         end
     end
 end)
-
-
-local function lightControl()
-    spawn(function()
-        -- Lắng nghe sự thay đổi của LatestRoom
-        game.ReplicatedStorage.GameData.LatestRoom.Changed:Connect(function()
-            local latestRoomValue = game.ReplicatedStorage.GameData.LatestRoom.Value
-            -- Tìm phòng hiện tại trong CurrentRooms
-            local currentRoomAssets = game.Workspace.CurrentRooms:FindFirstChild(tostring(latestRoomValue))
-            
-            if currentRoomAssets then
-                -- Tìm và phá hủy Light_Fixtures
-                local lightFixtures = currentRoomAssets.Assets:FindFirstChild("Light_Fixtures")
-                if lightFixtures then
-                    lightFixtures:Destroy()
-                    print("Light_Fixtures destroyed in room: " .. latestRoomValue)
-                end
-                -- Tìm và phá hủy Chandelier
-                local chandelier = currentRoomAssets.Assets:FindFirstChild("Chandelier")
-                if chandelier then
-                    chandelier:Destroy()
-                    print("Chandelier destroyed in room: " .. latestRoomValue)
-                end
-            else
-                print("Could not find CurrentRoom or its Assets for room: " .. latestRoomValue)
-            end
-        end)
-    end)
-end
-lightControl() -- Gọi hàm điều khiển ánh sáng để bắt đầu lắng nghe sự kiện
