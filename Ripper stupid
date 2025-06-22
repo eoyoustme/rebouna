@@ -1,190 +1,527 @@
---!strict
-local killed = false
-local Plr = game.Players.LocalPlayer
-local ReSt = game.ReplicatedStorage
-local val = 80 -- Giá trị để kích hoạt camera shake tầm gần
+spawn(function() -- ripper
+while task.wait(175) do
+if workspace:FindFirstChild("SeekMovingNewClone") 
+        or workspace.CurrentRooms:FindFirstChild("50") 
+        or workspace.CurrentRooms:FindFirstChild("100") then
+            repeat task.wait() until not workspace:FindFirstChild("SeekMovingNewClone") 
+                and not workspace.CurrentRooms:FindFirstChild("50") 
+                and not workspace.CurrentRooms:FindFirstChild("100")
+    and not game.ReplicatedStorage.GameData.LatestRoom.Value == 6
+        end
+game:GetService("ReplicatedStorage").GameData.LatestRoom:GetPropertyChangedSignal("Value"):Wait()
+local dead = false
+local function ripperdeath()
+-- Services
+local Players = game:GetService("Players")
+local Workspace = game:GetService("Workspace")
+local TweenService = game:GetService("TweenService")
 
-local events = require(game.ReplicatedStorage.ClientModules.Module_Events)
-local cameraShaker = require(game.ReplicatedStorage.CameraShaker)
-local camera = workspace.CurrentCamera
-local TweenService = game:GetService("TweenService") -- Lấy TweenService một lần
 
-local camShake = cameraShaker.new(Enum.RenderPriority.Camera.Value, function(cf)
-    camera.CFrame = camera.CFrame * cf
+
+            
+-- Player and Character
+local player = Players.LocalPlayer
+local character = player.Character or player.CharacterAdded:Wait()
+local HumanoidRootPart = character:WaitForChild("HumanoidRootPart")
+
+--Model Jumpscare
+local r = game:GetObjects("rbxassetid://76305076231751")[1] 
+r.Parent = Workspace
+
+
+
+
+
+spawn(function()
+local Camera = workspace.CurrentCamera
+Camera.CameraType = Enum.CameraType.Scriptable
+    local cameraPosition = Camera.CFrame.Position
+    local modelPosition = r:GetPivot().Position
+local scene = TweenService:Create(Camera, TweenInfo.new(0.5), {CFrame = CFrame.new(cameraPosition, modelPosition)})
+scene:Play()
+scene.Completed:Wait()
+game:GetService("RunService").RenderStepped:Connect(function()
+    local Camera = workspace.CurrentCamera
+    local cameraPosition = Camera.CFrame.Position
+    local modelPosition = r:GetPivot().Position
+    Camera.CFrame = CFrame.new(cameraPosition, modelPosition)
+end)
 end)
 
+
+
+
+--Freeze movement
+spawn(function()
+while wait() do
+game.Players.LocalPlayer.Character.Humanoid.WalkSpeed = 0
+end
+end)
+
+--Jumpscare
+local bruh = workspace:FindFirstChild("Death")
+r:SetPrimaryPartCFrame(bruh.PrimaryPart.CFrame * CFrame.new(0, 1, 0))
+for i,v in pairs(r:GetDescendants()) do
+     if v:IsA("ParticleEmitter") then
+          v.Rate = 9999999
+     task.wait(0.1)
+     v.TimeScale = 0
+
+
+    end
+end
+
+wait(0.1)
+                        local function GetGitSound(GithubSnd, SoundName)
+                local url = GithubSnd
+                if not isfile(SoundName .. ".mp3") then
+                    writefile(SoundName .. ".mp3", game:HttpGet(url))
+                end
+                local sound = Instance.new("Sound")
+                sound.SoundId = (getcustomasset or getsynasset)(SoundName .. ".mp3")
+                return sound
+            end
+            
+            
+            
+local crash = GetGitSound("https://github.com/Brololto/Angler-sounds/blob/main/lv_0_20241221185918%20(1).mp3?raw=true", "Crashund")
+crash.Volume = 4
+crash.Parent = workspace
+crash:Play()
+wait(1)
+            local player = game.Players.LocalPlayer
+            local playerGui = player:WaitForChild("PlayerGui")
+
+
+local screenGui = Instance.new("ScreenGui")
+screenGui.Name = "RandomImageGui"
+screenGui.Parent = playerGui
+screenGui.IgnoreGuiInset = true
+
+local red = Instance.new("ImageLabel")
+red.Size = UDim2.new(1, 0, 1, 0)
+red.BackgroundTransparency = 1 -- Make the background fully transparent
+red.Image = "rbxassetid://76637426417491" -- Set the image using a random Image ID
+red.ImageTransparency = 1
+red.Parent = screenGui
+
+
+
+
+
+
+task.spawn(function()
+while task.wait(0.1) do
+red.Image = "rbxassetid://94547864377343"
+wait()
+red.Image = "rbxassetid://76637426417491"
+end
+end)
+                TweenService:Create(red, TweenInfo.new(0.5), {ImageTransparency = 0}):Play()
+
+wait(2)
+                local hum = game.Players.LocalPlayer.Character.Humanoid
+                hum:TakeDamage(100)
+                r:Destroy()
+                crash:Stop()
+                local GetTimeSpeed = TweenInfo.new(0.5)
+                TweenService:Create(red, GetTimeSpeed, {ImageTransparency = 1}):Play()
+                            local ReSt = game:GetService("ReplicatedStorage") 
+            ReSt.GameStats["Player_"..player.Name].Total.DeathCause.Value = "Ripper"
+end
+
+
+local function shaker()
+            local CameraShaker = require(game.ReplicatedStorage.CameraShaker)
+            local camera = game.Workspace.CurrentCamera
+            local camShake = CameraShaker.new(Enum.RenderPriority.Camera.Value, function(shakeCf)
+                camera.CFrame = camera.CFrame * shakeCf
+            end)
+            camShake:Start()
+            camShake:ShakeOnce(8, 5, 0, 5.5, 1, 0)
+end
+
+
+--Service for moving and lights
+local TweenService = game:GetService("TweenService")
+
+--Lights--
+local Tweeninfo = TweenInfo.new(3, Enum.EasingStyle.Linear, Enum.EasingDirection.Out)
+local color = {Color = Color3.new(1, 0, 0)} -- Use normalized color values
+
+
+for i, v in pairs(workspace.CurrentRooms:GetDescendants()) do
+    if v:IsA("Light") then
+        TweenService:Create(v, Tweeninfo, color):Play()
+    end
+    if v.Parent.Name == "LightFixture" then
+          TweenService:Create(v.Parent, Tweeninfo, color):Play()
+          end
+end
+
+
+local spawn = Instance.new("Sound")
+spawn.Parent = workspace
+spawn.SoundId = "rbxassetid://9125713501"
+spawn.PlaybackSpeed = 0.6
+spawn.Volume = 10
+
+local speed = Instance.new("PitchShiftSoundEffect")
+speed.Name = "PitchShiftSoundEffect"
+speed.Parent = spawn
+speed.Octave = 0.875
+
+spawn:Play()
+
+
+
+local s = game:GetObjects("rbxassetid://132675601442627")[1]
+s.Parent = workspace
+local ambush = s.PrimaryPart or s.Ripe
+ambush.CanCollide = false
+ambush.Anchored = true
+
+shaker()
+
+local workspace = game:GetService("Workspace")
+local silence = s
+local Players = game:GetService("Players")
+
+
+
+            
+-- Player and Character
+local player = Players.LocalPlayer
+local character = player.Character or player.CharacterAdded:Wait()
+local HumanoidRootPart = character:WaitForChild("HumanoidRootPart")
+
+local hitbox = 50
+local RunService = game:GetService("RunService")
+
+RunService.Heartbeat:Connect(function()
+local origin = silence.PrimaryPart.Position
+local direction = (HumanoidRootPart.Position - origin).Unit
+
+local ray = Ray.new(origin, direction * hitbox)
+
+local result = workspace:Raycast(ray.Origin, ray.Direction)
+
+     if result and result.Instance.Parent == character then
+      
+                if not player.Character:GetAttribute("Hiding") then
+                dead = true
+                      local Debris = game:GetService("Debris")
+                      Debris:AddItem(silence, 0.00000000000000001)
+                    ripperdeath() -- Execute your custom function
+                    end
+end
+
+end)
+
+local workspace = game:GetService("Workspace")
+local silene = s
+local hitboox = 80
+
+if not silene then
+    warn("Model 'Silence' not found in Workspace!")
+    return
+end
+
+
+
+RunService.Heartbeat:Connect(function()
+    for _, plaer in pairs(game.Players:GetPlayers()) do
+        if plaer.Character and plaer.Character:FindFirstChild("HumanoidRootPart") and plaer.Character:FindFirstChild("Humanoid") then
+            local rane = (silene.PrimaryPart.Position - plaer.Character.HumanoidRootPart.Position).Magnitude
+            if rane <= hitboox then
+                                              local CameraShaker = require(game.ReplicatedStorage.CameraShaker)
+            local camera = game.Workspace.CurrentCamera
+            local camShake = CameraShaker.new(Enum.RenderPriority.Camera.Value, function(shakeCf)
+                camera.CFrame = camera.CFrame * shakeCf
+            end)
+            camShake:Start()
+            camShake:ShakeOnce(15, 25, 0, 2, 1, 6)
+                end
+            end
+        end
+end)
+
+local rooms = workspace.CurrentRooms
+local currentroom = rooms:FindFirstChild(game.ReplicatedStorage.GameData.LatestRoom.Value)
+                        local romer = rooms:FindFirstChild(game.ReplicatedStorage.GameData.LatestRoom.Value - 5)
+                                                local pproom = rooms:FindFirstChild(game.ReplicatedStorage.GameData.LatestRoom.Value - 4)
+                                                        local previousroom = rooms:FindFirstChild(game.ReplicatedStorage.GameData.LatestRoom.Value - 3)
+                                                                              local reviousroom = rooms:FindFirstChild(game.ReplicatedStorage.GameData.LatestRoom.Value - 2)
+                                                                                                    local peviousroom = rooms:FindFirstChild(game.ReplicatedStorage.GameData.LatestRoom.Value - 1)
+                                                                                                                          local previousrom = rooms:FindFirstChild(game.ReplicatedStorage.GameData.LatestRoom.Value)
+                                                                                                                                                local previousroo = rooms:FindFirstChild(game.ReplicatedStorage.GameData.LatestRoom.Value + 1)
+
+game.ReplicatedStorage.GameData.LatestRoom.Changed:Connect(function()
+                                                     previousroo = rooms:FindFirstChild(game.ReplicatedStorage.GameData.LatestRoom.Value + 1)
+end)
+game.ReplicatedStorage.GameData.LatestRoom.Changed:Connect(function()
+
+                        romer = rooms:FindFirstChild(game.ReplicatedStorage.GameData.LatestRoom.Value - 5)
+                                                pproom = rooms:FindFirstChild(game.ReplicatedStorage.GameData.LatestRoom.Value - 4)
+                                                        previousroom = rooms:FindFirstChild(game.ReplicatedStorage.GameData.LatestRoom.Value - 3)
+                                                                              reviousroom = rooms:FindFirstChild(game.ReplicatedStorage.GameData.LatestRoom.Value - 2)
+                                                                                                    peviousroom = rooms:FindFirstChild(game.ReplicatedStorage.GameData.LatestRoom.Value - 1)
+                                                                                                                          previousrom = rooms:FindFirstChild(game.ReplicatedStorage.GameData.LatestRoom.Value)
+
+
+end)
+
+
+ambush.Position = romer.RoomEntrance.Position
+
+task.wait(8)
+wait(0.2)
+
+    wait(0.3)
+    task.spawn(function()
+    wait(3.2)
+      local rippermoving = Instance.new("Sound")
+rippermoving.Volume = 9
+rippermoving.Parent = ambush
+rippermoving.SoundId = "rbxassetid://6963538865"
+rippermoving.PlaybackSpeed = 0.2
+rippermoving.RollOffMinDistance = 15
+rippermoving:Play()
+end)
+               task.wait(0.1)
+                        
+                        task.spawn(function()
+       task.wait(5.2)
+           ambush.Anchored = false
+           
+                   task.wait(2)
+    if dead == false then
+          local despawn = Instance.new("Sound")
+     despawn.Parent = ambush
+     despawn.Volume = 10
+      despawn.SoundId = "rbxassetid://1837829565"
+      despawn:Play()
+   --Shaker
+            local CameraShaker = require(game.ReplicatedStorage.CameraShaker)
+            local camera = game.Workspace.CurrentCamera
+            local camShake = CameraShaker.new(Enum.RenderPriority.Camera.Value, function(shakeCf)
+                camera.CFrame = camera.CFrame * shakeCf
+            end)
+            camShake:Start()
+            camShake:ShakeOnce(5, 5, 0, 5.5, 1, 0)
+    workspace.CurrentRooms[game.ReplicatedStorage.GameData.LatestRoom.Value]:WaitForChild("Door").ClientOpen:FireServer()
+
+                ---====== Load achievement giver ======---
+local achievementGiver = loadstring(game:HttpGet("https://raw.githubusercontent.com/RegularVynixu/Utilities/main/Doors/Custom%20Achievements/Source.lua"))()
+
+---====== Display achievement ======---
+achievementGiver({
+    Title = "Torn Apart",
+    Desc = "Don't leave to early",
+    Reason = "Encounter Ripper",
+    Image = "rbxassetid://85743086408147"
+})
+s:Destroy()
+end
+end)
+                        local cheese = game.TweenService:Create(ambush, TweenInfo.new(0.1, Enum.EasingStyle.Linear, Enum.EasingDirection.Out), {Position = romer.RoomEntrance.Position + Vector3.new(0, 6, 0)})
+                        cheese:Play()
+                        task.wait(1)
+
+                        local makejays = game.TweenService:Create(ambush,TweenInfo.new(0.1), {CFrame = pproom.RoomEntrance.CFrame * CFrame.new(0, 6, 0)})
+                        makejays:Play()
+                        makejays.Completed:Wait()
+
+
+                local akejays = game.TweenService:Create(ambush, TweenInfo.new(1, Enum.EasingStyle.Linear, Enum.EasingDirection.Out), {Position = previousroom.RoomEntrance.Position + Vector3.new(0, 6, 0)})
+                akejays:Play()
+              akejays.Completed:Wait()
+
+                                      local aejays = game.TweenService:Create(ambush, TweenInfo.new(1, Enum.EasingStyle.Linear, Enum.EasingDirection.Out), {Position = reviousroom.RoomEntrance.Position + Vector3.new(0, 6, 0)})
+                aejays:Play()
+              aejays.Completed:Wait()
+
+                                      local akejas = game.TweenService:Create(ambush, TweenInfo.new(1, Enum.EasingStyle.Linear, Enum.EasingDirection.Out), {Position = peviousroom.RoomEntrance.Position + Vector3.new(0, 6, 0)})
+                akejas:Play()
+              akejas.Completed:Wait()
+
+                                      local akjays = game.TweenService:Create(ambush, TweenInfo.new(1, Enum.EasingStyle.Linear, Enum.EasingDirection.Out), {Position = previousrom.RoomEntrance.Position + Vector3.new(0, 6, 0)})
+                akjays:Play()
+              akjays.Completed:Wait()
+
+                                      local vakejays = game.TweenService:Create(ambush, TweenInfo.new(1, Enum.EasingStyle.Linear, Enum.EasingDirection.Out), {Position = previousroo.RoomEntrance.Position + Vector3.new(0, 6, -3)})
+                vakejays:Play()
+end
+end)
+
+
+local function iceball()
+if workspace:FindFirstChild("SeekMovingNewClone") 
+        or workspace.CurrentRooms:FindFirstChild("50") 
+        or workspace.CurrentRooms:FindFirstChild("100") then
+            repeat task.wait() until not workspace:FindFirstChild("SeekMovingNewClone") 
+                and not workspace.CurrentRooms:FindFirstChild("50") 
+                and not workspace.CurrentRooms:FindFirstChild("100")
+        end
+local CameraShaker = require(game.ReplicatedStorage.CameraShaker)
+local camara = game.Workspace.CurrentCamera
+
+local camShake = CameraShaker.new(Enum.RenderPriority.Camera.Value, function(cf)
+    camara.CFrame = camara.CFrame * cf
+end)
+
+
 camShake:Start()
+camShake:Shake(CameraShaker.Presets.Earthquake)
 
-function GetTime(Distance, Speed)
-    -- Time = Distance / Speed
-    local Time = Distance / Speed
-    return Time
-end
-
-local DEF_SPEED = 99999 -- Tốc độ mặc định của "Ambush"
-local function THEHORROR()
-    --- configs
-    local ambruhspeed = 100 -- Tốc độ ban đầu của "Ambush"
-    local storer = ambruhspeed -- Lưu trữ tốc độ ban đầu
-    local ambushheight = Vector3.new(0, 5, 0) -- Chiều cao cộng thêm cho CFrame của Ambush
-    local redtweeninfo = TweenInfo.new(3)
-    local redinfo = {Color = Color3.new(1, 0, 0.133333)} -- Màu đỏ
-
-    camShake:Shake(cameraShaker.Presets.Earthquake)
-
-    -- Đổi màu đèn thành đỏ
-    for i, v in pairs(game.Workspace.CurrentRooms:GetDescendants()) do
-        if v:IsA("Light") then
-            TweenService:Create(v, redtweeninfo, redinfo):Play()
-            if v.Parent and v.Parent.Name == "LightFixture" then -- Kiểm tra Parent tồn tại
-                TweenService:Create(v.Parent, redtweeninfo, redinfo):Play()
-            end
-        end
-    end
-
-    -- ***** LỖI ĐÃ SỬA: Cách tải Model từ Asset ID *****
-    -- Bạn không thể dùng game:GetObjects trong Local Script để tải asset.
-    -- Giả định rằng Model "Ambush" đã được tải vào game (ví dụ: bởi Server Script)
-    -- và bạn đang tìm nó trong Workspace.
-    local s = workspace:FindFirstChild("AmbushModel") -- THAY THẾ "AmbushModel" bằng tên model thực tế của bạn nếu nó được load vào workspace
-    if not s then
-        warn("Model 'AmbushModel' (Asset ID 13515035) không tìm thấy trong Workspace. Không thể tiếp tục.")
-        return -- Dừng hàm nếu không tìm thấy model
-    end
-
-    local ambush = s.Ripe -- Giả sử "Ripe" là part chính của Ambush
-    if not ambush then
-        warn("Part 'Ripe' không tìm thấy trong model 'AmbushModel'.")
-        return
-    end
-
-    -- Khởi tạo và phát âm thanh Spawn
-    local amb = ambush.Spawn:Clone()
-    amb.Parent = workspace
-    amb.TimePosition = 0
-    amb:Play()
-    amb.Volume = 6
-    ambush.Ambush.Volume = 0 -- Đảm bảo âm thanh Ambush ban đầu không phát
-
-    ----------------------
-    -- Hàm kiểm tra tầm nhìn
-    local function canSeeTarget(target: Model, size: number): boolean?
-        if killed then -- Nếu đã chết, không cần kiểm tra nữa
-            return nil
-        end
-        local origin = ambush.Position
-        local targetHumanoidRootPart = target:FindFirstChild("HumanoidRootPart")
-        if not targetHumanoidRootPart then return nil end -- Kiểm tra HumanoidRootPart
-
-        local direction = (targetHumanoidRootPart.Position - ambush.Position).unit * size
-        local ray = Ray.new(origin, direction)
-
-        local hit, _ = workspace:FindPartOnRay(ray, ambush) -- _ để bỏ qua pos
-
-        if hit then
-            if hit:IsDescendantOf(target) then
-                killed = true -- Đặt trạng thái killed
-                return true
-            else
-                return false -- Thấy vật cản, không thấy mục tiêu
-            end
-        else
-            return false -- Không thấy gì trên đường đi
-        end
-    end
-
-    -------------------------
-    -- Vòng lặp kiểm tra tầm nhìn và gây sát thương
-    --_SHAKER DO NOT MODIFY
-    task.spawn(function() -- Dùng task.spawn thay vì spawn
-        while ambush and ambush.Parent == s do -- Đảm bảo ambush còn tồn tại và là con của s
-            task.wait(0.2) -- Dùng task.wait thay vì wait
-            local v = game.Players.LocalPlayer
-            if v.Character and v.Character:FindFirstChild("HumanoidRootPart") and not v.Character:GetAttribute("Hiding") then -- Kiểm tra Character và HRP
-                if canSeeTarget(v.Character, 50) then
-                    ambush.Ambush:Stop()
-                    local humanoid = v.Character:FindFirstChildOfClass("Humanoid")
-                    if humanoid then -- Kiểm tra Humanoid tồn tại
-                        humanoid:TakeDamage(100)
-                    end
-                    ReSt.GameStats["Player_" .. Plr.Name].Total.DeathCause.Value = "Ripper"
-                    -- firesignal là hàm không chuẩn, giả định executor cung cấp
-                    firesignal(game.ReplicatedStorage.RemotesFolder.DeathHint.OnClientEvent, {"You died to who you call Ripper...", "You can tell his presence by the lights and his scream.", "Hide when he does this!"}, "Blue")
-                end
-            end
-            if v.Character and v.Character:FindFirstChild("HumanoidRootPart") then -- Kiểm tra Character và HRP
-                if (ambush.Position - v.Character:FindFirstChild("HumanoidRootPart").Position).magnitude <= val then
-                    camShake:ShakeOnce(15, 8.8, 0, 2, 1, 6)
-                end
-            end
-        end
-    end)
-    ----------------------
-    game.Debris:AddItem(amb, 10) -- Thêm âm thanh spawn vào Debris
-    ambush.Ambush:Stop() -- Dừng âm thanh Ambush (nếu nó đang phát)
-    local h = ambush.Ambush -- Lấy lại tham chiếu đến âm thanh Ambush
-    h.SoundId = "rbxassetid://6963538865"
-    h.Volume = 10 -- Đặt âm lượng cao
-    h.RollOffMinDistance = 5
-    h.PlaybackSpeed = 0.37
-    h.TimePosition = 0
-
-    task.wait(8) -- Dùng task.wait
-    h:Play() -- Phát âm thanh Ambush sau 8 giây
-    TweenService:Create(h, TweenInfo.new(6), {Volume = 0.8}):Play() -- Giảm âm lượng từ 10 xuống 0.8 trong 6 giây
-
-    local gruh = workspace.CurrentRooms
-    ambruhspeed = DEF_SPEED -- Reset tốc độ về DEF_SPEED trước khi bắt đầu Pathfind
-
-    -- Vòng lặp Pathfind của Ambush
-    for i = 1, ReSt.GameData.LatestRoom.Value do
-        if gruh:FindFirstChild(tostring(i)) then -- Đảm bảo tìm phòng theo tên string
-            local room = gruh:FindFirstChild(tostring(i))
-            print("Room " .. i)
-            if room and room:FindFirstChild("PathfindNodes") then -- Kiểm tra room tồn tại
-                local nodes = room:FindFirstChild("PathfindNodes")
-                -- ***** LỖI ĐÃ SỬA: Cách duyệt nodes *****
-                for _, waypoint in pairs(nodes:GetChildren()) do -- Duyệt bằng pairs(GetChildren()) an toàn hơn
-                    if waypoint:IsA("BasePart") then -- Chỉ xử lý nếu là Part
-                        local Distance = (ambush.Position - waypoint.Position).magnitude
-                        local fakejays = TweenService:Create(ambush, TweenInfo.new(GetTime(Distance, ambruhspeed), Enum.EasingStyle.Linear, Enum.EasingDirection.Out, 0, false, 0), {CFrame = waypoint.CFrame + ambushheight})
-                        fakejays:Play()
-                        fakejays.Completed:Wait() -- Chờ Tween hoàn thành
-                        ambruhspeed = storer -- Reset tốc độ cho waypoint tiếp theo
-                    end
-                end
-            end
-        end
-        print("Looping through rooms...")
-    end
-
-    ----------------------
-    -- Hiệu ứng kết thúc
-    local slam = Instance.new("Sound")
-    slam.Volume = 10
-    slam.SoundId = "rbxassetid://1837829565"
-    slam.Parent = ambush -- Đặt parent của sound vào ambush
-    camShake:Shake(cameraShaker.Presets.Explosion)
-    slam:Play()
-    task.wait(1) -- Dùng task.wait
-
-    ambush.Anchored = false
-    ambush.CanCollide = false
-    game.Debris:AddItem(s, 5) -- Thêm cả model 's' vào Debris để xóa sau 5 giây
-
-    ---====== Load achievement giver ======---
-    -- Loadstring và HttpGet chỉ hoạt động với Executor
-    local achievementGiver = loadstring(game:HttpGet("https://raw.githubusercontent.com/RegularVynixu/Utilities/main/Doors/Custom%20Achievements/Source.lua"))()
-
-    ---====== Display achievement ======---
-    if achievementGiver then -- Đảm bảo achievementGiver được tải thành công
-        achievementGiver({
-            Title = "Torn Appart",
-            Desc = "Don't leave **too** early..",
-            Reason = "Encounter Ripper.",
-            Image = "rbxassetid://12231244970"
-        })
+local redtweeninfo = TweenInfo.new(3)
+local redinfo = {Color = Color3.new(0, 0, 1)}
+----------
+for i,v in pairs(workspace.CurrentRooms:GetDescendants()) do
+    if v:IsA("Light") then
+        game.TweenService:Create(v, redtweeninfo, redinfo):Play()
     end
 end
 
-pcall(THEHORROR) -- Sử dụng pcall để bắt lỗi nếu có
+
+
+local s = game:GetObjects("rbxassetid://121128782273259")[1]
+s.Parent = game.Workspace
+if not s.PrimaryPart then
+   s.PrimaryPart = s:FindFirstChildWhichIsA("BasePart")
+end
+local ambush = s.PrimaryPart
+ambush.CanCollide = true
+ambush.Anchored = true
+
+    local active = Instance.new("Sound")
+active.Parent = workspace
+active.Name = "spawn"
+active.SoundId = "rbxassetid://166047422"
+active.Volume = 3
+active:Play()
+wait(0.5)
+local active = Instance.new("Sound")
+active.Parent = workspace
+active.Name = "huge_explosion"
+active.SoundId = "rbxassetid://9125632539"
+active.Volume = 3
+active.PlaybackSpeed = 0.5
+active:Play()
+
+
+
+local workspace = game:GetService("Workspace")
+local silence = s
+local Players = game:GetService("Players")
+
+
+
+            
+-- Player and Character
+local player = Players.LocalPlayer
+local character = player.Character or player.CharacterAdded:Wait()
+local HumanoidRootPart = character:WaitForChild("HumanoidRootPart")
+
+
+
+local hitbox = 80
+local RunService = game:GetService("RunService")
+
+RunService.Heartbeat:Connect(function()
+local origin = silence.PrimaryPart.Position
+local direction = (HumanoidRootPart.Position - origin).Unit
+
+local ray = Ray.new(origin, direction * hitbox)
+
+local result = workspace:Raycast(ray.Origin, ray.Direction)
+
+     if result and result.Instance.Parent == character then
+     if game.Players.LocalPlayer.Character.Humanoid.MoveDirection ~= Vector3.new(0, 0, 0) then
+     game.Players.LocalPlayer.Character.Humanoid.Health = 0
+
+                            local ReSt = game:GetService("ReplicatedStorage") 
+            ReSt.GameStats["Player_"..player.Name].Total.DeathCause.Value = "Cease"
+end
+end
+end)
+
+local workspace = game:GetService("Workspace")
+local silene = s
+local hitboox = 80
+
+if not silene then
+    warn("Model 'Silence' not found in Workspace!")
+    return
+end
+
+local RunService = game:GetService("RunService")
+
+RunService.Heartbeat:Connect(function()
+    for _, plaer in pairs(game.Players:GetPlayers()) do
+        if plaer.Character and plaer.Character:FindFirstChild("HumanoidRootPart") and plaer.Character:FindFirstChild("Humanoid") then
+            local rane = (silene.PrimaryPart.Position - plaer.Character.HumanoidRootPart.Position).Magnitude
+            if rane <= hitboox then
+                                              local CameraShaker = require(game.ReplicatedStorage.CameraShaker)
+            local camera = game.Workspace.CurrentCamera
+            local camShake = CameraShaker.new(Enum.RenderPriority.Camera.Value, function(shakeCf)
+                camera.CFrame = camera.CFrame * shakeCf
+            end)
+            camShake:Start()
+            camShake:ShakeOnce(5, 5, 0, 2, 1, 6)
+                end
+            end
+        end
+end)
+
+local rooms = workspace.CurrentRooms
+
+                        local romer = rooms:FindFirstChild(game.ReplicatedStorage.GameData.LatestRoom.Value - 5)
+                                                local pproom = rooms:FindFirstChild(game.ReplicatedStorage.GameData.LatestRoom.Value - 4)
+                                                        local previousroom = rooms:FindFirstChild(game.ReplicatedStorage.GameData.LatestRoom.Value - 3)
+                                                                              local reviousroom = rooms:FindFirstChild(game.ReplicatedStorage.GameData.LatestRoom.Value - 2)
+                                                                                                    local peviousroom = rooms:FindFirstChild(game.ReplicatedStorage.GameData.LatestRoom.Value - 1)
+local currentroom = rooms:FindFirstChild(game.ReplicatedStorage.GameData.LatestRoom.Value)
+local currentroom2 = rooms:FindFirstChild(game.ReplicatedStorage.GameData.LatestRoom.Value + 1)
+
+
+                       
+                        local cheese = game.TweenService:Create(ambush, TweenInfo.new(1, Enum.EasingStyle.Linear, Enum.EasingDirection.Out), {Position = romer.RoomEntrance.Position + Vector3.new(0, 1, 0)})
+                        cheese:Play()
+                        cheese.Completed:Wait()
+
+                        local cheeser = game.TweenService:Create(ambush, TweenInfo.new(1, Enum.EasingStyle.Linear, Enum.EasingDirection.Out), {Position = pproom.RoomEntrance.Position + Vector3.new(0, 1, 0)})
+cheeser:Play()
+cheeser.Completed:Wait()
+
+                        local kiss = game.TweenService:Create(ambush, TweenInfo.new(1, Enum.EasingStyle.Linear, Enum.EasingDirection.Out), {Position = previousroom.RoomEntrance.Position + Vector3.new(0, 1, 0)})
+kiss:Play()
+kiss.Completed:Wait()
+
+                        local han = game.TweenService:Create(ambush, TweenInfo.new(1, Enum.EasingStyle.Linear, Enum.EasingDirection.Out), {Position = reviousroom.RoomEntrance.Position + Vector3.new(0, 1, 0)})
+han:Play()
+han.Completed:Wait()
+
+                        local shit = game.TweenService:Create(ambush, TweenInfo.new(1, Enum.EasingStyle.Linear, Enum.EasingDirection.Out), {Position = peviousroom.RoomEntrance.Position + Vector3.new(0, 1, 0)})
+shit:Play()
+shit.Completed:Wait()
+
+                        local pls = game.TweenService:Create(ambush, TweenInfo.new(1, Enum.EasingStyle.Linear, Enum.EasingDirection.Out), {Position = currentroom.RoomEntrance.Position + Vector3.new(0, 1, 0)})
+pls:Play()
+pls.Completed:Wait()
+
+                        local dez = game.TweenService:Create(ambush, TweenInfo.new(1, Enum.EasingStyle.Linear, Enum.EasingDirection.Out), {Position = currentroom2.RoomEntrance.Position + Vector3.new(0, 1, 0)})
+dez:Play()
+dez.Completed:Wait()
+
+
+
+               task.wait(0.8)
+                        task.wait(1)  
+        ambush.CanCollide = false
+        ambush.Anchored = false
+        wait(1)
+        s:Destroy()
+       
+       
+end
