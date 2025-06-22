@@ -21,8 +21,8 @@ local entityPart -- Part "RushNew" bên trong entityModel, dùng cho vị trí v
 local chaseConnection = nil -- Kết nối Heartbeat để đuổi theo
 local destroyTimer = nil -- Timer tự hủy Deer God
 local MoveActive = true -- Biến kiểm soát việc di chuyển của Deer God
-local customSpeed = 17 -- Tốc độ Deer God đuổi theo người chơi
-local activationRange = 17 -- **Khoảng cách kích hoạt Deer God đuổi theo**
+local customSpeed = 23 -- Tốc độ Deer God đuổi theo người chơi
+local activationRange = 34 -- **Khoảng cách kích hoạt Deer God đuổi theo**
 
 -- Biến lưu trữ trạng thái ánh sáng ban đầu
 local originalTintColor
@@ -36,9 +36,9 @@ local activeSounds = {}
 ---====== Tạo ColorCorrectionEffect nếu chưa có ======---
 local colorCorrection = Lighting:FindFirstChildOfClass("ColorCorrectionEffect")
 if not colorCorrection then
-    colorCorrection = Instance.new("ColorCorrectionEffect")
-    colorCorrection.Name = "MainColorCorrection"
-    colorCorrection.Parent = Lighting
+    colorCorrection = Instance.new("ColorCorrectionEffect")
+    colorCorrection.Name = "MainColorCorrection"
+    colorCorrection.Parent = Lighting
 end
 
 ---====== Create Entity (Deer God) ======---
@@ -76,302 +76,293 @@ local entity = spawner.Create({
 
 ---====== Helper Functions for Custom Sound (Tùy chọn: chỉ dùng nếu có exploit) ======---
 function GitAud(soundgit, filename)
-    if type(getcustomasset) == "function" or type(getsynasset) == "function" then
-	    writefile(filename..".mp3", game:HttpGet(soundgit))
-	    return (getcustomasset or getsynasset)(filename..".mp3")
-    else
-        warn("Cannot load sound from GitHub: getcustomasset/getsynasset not available. Please upload sound to Roblox and use its Asset ID.")
-        return ""
-    end
+    if type(getcustomasset) == "function" or type(getsynasset) == "function" then
+	    writefile(filename..".mp3", game:HttpGet(soundgit))
+	    return (getcustomasset or getsynasset)(filename..".mp3")
+    else
+        warn("Cannot load sound from GitHub: getcustomasset/getsynasset not available. Please upload sound to Roblox and use its Asset ID.")
+        return ""
+    end
 end
 
 function CustomGitSound(soundlink, vol, filename)
 	local S = Instance.new("Sound")
-    S.SoundId = GitAud(soundlink, filename)
-    if S.SoundId == "" then return nil end
+    S.SoundId = GitAud(soundlink, filename)
+    if S.SoundId == "" then return nil end
 	S.Volume = vol
 	S.Looped = false
 	S:Play()
 	Debris:AddItem(S, S.TimeLength + 1)
-    return S
+    return S
 end
 
 ---====== Jumpscare Functions ======---
 local function executeRealJumpscare()
-    if inputConn1 then inputConn1:Disconnect(); inputConn1 = nil end
-    if inputConn2 then inputConn2:Disconnect(); inputConn2 = nil end
+    if inputConn1 then inputConn1:Disconnect(); inputConn1 = nil end
+    if inputConn2 then inputConn2:Disconnect(); inputConn2 = nil end
 
-    local jumpscareGui = Instance.new("ScreenGui", LocalPlayer:WaitForChild("PlayerGui"))
-    jumpscareGui.Name = "JumpscareGUI"
-    jumpscareGui.IgnoreGuiInset = true
-    jumpscareGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+    local jumpscareGui = Instance.new("ScreenGui", LocalPlayer:WaitForChild("PlayerGui"))
+    jumpscareGui.Name = "JumpscareGUI"
+    jumpscareGui.IgnoreGuiInset = true
+    jumpscareGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 
-    local jumpscareImg = Instance.new("ImageLabel", jumpscareGui)
-    jumpscareImg.Size = UDim2.new(1, 0, 1, 0)
-    jumpscareImg.BackgroundTransparency = 1
-    jumpscareImg.ImageTransparency = 1
-    jumpscareImg.Image = "rbxassetid://000000"
-    jumpscareImg.ZIndex = 10
+    local jumpscareImg = Instance.new("ImageLabel", jumpscareGui)
+    jumpscareImg.Size = UDim2.new(1, 0, 1, 0)
+    jumpscareImg.BackgroundTransparency = 1
+    jumpscareImg.ImageTransparency = 1
+    jumpscareImg.Image = "rbxassetid://11826279208"
+    jumpscareImg.ZIndex = 10
 
-    local jumpscareSound = Instance.new("Sound", workspace)
-    jumpscareSound.SoundId = "rbxassetid://6567183465"
-    jumpscareSound.Volume = 3
-    jumpscareSound:Play()
-    activeSounds[jumpscareSound] = true
+    local jumpscareSound = Instance.new("Sound", workspace)
+    jumpscareSound.SoundId = "rbxassetid://6567183465"
+    jumpscareSound.Volume = 3
+    jumpscareSound:Play()
+    activeSounds[jumpscareSound] = true
 
-    TweenService:Create(jumpscareImg, TweenInfo.new(0.1), {ImageTransparency = 0}):Play()
+    TweenService:Create(jumpscareImg, TweenInfo.new(0.1), {ImageTransparency = 0}):Play()
 
-    colorCorrection.TintColor = Color3.fromRGB(250, 0, 0)
-    colorCorrection.Contrast = 10
-    TweenService:Create(colorCorrection, TweenInfo.new(0.25), {Contrast = 0}):Play()
-    TweenService:Create(colorCorrection, TweenInfo.new(0.5), {TintColor = originalTintColor}):Play()
+    colorCorrection.TintColor = Color3.fromRGB(250, 0, 0)
+    colorCorrection.Contrast = 10
+    TweenService:Create(colorCorrection, TweenInfo.new(0.25), {Contrast = 0}):Play()
+    TweenService:Create(colorCorrection, TweenInfo.new(0.5), {TintColor = originalTintColor}):Play()
 
-    task.wait(1.5)
+    task.wait(1.5)
 
-    jumpscareImg.ImageTransparency = 1
-    jumpscareImg.Image = "rbxassetid://000000"
-    jumpscareImg.ZIndex = 12
-    TweenService:Create(jumpscareImg, TweenInfo.new(0.5), {ImageTransparency = 0}):Play()
+    jumpscareImg.ImageTransparency = 1
+    jumpscareImg.Image = "rbxassetid://12331751893"
+    jumpscareImg.ZIndex = 12
+    TweenService:Create(jumpscareImg, TweenInfo.new(0.5), {ImageTransparency = 0}):Play()
 
-    local skullSound = Instance.new("Sound", workspace)
-    skullSound.SoundId = "rbxassetid://18459521002"
-    skullSound.Volume = 2
-    skullSound:Play()
-    activeSounds[skullSound] = true
+    local skullSound = Instance.new("Sound", workspace)
+    skullSound.SoundId = "rbxassetid://18459521002"
+    skullSound.Volume = 2
+    skullSound:Play()
+    activeSounds[skullSound] = true
 
-    task.wait(2)
+    task.wait(2)
 
-    TweenService:Create(jumpscareImg, TweenInfo.new(0.5), {ImageTransparency = 1}):Play().Completed:Wait()
+    TweenService:Create(jumpscareImg, TweenInfo.new(0.5), {ImageTransparency = 1}):Play().Completed:Wait()
 
-    if cameraConn then cameraConn:Disconnect(); cameraConn = nil end
-    Camera.CameraType = Enum.CameraType.Custom
-    isJumpscareActive = false
-    jumpscareGui:Destroy()
+    if cameraConn then cameraConn:Disconnect(); cameraConn = nil end
+    Camera.CameraType = Enum.CameraType.Custom
+    isJumpscareActive = false
+    jumpscareGui:Destroy()
 
-    for sound, _ in pairs(activeSounds) do
-        if sound and sound.Playing then
-            sound:Stop()
-        end
-        if sound and sound.Parent then
-            sound:Destroy()
-        end
-    end
-    activeSounds = {}
+    for sound, _ in pairs(activeSounds) do
+        if sound and sound.Playing then
+            sound:Stop()
+        end
+        if sound and sound.Parent then
+            sound:Destroy()
+        end
+    end
+    activeSounds = {}
 
-    local char = LocalPlayer.Character
-    if char then
-        local hum = char:FindFirstChild("Humanoid")
-        if hum then
-            hum.WalkSpeed = 16
-            hum.JumpPower = 50
-            hum.AutoRotate = true
-            hum.PlatformStand = false
-            for _, part in ipairs(char:GetDescendants()) do
-                if part:IsA("BasePart") then
-                    part.Anchored = false
-                end
-            end
-        end
-    end
-    print("Jumpscare đã kết thúc và trạng thái người chơi đã được khôi phục.")
+    local char = LocalPlayer.Character
+    if char then
+        local hum = char:FindFirstChild("Humanoid")
+        if hum then
+            hum.WalkSpeed = 16
+            hum.JumpPower = 50
+            hum.AutoRotate = true
+            hum.PlatformStand = false
+            for _, part in ipairs(char:GetDescendants()) do
+                if part:IsA("BasePart") then
+                    part.Anchored = false
+                end
+            end
+        end
+    end
+    print("Jumpscare đã kết thúc và trạng thái người chơi đã được khôi phục.")
 end
 
 local function doJumpscareWithEffect()
-    if isJumpscareActive then return end
-    isJumpscareActive = true
+    if isJumpscareActive then return end
+    isJumpscareActive = true
 
-    local char = LocalPlayer.Character
-    if char then
-        local hum = char:FindFirstChild("Humanoid")
-        if hum then
-            hum.WalkSpeed = 0
-            hum.JumpPower = 0
-            hum.AutoRotate = false
-            hum.PlatformStand = true
-            for _, part in ipairs(char:GetDescendants()) do
-                if part:IsA("BasePart") then
-                    part.Anchored = true
-                end
-            end
-        end
-    end
+    local char = LocalPlayer.Character
+    if char then
+        local hum = char:FindFirstChild("Humanoid")
+        if hum then
+            hum.WalkSpeed = 0
+            hum.JumpPower = 0
+            hum.AutoRotate = false
+            hum.PlatformStand = true
+            for _, part in ipairs(char:GetDescendants()) do
+                if part:IsA("BasePart") then
+                    part.Anchored = true
+                end
+            end
+        end
+    end
 
-    Camera.CameraType = Enum.CameraType.Scriptable
-    if cameraConn then cameraConn:Disconnect() end
-    cameraConn = RunService.RenderStepped:Connect(function()
-        if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Head") and entityPart and entityModel and entityModel.Parent then
-            Camera.CFrame = CFrame.new(LocalPlayer.Character.Head.Position, entityPart.Position)
-        else
-            warn("Không thể khóa camera: entityPart, đầu người chơi hoặc entityModel không tồn tại.")
-            if cameraConn then cameraConn:Disconnect() end
-        end
-    end)
-    print("Camera đã được khóa vào entity ngay khi người chơi bị đóng băng.")
+    Camera.CameraType = Enum.CameraType.Scriptable
+    if cameraConn then cameraConn:Disconnect() end
+    cameraConn = RunService.RenderStepped:Connect(function()
+        if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Head") and entityPart and entityModel and entityModel.Parent then
+            Camera.CFrame = CFrame.new(LocalPlayer.Character.Head.Position, entityPart.Position)
+        else
+            warn("Không thể khóa camera: entityPart, đầu người chơi hoặc entityModel không tồn tại.")
+            if cameraConn then cameraConn:Disconnect() end
+        end
+    end)
+    print("Camera đã được khóa vào entity ngay khi người chơi bị đóng băng.")
 
-    if inputConn1 then inputConn1:Disconnect(); inputConn1 = nil end
-    if inputConn2 then inputConn2:Disconnect(); inputConn2 = nil end
-    inputConn1 = UserInputService.InputBegan:Connect(function() return Enum.ContextActionResult.Sink end)
-    inputConn2 = UserInputService.InputChanged:Connect(function() return Enum.ContextActionResult.Sink end)
+    if inputConn1 then inputConn1:Disconnect(); inputConn1 = nil end
+    if inputConn2 then inputConn2:Disconnect(); inputConn2 = nil end
+    inputConn1 = UserInputService.InputBegan:Connect(function() return Enum.ContextActionResult.Sink end)
+    inputConn2 = UserInputService.InputChanged:Connect(function() return Enum.ContextActionResult.Sink end)
 
-    local staticGui = Instance.new("ScreenGui", LocalPlayer:WaitForChild("PlayerGui"))
-    staticGui.Name = "StaticGUI"
-    local staticImg = Instance.new("ImageLabel", staticGui)
-    staticImg.Size = UDim2.new(1, 0, 1, 0)
-    staticImg.BackgroundTransparency = 1
-    staticImg.ImageTransparency = 0
-    staticImg.Image = "rbxassetid://1568285513"
-    staticImg.ZIndex = 11
+    local staticGui = Instance.new("ScreenGui", LocalPlayer:WaitForChild("PlayerGui"))
+    staticGui.Name = "StaticGUI"
+    local staticImg = Instance.new("ImageLabel", staticGui)
+    staticImg.Size = UDim2.new(1, 0, 1, 0)
+    staticImg.BackgroundTransparency = 1
+    staticImg.ImageTransparency = 0
+    staticImg.Image = "rbxassetid://1568285513"
+    staticImg.ZIndex = 11
 
-    local staticSound = Instance.new("Sound", workspace)
-    staticSound.SoundId = "rbxassetid://1845110821"
-    staticSound.Volume = 1
-    staticSound.Looped = true
-    staticSound:Play()
-    activeSounds[staticSound] = true
+    local staticSound = Instance.new("Sound", workspace)
+    staticSound.SoundId = "rbxassetid://1845110821"
+    staticSound.Volume = 1
+    staticSound.Looped = true
+    staticSound:Play()
+    activeSounds[staticSound] = true
 
-    local currentBrightness = Lighting.Brightness
-    TweenService:Create(Lighting, TweenInfo.new(0.5), {Brightness = -1}):Play()
+    local currentBrightness = Lighting.Brightness
+    TweenService:Create(Lighting, TweenInfo.new(0.5), {Brightness = -1}):Play()
 
-    task.wait(1.5)
+    task.wait(1.5)
 
-    staticImg.ImageTransparency = 1
-    if staticSound and staticSound.Playing then staticSound:Stop() end
-    staticSound:Destroy()
-    staticGui:Destroy()
+    staticImg.ImageTransparency = 1
+    if staticSound and staticSound.Playing then staticSound:Stop() end
+    staticSound:Destroy()
+    staticGui:Destroy()
 
-    TweenService:Create(Lighting, TweenInfo.new(0.5), {Brightness = currentBrightness}):Play()
+    TweenService:Create(Lighting, TweenInfo.new(0.5), {Brightness = currentBrightness}):Play()
 
-    colorCorrection.TintColor = Color3.fromRGB(250, 0, 0)
-    colorCorrection.Contrast = 0
+    colorCorrection.TintColor = Color3.fromRGB(250, 0, 0)
+    colorCorrection.Contrast = 0
 
-    task.wait(0.5)
+    task.wait(0.5)
 
-    executeRealJumpscare()
+    executeRealJumpscare()
 end
 
 ---====== Entity Callbacks ======---
 
 entity:SetCallback("OnSpawned", function()
-    print("Entity has spawned")
-    entityModel = entity.Model
-    entityModel.Parent = workspace
+    print("Entity has spawned")
+    entityModel = entity.Model
+    entityModel.Parent = workspace
 
-    if entityModel then
-        entityPart = entityModel:FindFirstChild("RushNew")
-        if not entityPart then
-            warn("Deer God model does NOT contain a part named 'RushNew'!")
-            entityPart = entityModel.PrimaryPart or entityModel:FindFirstChildOfClass("BasePart")
-            if not entityPart then
-                warn("Could not find 'RushNew' or any suitable BasePart for Deer God! Entity may not move correctly.")
-                return
-            end
-        end
-        entityModel.PrimaryPart = entityPart
-        print("DeerGod.PrimaryPart set to: " .. entityModel.PrimaryPart.Name)
+    if entityModel then
+        entityPart = entityModel:FindFirstChild("RushNew")
+        if not entityPart then
+            warn("Deer God model does NOT contain a part named 'RushNew'!")
+            entityPart = entityModel.PrimaryPart or entityModel:FindFirstChildOfClass("BasePart")
+            if not entityPart then
+                warn("Could not find 'RushNew' or any suitable BasePart for Deer God! Entity may not move correctly.")
+                return
+            end
+        end
+        entityModel.PrimaryPart = entityPart
+        print("DeerGod.PrimaryPart set to: " .. entityModel.PrimaryPart.Name)
 
-        -- --- ĐOẠN CODE ĐÃ ĐƯỢC CHỈNH SỬA ĐỂ SPAWN CỐ ĐỊNH ---
-        -- Đảm bảo Deer God spawn tại vị trí của Entity Spawner đã được đặt.
-        if spawner and spawner.CFrame then
-            entityModel:SetPrimaryPartCFrame(spawner.CFrame)
-            print("Deer God spawned at the Spawner's CFrame.")
-        else
-            warn("Spawner's CFrame not found or spawner is nil. Spawning 50 studs in front of player as fallback.")
-            -- Fallback to spawning in front of the player if spawner CFrame isn't available
-            entityModel:SetPrimaryPartCFrame(HumanoidRootPart.CFrame * CFrame.new(0, 0, 50))
-        end
-        -- --- KẾT THÚC ĐOẠN ĐÃ CHỈNH SỬA ---
+        -- Vị trí ban đầu của Deer God
+        entityModel:SetPrimaryPartCFrame(HumanoidRootPart.CFrame * CFrame.new(0, 0, 50))
+    else
+        warn("entity.Model is nil after spawning! Cannot set up movement or sound.")
+        return
+    end
 
-        coroutine.wrap(function()
-            for i, v in ipairs(entityModel:GetDescendants()) do
-                if v.Name == "RushNew" then
-                    pcall(function()
-                        if v:FindFirstChild("Breathing") then v.Breathing:Destroy() end
-                    end)
-                    pcall(function()
-                        if v:FindFirstChild("Footsteps") then v.Footsteps:Destroy() end
-                    end)
-                end
-            end
-        end)()
+    coroutine.wrap(function()
+        for i, v in ipairs(entityModel:GetDescendants()) do
+            if v.Name == "RushNew" then
+                pcall(function()
+                    if v:FindFirstChild("Breathing") then v.Breathing:Destroy() end
+                end)
+                pcall(function()
+                    if v:FindFirstChild("Footsteps") then v.Footsteps:Destroy() end
+                end)
+            end
+        end
+    end)()
 
-        local customSoundInstance = CustomGitSound("https://github.com/Tinkgy111/Bang/blob/main/followed.mp3?raw=true", 2, "DeerGod_Hostile")
-        if customSoundInstance then
-            customSoundInstance.Parent = entityModel
-        end
+    local customSoundInstance = CustomGitSound("https://github.com/Tinkgy111/Bang/blob/main/followed.mp3?raw=true", 2, "DeerGod_Hostile")
+    if customSoundInstance then
+        customSoundInstance.Parent = entityModel
+    end
 
-        originalTintColor = colorCorrection.TintColor
-        originalContrast = colorCorrection.Contrast
+    originalTintColor = colorCorrection.TintColor
+    originalContrast = colorCorrection.Contrast
 
-        colorCorrection.TintColor = Color3.fromRGB(255, 255, 255)
-        colorCorrection.Contrast = 10
-        TweenService:Create(colorCorrection, TweenInfo.new(2.5), {Contrast = 0}):Play()
-        TweenService:Create(colorCorrection, TweenInfo.new(5), {TintColor = Color3.fromRGB(250, 0, 0)}):Play()
+    colorCorrection.TintColor = Color3.fromRGB(255, 255, 255)
+    colorCorrection.Contrast = 10
+    TweenService:Create(colorCorrection, TweenInfo.new(2.5), {Contrast = 0}):Play()
+    TweenService:Create(colorCorrection, TweenInfo.new(5), {TintColor = Color3.fromRGB(250, 0, 0)}):Play()
 
-        MoveActive = true
-        if chaseConnection then chaseConnection:Disconnect() end
-        chaseConnection = RunService.Heartbeat:Connect(function(dt)
-            if not MoveActive or not entityModel or not entityModel.PrimaryPart or not HumanoidRootPart or not HumanoidRootPart.Parent then return end
-            
-            local pos = entityModel.PrimaryPart.Position
-            local target = HumanoidRootPart.Position
-            local distance = (target - pos).Magnitude
+    MoveActive = true
+    if chaseConnection then chaseConnection:Disconnect() end
+    chaseConnection = RunService.Heartbeat:Connect(function(dt)
+        if not MoveActive or not entityModel or not entityModel.PrimaryPart or not HumanoidRootPart or not HumanoidRootPart.Parent then return end
+        
+        local pos = entityModel.PrimaryPart.Position
+        local target = HumanoidRootPart.Position
+        local distance = (target - pos).Magnitude
 
-            if distance <= activationRange then -- **Chỉ đuổi theo nếu trong phạm vi kích hoạt**
-                local dir = (target - pos).Unit
-                local moveVec = dir * customSpeed * dt
-                local newCFrame = CFrame.new(pos + moveVec, target)
-                entityModel:SetPrimaryPartCFrame(newCFrame)
-            else
-                -- Nếu ngoài phạm vi, Deer God đứng yên
-                -- Không cần làm gì ở đây, vì chúng ta đang kiểm soát di chuyển thủ công.
-                -- Nếu bạn muốn Deer God có hành vi đứng yên đặc biệt (ví dụ: quay mặt về phía người chơi)
-                -- thì có thể thêm code ở đây.
-            end
-        end)
+        if distance <= activationRange then -- **Chỉ đuổi theo nếu trong phạm vi kích hoạt**
+            local dir = (target - pos).Unit
+            local moveVec = dir * customSpeed * dt
+            local newCFrame = CFrame.new(pos + moveVec, target)
+            entityModel:SetPrimaryPartCFrame(newCFrame)
+        else
+            -- Nếu ngoài phạm vi, Deer God đứng yên
+            -- Không cần làm gì ở đây, vì chúng ta đang kiểm soát di chuyển thủ công.
+            -- Nếu bạn muốn Deer God có hành vi đứng yên đặc biệt (ví dụ: quay mặt về phía người chơi)
+            -- thì có thể thêm code ở đây.
+        end
+    end)
 
-        if destroyTimer then task.cancel(destroyTimer) end
-        destroyTimer = task.delay(math.random(20, 25), function()
-            print("Deer God self-destruct timer activated.")
-            MoveActive = false
-            task.wait(0.5)
-            if entityModel and entityModel.PrimaryPart then
-                entityModel:SetPrimaryPartCFrame(entityModel.PrimaryPart.CFrame * CFrame.new(0, -100, 0))
-            end
-            task.wait(2)
-            entity:Despawn()
-        end)
+    if destroyTimer then task.cancel(destroyTimer) end
+    destroyTimer = task.delay(math.random(10, 20), function()
+        print("Deer God self-destruct timer activated.")
+        MoveActive = false
+        task.wait(0.5)
+        if entityModel and entityModel.PrimaryPart then
+            entityModel:SetPrimaryPartCFrame(entityModel.PrimaryPart.CFrame * CFrame.new(0, -100, 0))
+        end
+        task.wait(1)
+        entity:Despawn()
+    end)
 
-        local spawnedRushNew = entityModel:FindFirstChild("RushNew")
-        if spawnedRushNew then
-            spawnedRushNew.Touched:Connect(function(hit)
-                local h = hit.Parent and hit.Parent:FindFirstChild("Humanoid")
-                if h and hit:IsDescendantOf(Character) then
-                    h:TakeDamage(10)
-                    local stats = game:GetService("ReplicatedStorage").GameStats
-                    if stats:FindFirstChild("Player_"..LocalPlayer.Name) then
-                        stats["Player_"..LocalPlayer.Name].Total.DeathCause.Value = "Deer God"
-                    end
-                end
-            end)
-        else
-            warn("Spawned Deer God model does not contain 'RushNew' for Touched event!")
-        end
-    else
-        warn("entity.Model is nil after spawning! Cannot set up movement or sound.")
-        return
-    end
+    local spawnedRushNew = entityModel:FindFirstChild("RushNew")
+    if spawnedRushNew then
+        spawnedRushNew.Touched:Connect(function(hit)
+            local h = hit.Parent and hit.Parent:FindFirstChild("Humanoid")
+            if h and hit:IsDescendantOf(Character) then
+                h:TakeDamage(10)
+                local stats = game:GetService("ReplicatedStorage").GameStats
+                if stats:FindFirstChild("Player_"..LocalPlayer.Name) then
+                    stats["Player_"..LocalPlayer.Name].Total.DeathCause.Value = "Deer God"
+                end
+            end
+        end)
+    else
+        warn("Spawned Deer God model does not contain 'RushNew' for Touched event!")
+    end
 end)
 
 entity:SetCallback("OnStartMoving", function()
-    print("Entity has started moving (Note: Movement is controlled by Heartbeat, not spawner's default logic).")
+    print("Entity has started moving (Note: Movement is controlled by Heartbeat, not spawner's default logic).")
 end)
 
 entity:SetCallback("OnEnterRoom", function(room, firstTime)
-    if firstTime then
-        print("Entity has entered room: ".. room.Name.. " for the first time")
-    else
-        print("Entity has entered room: ".. room.Name.. " again")
-    end
+    if firstTime then
+        print("Entity has entered room: ".. room.Name.. " for the first time")
+    else
+        print("Entity has entered room: ".. room.Name.. " again")
+    end
 end)
 
 entity:SetCallback("OnLookAt", function(lineOfSight)
@@ -383,62 +374,62 @@ entity:SetCallback("OnLookAt", function(lineOfSight)
 end)
 
 entity:SetCallback("OnRebounding", function(startOfRebound)
-    if startOfRebound then
-        print("Entity has started rebounding")
+    if startOfRebound then
+        print("Entity has started rebounding")
 	else
-        print("Entity has finished rebounding")
+        print("Entity has finished rebounding")
 	end
 end)
 
 entity:SetCallback("OnDespawning", function()
-    print("Entity is despawning")
-    if chaseConnection then
-        chaseConnection:Disconnect()
-        chaseConnection = nil
-    end
-    if destroyTimer then
-        task.cancel(destroyTimer)
-        destroyTimer = nil
-    end
+    print("Entity is despawning")
+    if chaseConnection then
+        chaseConnection:Disconnect()
+        chaseConnection = nil
+    end
+    if destroyTimer then
+        task.cancel(destroyTimer)
+        destroyTimer = nil
+    end
 
-    TweenService:Create(colorCorrection, TweenInfo.new(2.5), {Contrast = originalContrast}):Play()
-    TweenService:Create(colorCorrection, TweenInfo.new(5), {TintColor = originalTintColor}):Play()
+    TweenService:Create(colorCorrection, TweenInfo.new(2.5), {Contrast = originalContrast}):Play()
+    TweenService:Create(colorCorrection, TweenInfo.new(5), {TintColor = originalTintColor}):Play()
 
-    if entityModel then
-        for _, part in ipairs(entityModel:GetDescendants()) do
-            if part:IsA("BasePart") then
-                part.Anchored = false
-            end
-        end
-        print("Entity has been unanchored before despawn.")
-    end
+    if entityModel then
+        for _, part in ipairs(entityModel:GetDescendants()) do
+            if part:IsA("BasePart") then
+                part.Anchored = false
+            end
+        end
+        print("Entity has been unanchored before despawn.")
+    end
 end)
 
 entity:SetCallback("OnDespawned", function()
-    print("Entity has despawned")
-    local cue2 = Instance.new("Sound")
-    cue2.Parent = game.Workspace
-    cue2.Name = "Spawn"
-    cue2.SoundId = "rbxassetid://000000"
-    cue2.Volume = 9999
-    cue2.PlaybackSpeed = 1
-    cue2:Play()
-    Debris:AddItem(cue2, cue2.TimeLength + 1)
-    task.wait(3)
+    print("Entity has despawned")
+    local cue2 = Instance.new("Sound")
+    cue2.Parent = game.Workspace
+    cue2.Name = "Spawn"
+    cue2.SoundId = "rbxassetid://000000"
+    cue2.Volume = 9999
+    cue2.PlaybackSpeed = 1
+    cue2:Play()
+    Debris:AddItem(cue2, cue2.TimeLength + 1)
+    task.wait(3)
 end)
 
 entity:SetCallback("OnDamagePlayer", function(newHealth)
 	if newHealth == 0 then
 		print("Entity has killed the player - Initiating Jumpscare")
-        doJumpscareWithEffect()
+        doJumpscareWithEffect()
 	else
 		print("Entity has damaged the player")
 	end
 end)
 
 LocalPlayer.CharacterAdded:Connect(function(char)
-    Character = char
-    HumanoidRootPart = char:WaitForChild("HumanoidRootPart")
+    Character = char
+    HumanoidRootPart = char:WaitForChild("HumanoidRootPart")
 end)
 
 ---====== Run Entity ======---
