@@ -268,13 +268,7 @@ entity:SetCallback("OnSpawned", function()
         end
         entityModel.PrimaryPart = entityPart
         print("DeerGod.PrimaryPart set to: " .. entityModel.PrimaryPart.Name)
-
-        -- Vị trí ban đầu của Deer God
-        entityModel:SetPrimaryPartCFrame(HumanoidRootPart.CFrame * CFrame.new(0, 0, 50))
-    else
-        warn("entity.Model is nil after spawning! Cannot set up movement or sound.")
-        return
-    end
+end
 
     coroutine.wrap(function()
         for i, v in ipairs(entityModel:GetDescendants()) do
