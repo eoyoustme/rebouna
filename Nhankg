@@ -1,148 +1,358 @@
+spawn(function() -- Ripper Event Handler
+    -- Khai báo các dịch vụ Roblox cần thiết một lần
+    local Players = game:GetService("Players")
+    local Workspace = game:GetService("Workspace")
+    local TweenService = game:GetService("TweenService")
+    local ReplicatedStorage = game:GetService("ReplicatedStorage")
+    local RunService = game:GetService("RunService")
+    local Debris = game:GetService("Debris")
 
-			local killed = false
-			local Plr = game.Players.LocalPlayer
-			local ReSt = game.ReplicatedStorage
-			local val = 80
-			local events = require(game.ReplicatedStorage.ClientModules.Module_Events)
-			local cameraShaker = require(game.ReplicatedStorage.CameraShaker)
-			local camera = workspace.CurrentCamera
+    local LocalPlayer = Players.LocalPlayer
+    local CameraShaker = require(ReplicatedStorage.CameraShaker) -- Yêu cầu module CameraShaker
 
-			local camShake = cameraShaker.new(Enum.RenderPriority.Camera.Value, function(cf)
-				camera.CFrame = camera.CFrame * cf
-			end)
+    --- Hàm hỗ trợ: Tải hoặc lấy âm thanh từ GitHub ---
+    -- Chức năng này giúp tránh tải lại tệp âm thanh nếu nó đã được lưu cục bộ
+    local function GetOrLoadSound(githubUrl, soundName)
+        local sound = Instance.new("Sound")
+        sound.Name = soundName
+        if not isfile(soundName .. ".mp3") then
+            -- Tải tệp nếu chưa có
+            writefile(soundName .. ".mp3", game:HttpGet(githubUrl))
+        end
+        -- Gán SoundId từ tài sản cục bộ hoặc tài sản đã tải
+        sound.SoundId = (getcustomasset or getsynasset)(soundName .. ".mp3")
+        return sound
+    end
 
+    --- Hàm chính: Xử lý cái chết và Jumpscare của Ripper ---
+    local function HandleRipperDeath()
+        local character = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
+        local HumanoidRootPart = character:WaitForChild("HumanoidRootPart")
 
-			camShake:Start()
-			function GetTime(Distance, Speed)
-				-- Time = Distance / Speed
-				local Time = Distance / Speed
-				return Time
-			end
-			local DEF_SPEED = 99999
-			local function THEHORROR()
-				---configs
-				local ambruhspeed = 100
-				local storer = ambruhspeed
-				local ambushheight = Vector3.new(0,5,0)
-				local redtweeninfo = TweenInfo.new(3)
-				local redinfo = {Color = Color3.new(1, 0, 0.133333)}
-				----------
-				camShake:Shake(cameraShaker.Presets.Earthquake)
-				for i,v in pairs(game.Workspace.CurrentRooms:GetDescendants()) do
-					if v:IsA("Light") then
-						game.TweenService:Create(v,redtweeninfo,redinfo):Play()
-						if v.Parent.Name == "LightFixture" then
-							game.TweenService:Create(v.Parent,redtweeninfo,redinfo):Play()
-						end
-					end
-				end
+        -- Tải và đưa mô hình jumpscare vào Workspace
+        local jumpscareModel = game:GetObjects("rbxassetid://76305076231751")[1]
+        jumpscareModel.Parent = Workspace
 
-				local s = game:GetObjects("rbxassetid://118750853123155")[1]
-				s.Parent = workspace
-				local ambush = s.Ripe
-				ambush.Ambush.Volume = 0
-				local amb = ambush.Spawn:Clone() amb.Parent = workspace
-				amb.TimePosition = 0
-				amb:Play()
-				amb.Volume = 6
-				----------------------
-				--------------
-				local function canSeeTarget(target,size)
-					if killed == true then
-						return
-					end
-					local origin = ambush.Position
-					local direction = (target.HumanoidRootPart.Position - ambush.Position).unit * size
-					local ray = Ray.new(origin, direction)
+        -- Điều khiển Camera cho jumpscare
+        local Camera = Workspace.CurrentCamera
+        Camera.CameraType = Enum.CameraType.Scriptable
 
-					local hit, pos = workspace:FindPartOnRay(ray, ambush)
+        local cameraFollowConnection -- Kết nối để ngắt sau này
+        local function updateCameraToModel()
+            if jumpscareModel and jumpscareModel.PrimaryPart then
+                Camera.CFrame = CFrame.new(Camera.CFrame.Position, jumpscareModel.PrimaryPart:GetPivot().Position)
+            end
+        end
+        cameraFollowConnection = RunService.RenderStepped:Connect(updateCameraToModel)
 
+        -- Tween camera đến vị trí jumpscare ban đầu
+        if jumpscareModel.PrimaryPart then
+            local initialCameraTween = TweenService:Create(Camera, TweenInfo.new(0.5), {CFrame = CFrame.new(Camera.CFrame.Position, jumpscareModel.PrimaryPart:GetPivot().Position)})
+            initialCameraTween:Play()
+            initialCameraTween.Completed:Wait()
+        end
 
-					if hit then
-						if hit:IsDescendantOf(target) then
-							killed = true
-							return true
-						end
-					else
-						return false
-					end
-				end
+        -- Đóng băng chuyển động của người chơi
+        local originalWalkSpeed = character.Humanoid.WalkSpeed
+        character.Humanoid.WalkSpeed = 0
+        local freezeMovementConnection = RunService.Heartbeat:Connect(function()
+            character.Humanoid.WalkSpeed = 0
+        end)
 
-				-------------------------
-				--_SHAKER DO NOT MOD IFY
-				spawn(function()
-					while ambush ~= nil do wait(0.2)
-						local v = game.Players.LocalPlayer
-						local parent = script.Parent
-						if v.Character ~= nil and not v.Character:GetAttribute("Hiding") then
-							if canSeeTarget(v.Character,50) then
-								ambush.Ambush:Stop()
-								v.Character:FindFirstChildWhichIsA("Humanoid"):TakeDamage(100)
-								ReSt.GameStats["Player_".. Plr.Name].Total.DeathCause.Value = "Ripper"
-								firesignal(game.ReplicatedStorage.RemotesFolder.DeathHint.OnClientEvent, {"You died to who you call Ripper...","You can tell his presence by the lights and his scream.","Hide when he does this!"}, "Blue")
-							end
-						end
-						if v.Character ~= nil then
-							if v.Character:FindFirstChild("HumanoidRootPart") and (ambush.Position - v.Character:FindFirstChild("HumanoidRootPart").Position).magnitude <= val	 then
-								camShake:ShakeOnce(15,8.8,0,2,1,6)
-							end
-						end
-					end
-				end)
-				----------------------
-				game.Debris:AddItem(amb,10)
-				ambush.Ambush:Stop()
-				local h = ambush.Ambush
-				h.SoundId = "rbxassetid://6963538865"
-				h.Volume = 10
-				h.RollOffMinDistance = 5
-				h.PlaybackSpeed = 0.37
-				h.TimePosition = 0
-				h.Volume = 10
-				wait(8)
-				ambush.Ambush:Play()
-				game.TweenService:Create(ambush.Ambush,TweenInfo.new(6),{Volume = 0.8}):Play()
-				local gruh = workspace.CurrentRooms
-				ambruhspeed = DEF_SPEED
-				for i = 1, game.ReplicatedStorage.GameData.LatestRoom.Value do
-					if gruh:FindFirstChild(i) then
-						print("room "..i)
-						local room = gruh[i]
-						if room:FindFirstChild("PathfindNodes") then
-							local nodes = room:FindFirstChild("PathfindNodes")
-							for v = 1, #nodes:GetChildren() do
-								if nodes:FindFirstChild(v) then
-									local waypoint = nodes[v]
-									local Distance = (ambush.Position - waypoint.Position).magnitude 
-									local fakejays = game.TweenService:Create(ambush,TweenInfo.new(GetTime(Distance, ambruhspeed), Enum.EasingStyle.Linear,Enum.EasingDirection.Out, 0,false,0),{CFrame = waypoint.CFrame + ambushheight})
-									fakejays:Play()
-									fakejays.Completed:Wait()
-									ambruhspeed = storer
-								end
-							end
-						end
-					end
-					print("looping")
-				end
-				----------------------
-				local slam = Instance.new("Sound",ambush)
-				slam.Volume = 10
-				slam.SoundId = "rbxassetid://1837829565"
-				camShake:Shake(cameraShaker.Presets.Explosion)
-				slam:Play()
-				wait(1)
-				ambush.Anchored = false
-				ambush.CanCollide = false
-				game.Debris:AddItem(s,5)
-				---====== Load achievement giver ======---
-                   local achievementGiver = loadstring(game:HttpGet("https://raw.githubusercontent.com/RegularVynixu/Utilities/main/Doors/Custom%20Achievements/Source.lua"))()
+        -- Đặt vị trí mô hình jumpscare và kích hoạt hạt
+        local deathPoint = Workspace:FindFirstChild("Death")
+        if deathPoint and deathPoint.PrimaryPart then
+            jumpscareModel:SetPrimaryPartCFrame(deathPoint.PrimaryPart.CFrame * CFrame.new(0, 1, 0))
+        end
 
-				---====== Display achievement ======---
-				   achievementGiver({
-					   Title = "Torn Appart",
-                       Desc = "Dont leave **too** early..",
-                       Reason = "Encounter Ripper.",
-                       Image = "rbxassetid://12231244970"
-				   })
-			end
-			pcall(THEHORROR)
+        for _, part in pairs(jumpscareModel:GetDescendants()) do
+            if part:IsA("ParticleEmitter") then
+                part.Rate = 9999999
+                task.wait(0.1) -- Giữ độ trễ ngắn ban đầu
+                part.TimeScale = 0
+            end
+        end
+
+        task.wait(0.1)
+
+        -- Phát âm thanh "Crashund"
+        local crashSound = GetOrLoadSound("https://github.com/Brololto/Angler-sounds/blob/main/lv_0_20241221185918%20(1).mp3?raw=true", "Crashund")
+        crashSound.Volume = 4
+        crashSound.Parent = Workspace
+        crashSound:Play()
+        task.wait(1)
+
+        -- Tạo và hiển thị GUI jumpscare nhấp nháy
+        local playerGui = LocalPlayer:WaitForChild("PlayerGui")
+        local jumpscareGui = Instance.new("ScreenGui")
+        jumpscareGui.Name = "RipperJumpscareGui"
+        jumpscareGui.Parent = playerGui
+        jumpscareGui.IgnoreGuiInset = true
+
+        local redOverlay = Instance.new("ImageLabel")
+        redOverlay.Size = UDim2.new(1, 0, 1, 0)
+        redOverlay.BackgroundTransparency = 1
+        redOverlay.Image = "rbxassetid://76637426417491"
+        redOverlay.ImageTransparency = 1
+        redOverlay.Parent = jumpscareGui
+
+        -- Hiệu ứng nhấp nháy hình ảnh
+        local flashTask = task.spawn(function()
+            while redOverlay.Parent == jumpscareGui do -- Chỉ chạy khi GUI còn tồn tại
+                redOverlay.Image = "rbxassetid://94547864377343"
+                task.wait()
+                redOverlay.Image = "rbxassetid://76637426417491"
+                task.wait(0.1)
+            end
+        end)
+
+        -- Làm mờ dần lớp phủ đỏ để hiển thị
+        TweenService:Create(redOverlay, TweenInfo.new(0.5), {ImageTransparency = 0}):Play()
+        task.wait(2)
+
+        -- Gây sát thương và dọn dẹp
+        character.Humanoid:TakeDamage(100) -- Giết người chơi
+        jumpscareModel:Destroy() -- Hủy mô hình jumpscare
+        crashSound:Stop() -- Dừng âm thanh va chạm
+        cameraFollowConnection:Disconnect() -- Ngắt kết nối cập nhật camera
+        freezeMovementConnection:Disconnect() -- Ngắt kết nối đóng băng di chuyển
+        character.Humanoid.WalkSpeed = originalWalkSpeed -- Khôi phục tốc độ di chuyển
+
+        -- Làm mờ và hủy GUI jumpscare
+        TweenService:Create(redOverlay, TweenInfo.new(0.5), {ImageTransparency = 1}):Play()
+        -- Không cần task.spawn cho flashEffect nữa, đã gộp vào flashTask ở trên
+        Debris:AddItem(jumpscareGui, 0.5) -- Hủy GUI sau 0.5 giây
+
+        -- Cập nhật nguyên nhân chết
+        if ReplicatedStorage.GameStats["Player_" .. LocalPlayer.Name] and ReplicatedStorage.GameStats["Player_" .. LocalPlayer.Name].Total then
+            ReplicatedStorage.GameStats["Player_" .. LocalPlayer.Name].Total.DeathCause.Value = "Ripper"
+        end
+    end
+
+    --- Vòng lặp chính của sự kiện Ripper ---
+    while task.wait(175) do -- Chờ đợi giữa các lần kiểm tra Ripper
+        -- Đợi cho đến khi các sự kiện như Seek hoặc các phòng cụ thể không còn hoạt động
+        if Workspace:FindFirstChild("SeekMovingNewClone") or
+           Workspace.CurrentRooms:FindFirstChild("50") or
+           Workspace.CurrentRooms:FindFirstChild("100") or
+           ReplicatedStorage.GameData.LatestRoom.Value == 6 then -- Thêm kiểm tra phòng 6 ở đây
+            repeat task.wait() until not Workspace:FindFirstChild("SeekMovingNewClone") and
+                                  not Workspace.CurrentRooms:FindFirstChild("50") and
+                                  not Workspace.CurrentRooms:FindFirstChild("100") and
+                                  not (ReplicatedStorage.GameData.LatestRoom.Value == 6) -- Đảm bảo không ở phòng 6
+        end
+
+        -- Đợi cho đến khi giá trị phòng hiện tại thay đổi để kích hoạt Ripper
+        ReplicatedStorage.GameData.LatestRoom:GetPropertyChangedSignal("Value"):Wait()
+
+        local isPlayerHitByRipper = false -- Cờ để theo dõi xem người chơi đã bị Ripper "chạm" chưa
+
+        -- 1. Kích hoạt hiệu ứng đèn đỏ trong phòng
+        local lightTweenInfo = TweenInfo.new(3, Enum.EasingStyle.Linear, Enum.EasingDirection.Out)
+        local redColor = {Color = Color3.new(1, 0, 0)}
+
+        for _, child in pairs(Workspace.CurrentRooms:GetDescendants()) do
+            if child:IsA("Light") or (child.Parent and child.Parent.Name == "LightFixture") then
+                TweenService:Create(child, lightTweenInfo, redColor):Play()
+            end
+        end
+
+        -- 2. Phát âm thanh Ripper xuất hiện
+        local spawnSound = Instance.new("Sound")
+        spawnSound.Parent = Workspace
+        spawnSound.SoundId = "rbxassetid://9125713501"
+        spawnSound.PlaybackSpeed = 0.6
+        spawnSound.Volume = 10
+        local pitchShiftEffect = Instance.new("PitchShiftSoundEffect")
+        pitchShiftEffect.Name = "PitchShiftSoundEffect"
+        pitchShiftEffect.Parent = spawnSound
+        pitchShiftEffect.Octave = 0.875
+        spawnSound:Play()
+
+        -- 3. Tải và thiết lập mô hình Ripper
+        local ripperModel = game:GetObjects("rbxassetid://132675601442627")[1]
+        ripperModel.Parent = Workspace
+        local ripperPrimaryPart = ripperModel.PrimaryPart or ripperModel:FindFirstChild("Ripe")
+
+        if ripperPrimaryPart then
+            ripperPrimaryPart.CanCollide = false
+            ripperPrimaryPart.Anchored = true
+        else
+            warn("Lỗi: Không tìm thấy PrimaryPart hoặc 'Ripe' trong mô hình Ripper. Hủy sự kiện Ripper.")
+            ripperModel:Destroy()
+            spawnSound:Destroy()
+            continue -- Chuyển sang vòng lặp tiếp theo
+        end
+
+        -- Rung camera khi Ripper xuất hiện
+        CameraShaker:ShakeOnce(8, 5, 0, 5.5, 1, 0)
+
+        -- Đặt Ripper ở vị trí phòng cách 5 phòng
+        local initialRoomNum = ReplicatedStorage.GameData.LatestRoom.Value - 5
+        local initialRoom = Workspace.CurrentRooms:FindFirstChild(tostring(initialRoomNum))
+        if initialRoom and initialRoom.RoomEntrance then
+            ripperPrimaryPart.Position = initialRoom.RoomEntrance.Position
+        else
+            warn("Lỗi: Không tìm thấy phòng hoặc lối vào phòng " .. initialRoomNum .. " cho Ripper. Hủy sự kiện Ripper.")
+            ripperModel:Destroy()
+            spawnSound:Destroy()
+            continue
+        end
+
+        task.wait(8) -- Chờ trước khi Ripper bắt đầu di chuyển chính và âm thanh
+        task.wait(0.2) -- Giữ độ trễ nhỏ này
+        task.wait(0.3) -- Giữ độ trễ nhỏ này
+
+        -- Phát âm thanh Ripper di chuyển sau một khoảng thời gian
+        local ripperMovingSound
+        task.spawn(function()
+            task.wait(3.2)
+            ripperMovingSound = Instance.new("Sound")
+            ripperMovingSound.Volume = 9
+            ripperMovingSound.Parent = ripperPrimaryPart
+            ripperMovingSound.SoundId = "rbxassetid://6963538865"
+            ripperMovingSound.PlaybackSpeed = 0.2
+            ripperMovingSound.RollOffMinDistance = 15
+            ripperMovingSound:Play()
+        end)
+
+        task.wait(0.1) -- Giữ độ trễ nhỏ này
+
+        -- Logic chuyển Ripper từ chế độ neo sang không neo sau một khoảng thời gian
+        task.spawn(function()
+            task.wait(5.2)
+            if ripperPrimaryPart then
+                ripperPrimaryPart.Anchored = false
+            end
+
+            task.wait(2) -- Chờ thêm 2 giây trước khi kiểm tra despawn
+
+            -- Nếu người chơi chưa bị Ripper chạm, thì Ripper biến mất và mở cửa
+            if not isPlayerHitByRipper then
+                local despawnSound = Instance.new("Sound")
+                despawnSound.Parent = ripperPrimaryPart
+                despawnSound.Volume = 10
+                despawnSound.SoundId = "rbxassetid://1837829565"
+                despawnSound:Play()
+
+                -- Rung camera khi Ripper biến mất
+                CameraShaker:ShakeOnce(5, 5, 0, 5.5, 1, 0)
+
+                -- Mở cửa phòng hiện tại
+                local currentRoomDoor = Workspace.CurrentRooms:FindFirstChild(tostring(ReplicatedStorage.GameData.LatestRoom.Value))
+                if currentRoomDoor and currentRoomDoor:FindFirstChild("Door") then
+                    currentRoomDoor.Door.ClientOpen:FireServer()
+                end
+
+                -- Hiển thị thành tích
+                local achievementGiver = loadstring(game:HttpGet("https://raw.githubusercontent.com/RegularVynixu/Utilities/main/Doors/Custom%20Achievements/Source.lua"))()
+                achievementGiver({
+                    Title = "Torn Apart",
+                    Desc = "Don't leave too early",
+                    Reason = "Encounter Ripper",
+                    Image = "rbxassetid://85743086408147"
+                })
+                ripperModel:Destroy() -- Hủy mô hình Ripper khi biến mất
+            end
+        end)
+
+        -- Logic phát hiện va chạm (hitbox) của Ripper với người chơi
+        local playerHitboxConnection = RunService.Heartbeat:Connect(function()
+            local character = LocalPlayer.Character
+            if not character or isPlayerHitByRipper then return end -- Thoát nếu không có nhân vật hoặc đã bị chạm
+
+            local HumanoidRootPart = character:WaitForChild("HumanoidRootPart")
+            if not HumanoidRootPart or not ripperPrimaryPart or not ripperPrimaryPart.Parent then return end -- Kiểm tra nếu Ripper còn tồn tại
+
+            local origin = ripperPrimaryPart.Position
+            local direction = (HumanoidRootPart.Position - origin).Unit
+            local ray = Ray.new(origin, direction * 50) -- Hitbox 50
+
+            local result = Workspace:Raycast(ray.Origin, ray.Direction)
+
+            if result and result.Instance.Parent == character then
+                if not character:GetAttribute("Hiding") then -- Nếu người chơi không ẩn nấp
+                    isPlayerHitByRipper = true -- Đánh dấu là đã bị chạm
+                    -- Hủy mô hình Ripper ngay lập tức để tránh tương tác thêm
+                    Debris:AddItem(ripperModel, 0.00000000000000001)
+                    playerHitboxConnection:Disconnect() -- Ngắt kết nối sau khi đã chạm
+                    HandleRipperDeath() -- Kích hoạt hàm cái chết
+                end
+            end
+        end)
+
+        -- Logic rung camera toàn cục cho người chơi ở gần Ripper (80 đơn vị)
+        local globalShakeConnection = RunService.Heartbeat:Connect(function()
+            if not ripperPrimaryPart or not ripperPrimaryPart.Parent then return end -- Thoát nếu Ripper không tồn tại
+
+            for _, player in pairs(Players:GetPlayers()) do
+                if player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+                    local range = (ripperPrimaryPart.Position - player.Character.HumanoidRootPart.Position).Magnitude
+                    if range <= 80 then
+                        -- Rung camera mạnh hơn cho người ở gần
+                        CameraShaker:ShakeOnce(15, 25, 0, 2, 1, 6)
+                    end
+                end
+            end
+        end)
+
+        -- Điều khiển di chuyển của Ripper qua các phòng bằng TweenService
+        local currentRoomNumber = ReplicatedStorage.GameData.LatestRoom.Value
+
+        -- Xác định các phòng mà Ripper sẽ di chuyển qua
+        local roomMovementSequence = {
+            {offset = -5, waitTime = 0.1}, -- romer (chỉ di chuyển tới, không chờ)
+            {offset = -4, waitTime = 1},   -- pproom
+            {offset = -3, waitTime = 1},   -- previousroom
+            {offset = -2, waitTime = 1},   -- reviousroom
+            {offset = -1, waitTime = 1},   -- peviousroom
+            {offset = 0, waitTime = 1},    -- previousrom (phòng hiện tại của người chơi)
+            {offset = 1, waitTime = 1}     -- previousroo (phòng tiếp theo)
+        }
+
+        for _, roomData in ipairs(roomMovementSequence) do
+            local targetRoomNum = currentRoomNumber + roomData.offset
+            local targetRoom = Workspace.CurrentRooms:FindFirstChild(tostring(targetRoomNum))
+
+            if targetRoom and targetRoom.RoomEntrance and ripperPrimaryPart and ripperPrimaryPart.Parent then
+                local targetPosition = targetRoom.RoomEntrance.Position + Vector3.new(0, 6, 0)
+                if roomData.offset == 1 then -- Điều chỉnh vị trí cuối cùng nếu cần (ví dụ: lùi hơn một chút)
+                    targetPosition = targetRoom.RoomEntrance.Position + Vector3.new(0, 6, -3)
+                end
+
+                local moveTween = TweenService:Create(ripperPrimaryPart, TweenInfo.new(roomData.waitTime, Enum.EasingStyle.Linear, Enum.EasingDirection.Out), {Position = targetPosition})
+                moveTween:Play()
+                moveTween.Completed:Wait()
+            else
+                -- Nếu không tìm thấy phòng hoặc Ripper đã bị hủy (do người chơi chết), dừng di chuyển
+                warn("Ripper không thể di chuyển đến phòng " .. targetRoomNum .. ". Có thể phòng không tồn tại hoặc Ripper đã bị hủy.")
+                break
+            end
+
+            if isPlayerHitByRipper then -- Dừng di chuyển nếu người chơi đã chết
+                break
+            end
+        end
+
+        -- Đảm bảo các kết nối RunService bị ngắt sau khi Ripper đã hoàn thành chu trình di chuyển
+        if playerHitboxConnection.Connected then
+            playerHitboxConnection:Disconnect()
+        end
+        if globalShakeConnection.Connected then
+            globalShakeConnection:Disconnect()
+        end
+
+        -- Dọn dẹp các tài nguyên còn lại của Ripper nếu chưa bị hủy
+        if ripperModel and ripperModel.Parent then
+            ripperModel:Destroy()
+        end
+        if spawnSound and spawnSound.Parent then
+            spawnSound:Stop()
+            spawnSound:Destroy()
+        end
+        if ripperMovingSound and ripperMovingSound.Parent then
+            ripperMovingSound:Stop()
+            ripperMovingSound:Destroy()
+        end
+    end
+end)
