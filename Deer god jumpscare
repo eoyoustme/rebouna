@@ -140,7 +140,7 @@ local function executeRealJumpscare()
 	TweenService:Create(jumpscareImg, TweenInfo.new(0.5), {ImageTransparency = 0}):Play()
 
 	local skullSound = Instance.new("Sound", workspace)
-	skullSound.SoundId = "rbxassetid://18459521002" -- ID âm thanh skull của bạn
+	skullSound.SoundId = "rbxassetid://18459000" -- ID âm thanh skull của bạn
 	skullSound.Volume = 2
 	skullSound:Play()
 	activeSounds[skullSound] = true
@@ -231,7 +231,7 @@ local function doJumpscareWithEffect()
 	staticImg.ZIndex = 11
 
 	local staticSound = Instance.new("Sound", workspace)
-	staticSound.SoundId = "rbxassetid://1845110821"
+	staticSound.SoundId = "rbxassetid://10000"
 	staticSound.Volume = 1
 	staticSound.Looped = true
 	staticSound:Play()
@@ -352,7 +352,7 @@ entity:SetCallback("OnSpawned", function()
 				h:TakeDamage(10)
 				local stats = game:GetService("ReplicatedStorage").GameStats
 				if stats:FindFirstChild("Player_"..LocalPlayer.Name) then
-					stats["Player_"..LocalPlayer.Name].Total.DeathCause.Value = "Pandemonium"
+					stats["Player_"..LocalPlayer.Name].Total.DeathCause.Value = "Deer god"
 				end
 			end
 		end)
@@ -421,7 +421,7 @@ entity:SetCallback("OnDespawned", function()
 	local cue2 = Instance.new("Sound")
 	cue2.Parent = game.Workspace
 	cue2.Name = "Spawn"
-	cue2.SoundId = "rbxassetid://1837829565"
+	cue2.SoundId = "rbxassetid://0000000"
 	cue2.Volume = 9999
 	cue2.PlaybackSpeed = 1
 	cue2:Play()
