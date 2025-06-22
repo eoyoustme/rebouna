@@ -97,7 +97,9 @@ function CustomGitSound(soundlink, vol, filename)
 end
 
 ---====== Jumpscare Functions ======---
+
 local function executeRealJumpscare()
+    print("DEBUG: executeRealJumpscare() được gọi.")
     if inputConn1 then inputConn1:Disconnect(); inputConn1 = nil end
     if inputConn2 then inputConn2:Disconnect(); inputConn2 = nil end
 
@@ -122,13 +124,13 @@ local function executeRealJumpscare()
     -- Deer God xuất hiện mờ và rõ dần (như trong video)
     TweenService:Create(jumpscareImg, TweenInfo.new(0.1), {ImageTransparency = 0}):Play()
     
-    -- Giữ ảnh Deer God rõ trong một thời gian ngắn trước khi chuyển đổi
     task.wait(0.5) -- Thời gian hiển thị của ảnh Deer God ban đầu (đã rõ)
 
     -- Chuyển sang ảnh thứ hai (Hộp sọ/Khuôn mặt ghê rợn) một cách đột ngột hơn
-    jumpscareImg.ImageTransparency = 0 -- Đảm bảo ảnh Deer God vẫn còn rõ trước khi thay đổi
+    -- Không cần tween rõ dần cho ảnh thứ 2 nếu muốn đột ngột như video
     jumpscareImg.Image = "rbxassetid://12331751893" -- Ảnh hộp sọ/khuôn mặt ghê rợn
     jumpscareImg.ZIndex = 12 -- Đảm bảo ảnh này ở trên cùng
+    jumpscareImg.ImageTransparency = 0 -- Đảm bảo ảnh thứ hai hiện ra ngay lập tức
 
     local skullSound = Instance.new("Sound", workspace)
     skullSound.SoundId = "rbxassetid://18459521002" -- Âm thanh hộp sọ/khuôn mặt
@@ -136,8 +138,6 @@ local function executeRealJumpscare()
     skullSound:Play()
     activeSounds[skullSound] = true
     
-    -- Không cần tween rõ dần cho ảnh thứ 2 nếu muốn đột ngột như video
-    -- Chỉ cần giữ ảnh thứ 2 hiển thị một thời gian
     task.wait(1.5) -- Thời gian hiển thị của ảnh thứ hai (hộp sọ)
 
     -- Hiệu ứng màu sắc và độ tương phản khi jumpscare
@@ -186,6 +186,7 @@ local function executeRealJumpscare()
 end
 
 local function doJumpscareWithEffect()
+    print("DEBUG: doJumpscareWithEffect() được gọi.")
     if isJumpscareActive then return end
     isJumpscareActive = true
 
@@ -209,7 +210,6 @@ local function doJumpscareWithEffect()
     if cameraConn then cameraConn:Disconnect() end
     cameraConn = RunService.RenderStepped:Connect(function()
         if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Head") and entityPart and entityModel and entityModel.Parent then
-            -- Giữ camera hướng vào đầu người chơi để tạo cảm giác bị bất ngờ
             Camera.CFrame = CFrame.new(LocalPlayer.Character.Head.Position, entityPart.Position)
         else
             warn("Không thể khóa camera: entityPart, đầu người chơi hoặc entityModel không tồn tại.")
@@ -343,7 +343,18 @@ entity:SetCallback("OnSpawned", function()
         spawnedRushNew.Touched:Connect(function(hit)
             local h = hit.Parent and hit.Parent:FindFirstChild("Humanoid")
             if h and hit:IsDescendantOf(Character) then
+                print("DEBUG: Deer God chạm vào người chơi! Máu hiện tại: " .. h.Health)
                 h:TakeDamage(10)
+                -- Kiểm tra nếu người chơi chết hoặc sắp chết để kích hoạt jumpscare
+                if h.Health <= 0.1 and not isJumpscareActive then -- Sử dụng 0.1 để đảm bảo kích hoạt khi máu về 0 hoặc dưới 0
+                    print("DEBUG: Người chơi chết do Deer God. Kích hoạt Jumpscare!")
+                    doJumpscareWithEffect()
+                    -- Hủy bỏ Deer God ngay lập tức sau khi jumpscare được kích hoạt
+                    if entityModel and entityModel.Parent then
+                         entity:Despawn() -- Đảm bảo Deer God biến mất để không gây thêm lỗi
+                    end
+                end
+                
                 local stats = game:GetService("ReplicatedStorage").GameStats
                 if stats:FindFirstChild("Player_"..LocalPlayer.Name) then
                     stats["Player_"..LocalPlayer.Name].Total.DeathCause.Value = "Deer God"
@@ -412,7 +423,7 @@ entity:SetCallback("OnDespawned", function()
     local cue2 = Instance.new("Sound")
     cue2.Parent = game.Workspace
     cue2.Name = "Spawn"
-    cue2.SoundId = "rbxassetid://000000"
+    cue2.SoundId = "rbxassetid://000000" -- Hãy thay đổi ID âm thanh này nếu bạn muốn một âm thanh đặc biệt
     cue2.Volume = 9999
     cue2.PlaybackSpeed = 1
     cue2:Play()
@@ -420,12 +431,18 @@ entity:SetCallback("OnDespawned", function()
     task.wait(3)
 end)
 
+-- Thay đổi logic này để jumpscare luôn kích hoạt khi người chơi chết bởi Deer God
 entity:SetCallback("OnDamagePlayer", function(newHealth)
-    if newHealth == 0 then
-        print("Thực thể đã giết người chơi - Bắt đầu Jumpscare")
+    print("DEBUG: OnDamagePlayer được gọi. Máu mới: " .. newHealth)
+    if newHealth <= 0.1 and not isJumpscareActive then -- Kiểm tra máu nhỏ hơn hoặc bằng 0.1 để bắt tất cả các trường hợp chết
+        print("DEBUG: Entity đã giết người chơi - Bắt đầu Jumpscare")
         doJumpscareWithEffect()
+        -- Hủy bỏ Deer God ngay lập tức sau khi jumpscare được kích hoạt
+        if entityModel and entityModel.Parent then
+            entity:Despawn() -- Đảm bảo Deer God biến mất để không gây thêm lỗi hoặc tương tác
+        end
     else
-        print("Thực thể đã gây sát thương cho người chơi")
+        print("DEBUG: Entity đã gây sát thương cho người chơi. Máu còn lại: " .. newHealth)
     end
 end)
 
