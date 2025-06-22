@@ -21,8 +21,8 @@ local entityPart -- Part "RushNew" bên trong entityModel, dùng cho vị trí v
 local chaseConnection = nil -- Kết nối Heartbeat để đuổi theo
 local destroyTimer = nil -- Timer tự hủy Deer God
 local MoveActive = true -- Biến kiểm soát việc di chuyển của Deer God
-local customSpeed = 20 -- Tốc độ Deer God đuổi theo người chơi
-local activationRange = 40 -- **Khoảng cách kích hoạt Deer God đuổi theo**
+local customSpeed = 23 -- Tốc độ Deer God đuổi theo người chơi
+local activationRange = 17 -- **Khoảng cách kích hoạt Deer God đuổi theo**
 
 -- Biến lưu trữ trạng thái ánh sáng ban đầu
 local originalTintColor
