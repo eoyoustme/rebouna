@@ -12,10 +12,10 @@ local done = false
 
 local kill = Instance.new("Sound")
 kill.Parent = workspace
-kill.PlaybackSpeed = 1
+kill.PlaybackSpeed = 0.5
 kill.SoundId = "rbxassetid://140225556550357"
 kill.Name = "Dear god death sound chat"
-kill.Volume = 10
+kill.Volume = 100
 kill.Looped = true
 
 
@@ -95,13 +95,13 @@ task.spawn(function()
             break
         end
         face.Rotation = 2
-        face.Image = "rbxassetid://11395249132"
+        face.Image = "rbxassetid://101914212937482"
         task.wait(0.0589)
         face.Rotation = -2
-        face.Image = "rbxassetid://11395249132"
+        face.Image = "rbxassetid://101914212937482"
         task.wait(0.0589)
         face.Rotation = 2
-        face.Image = "rbxassetid://11395249132"
+        face.Image = "rbxassetid://101914212937482"
         task.wait(0.0589)
         face.Rotation = -2
     end
@@ -157,7 +157,7 @@ task.spawn(function()
 end)
 
 
-wait(1.6) -- Using 'wait()' is deprecated. Use 'task.wait()' instead.
+wait(3.2) -- Using 'wait()' is deprecated. Use 'task.wait()' instead.
 stop = true
 kill:Stop()
 task.wait() -- This task.wait() just adds a tiny delay.
@@ -187,9 +187,3 @@ task.wait(0.1)
 game.Players.LocalPlayer.Character.Humanoid.Health = 100
 task.wait(3)
 done = true
-
--- The remaining 'end' statements here are unmatched and causing syntax errors.
--- You likely have too many 'end's at the very end of your script.
--- end
--- end
--- end)
