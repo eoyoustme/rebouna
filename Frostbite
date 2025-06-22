@@ -1,0 +1,181 @@
+spawn(function() --remade trash frostbite
+while task.wait(249) do
+if workspace:FindFirstChild("SeekMovingNewClone") 
+        or workspace.CurrentRooms:FindFirstChild("50") 
+        or workspace.CurrentRooms:FindFirstChild("100") then
+            repeat task.wait() until not workspace:FindFirstChild("SeekMovingNewClone") 
+                and not workspace.CurrentRooms:FindFirstChild("50") 
+                and not workspace.CurrentRooms:FindFirstChild("100")
+        end
+game:GetService("ReplicatedStorage").GameData.LatestRoom:GetPropertyChangedSignal("Value"):Wait()
+local function GetGitSound(GithubSnd, SoundName)
+                local url = GithubSnd
+                if not isfile(SoundName .. ".mp3") then
+                    writefile(SoundName .. ".mp3", game:HttpGet(url))
+                end
+                local sound = Instance.new("Sound")
+                sound.SoundId = (getcustomasset or getsynasset)(SoundName .. ".mp3")
+                return sound
+            end
+
+local s = game:GetObjects("rbxassetid://99990302621844")[1]
+s.Parent = workspace
+if not s.PrimaryPart then
+  s.PrimaryPart = s:FindFirstChildWhichIsA("BasePart")
+  end
+s.PrimaryPart.Anchored = true
+ s.PrimaryPart.CanCollide = false
+ 
+ 
+ 
+
+local Players = game:GetService("Players")
+
+local player = Players.LocalPlayer
+local character = player.Character or player.CharacterAdded:Wait()
+local HumanoidRootPart = character:WaitForChild("HumanoidRootPart")
+
+
+
+local workspace = game:GetService("Workspace")
+local silence = workspace:FindFirstChild("Frostbite")
+local hitbox = 20
+
+if not silence then
+    warn("Model 'Silence' not found in Workspace!")
+    return
+end
+
+local RunService = game:GetService("RunService")
+
+RunService.Heartbeat:Connect(function()
+    for _, player in pairs(game.Players:GetPlayers()) do
+        if player.Character and player.Character:FindFirstChild("HumanoidRootPart") and player.Character:FindFirstChild("Humanoid") then
+            local range = (silence.PrimaryPart.Position - player.Character.HumanoidRootPart.Position).Magnitude
+            if range <= hitbox then
+                                              local CameraShaker = require(game.ReplicatedStorage.CameraShaker)
+            local camera = game.Workspace.CurrentCamera
+            local camShake = CameraShaker.new(Enum.RenderPriority.Camera.Value, function(shakeCf)
+                camera.CFrame = camera.CFrame * shakeCf
+            end)
+            camShake:Start()
+            camShake:ShakeOnce(7, 8, 0, 5.5, 1, 0)
+                end
+            end
+        end
+end)
+
+
+local latestRoom = game.ReplicatedStorage.GameData.LatestRoom.Value
+
+local current = game.Workspace.CurrentRooms:FindFirstChild(latestRoom)
+
+
+s.PrimaryPart.Position = current.Parts.Floor.Position + Vector3.new(0, 7, 2)
+
+
+task.wait(0.00001)
+ workspace.Frostbite.Part.Attachment.face.Enabled = false
+workspace.Frostbite.Part.Attachment.Heylois.Enabled = false
+workspace.Frostbite.Part.Attachment.BlackTrail.Enabled = false
+workspace.Frostbite.Part.Attachment.BlackTrai2l.Enabled = true
+workspace.Frostbite.Part.Attachment.BlackTrai3l.Enabled = true
+                local frosty = workspace:FindFirstChild("Frostbite")
+                local frostnew = GetGitSound("https://github.com/Brololto/Whisperer-sound/blob/main/lv_0_20241219192635.mp3?raw=true", "new")
+                frostnew.Parent = workspace.Frostbite.Part
+                frostnew.Volume = 5
+                frostnew:Play()
+
+wait(10)
+workspace.Frostbite.Part["Ambience"]:Play()
+workspace.Frostbite.Part["AmbienceFar"]:Play()
+workspace.Frostbite.Part.Attachment.face.Enabled = true
+workspace.Frostbite.Part.Attachment.Heylois.Enabled = true
+workspace.Frostbite.Part.Attachment.BlackTrail.Enabled = true
+local kill = true
+spawn(function()
+wait(1)
+    while true do
+        
+        if kill == false then
+              break
+        end
+
+
+        local player = game.Players.LocalPlayer
+        local character = player.Character or player.CharacterAdded:Wait() -- Ensure character is loaded
+        local hum = character.Humanoid
+
+        if hum then
+
+            local lighter = character:FindFirstChild("Lighter")
+            if not lighter then
+              hum:TakeDamage(5)
+            end
+            if lighter then
+
+                local blid = lighter:FindFirstChild("Handle")
+                local holder = blid:FindFirstChild("EffectsHolder")
+                if holder then
+                    local attach = holder:FindFirstChild("AttachOn")
+                    if attach then
+
+                        local emitter = attach:FindFirstChild("FireParticles")
+                        if not emitter.Enabled then
+                            hum:TakeDamage(5) 
+                        end
+                    end
+                end
+            end
+
+
+        end
+     
+
+        wait(1)
+    end
+end)
+
+
+
+game:GetService("ReplicatedStorage").GameData.LatestRoom:GetPropertyChangedSignal("Value"):Wait()
+kill = false
+ workspace.Frostbite.Part.Attachment.face.Enabled = false
+workspace.Frostbite.Part.Attachment.Heylois.Enabled = false
+workspace.Frostbite.Part.Attachment.BlackTrail.Enabled = false
+frostnew:Stop()
+            local TweenService = game:GetService("TweenService")
+local TweenInfo = TweenInfo.new(3, Enum.EasingStyle.Linear, Enum.EasingDirection.Out)
+local color = {Color = Color3.new(0, 0, 1)} -- Dark blue (normalized values)
+
+-- Script
+for i, v in pairs(workspace.CurrentRooms:GetDescendants()) do
+    if v:IsA("Light") then
+        TweenService:Create(v, TweenInfo, color):Play()
+    end  
+end                   
+
+local poopy = Instance.new("Part")
+poopy.Parent = workspace
+poopy.Transparency = 1
+poopy.CFrame = frosty.Part.CFrame
+poopy.Anchored = true
+poopy.CanCollide = false
+
+                local despawn = GetGitSound("https://github.com/Brololto/Balltest/blob/main/lv_0_20241219223727.mp3?raw=true", "rawmeat")
+                despawn.Parent = poopy
+                despawn.Volume = 5
+                despawn:Play()
+                for i,v in pairs(workspace.Frostbite:GetDescendants()) do
+                      if v:IsA("Sound") then
+                           v:Destroy()
+                         end
+                         end
+                         
+
+                wait(5)
+    workspace.Frostbite:Destroy()
+    wait(20)
+     poopy:Destroy()
+end
+end)
