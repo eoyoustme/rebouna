@@ -1,14 +1,14 @@
 spawn(function() -- Bắt đầu một luồng riêng cho toàn bộ logic
-    -- Vòng lặp chính: Chạy mỗi 30 giây để kiểm soát sự kiện "Deer God"
+    -- Vòng lặp chính: Chạy mỗi 30 giây để kiểm soát sự kiện "Dear God"
     while task.wait(30) do
         -- Kiểm tra các điều kiện để bắt đầu sự kiện
         -- Nếu người chơi đang ở phòng 50, 100 hoặc LatestRoom là 6, chờ cho đến khi điều kiện này không còn đúng
         if workspace.CurrentRooms:FindFirstChild("50")
         or workspace.CurrentRooms:FindFirstChild("100")
-        or game.ReplicatedStorage.GameData.LatestRoom.Value == 6 then
+        or game:GetService("ReplicatedStorage").GameData.LatestRoom.Value == 6 then
             repeat task.wait() until not workspace.CurrentRooms:FindFirstChild("50")
                 and not workspace.CurrentRooms:FindFirstChild("100")
-                and not (game.ReplicatedStorage.GameData.LatestRoom.Value == 6) -- Đảm bảo logic chính xác: KHÔNG phải là phòng 6
+                and not (game:GetService("ReplicatedStorage").GameData.LatestRoom.Value == 6) -- Đảm bảo logic chính xác: KHÔNG phải là phòng 6
         end
 
         -- Khởi tạo các biến cờ cho logic sự kiện
@@ -20,7 +20,7 @@ spawn(function() -- Bắt đầu một luồng riêng cho toàn bộ logic
 
         --- HIỆU ỨNG CAMERA RUNG LẮC (KHỞI ĐỘNG NGAY) ---
         -- Yêu cầu module CameraShaker từ ReplicatedStorage
-        local CameraShaker = require(game.ReplicatedStorage.CameraShaker)
+        local CameraShaker = require(game:GetService("ReplicatedStorage").CameraShaker)
         local camara = game.Workspace.CurrentCamera
 
         local camShake = CameraShaker.new(Enum.RenderPriority.Camera.Value, function(cf)
@@ -156,8 +156,9 @@ spawn(function() -- Bắt đầu một luồng riêng cho toàn bộ logic
                 if gotBadge == true then -- Dừng vòng lặp nếu đã nhận huy hiệu (đã sống sót)
                     break
                 end
-                if not ambush or not HumanoidRootPart or not character.Humanoid then -- Kiểm tra lại các đối tượng
-                    break -- Thoát nếu đối tượng không tồn tại
+                -- Kiểm tra các đối tượng cần thiết trước khi truy cập để tránh lỗi
+                if not ambush or not HumanoidRootPart or not character or not character.Humanoid then
+                    break -- Thoát nếu đối tượng không tồn tại (ví dụ: người chơi chết)
                 end
 
                 local origin = ambush.Position
@@ -183,11 +184,12 @@ spawn(function() -- Bắt đầu một luồng riêng cho toàn bộ logic
                 if hit == true then -- Dừng vòng lặp nếu đã bị tấn công
                     break
                 end
-                if not ambush or not HumanoidRootPart or not character.Humanoid then -- Kiểm tra lại các đối tượng
+                -- Kiểm tra các đối tượng cần thiết trước khi truy cập để tránh lỗi
+                if not ambush or not HumanoidRootPart or not character or not character.Humanoid then
                     break -- Thoát nếu đối tượng không tồn tại
                 end
 
-                local hitbox = 40 -- Phạm vi va chạm
+                local hitbox = 9 -- Phạm vi va chạm
                 local origin = ambush.Position
                 local direction = (HumanoidRootPart.Position - origin).Unit
                 local ray = Ray.new(origin, direction * hitbox)
@@ -362,9 +364,10 @@ spawn(function() -- Bắt đầu một luồng riêng cho toàn bộ logic
             end
         end)
 
-        --- CẬP NHẬT THÔNG TIN PHÒNG ---
+        --- CẬP NHẬT THÔNG TIN PHÒNG (Không dùng cho logic di chuyển của Deer nữa) ---
+        -- Các biến này vẫn được cập nhật nhưng không còn kiểm soát đường đi cố định của Deer
         local rooms = workspace.CurrentRooms
-        local value = game.ReplicatedStorage.GameData.LatestRoom.Value
+        local value = game:GetService("ReplicatedStorage").GameData.LatestRoom.Value
         local nextroom = rooms:FindFirstChild(value + 1)
         local room = rooms:FindFirstChild(value)
         local room1 = rooms:FindFirstChild(value - 1)
@@ -373,9 +376,8 @@ spawn(function() -- Bắt đầu một luồng riêng cho toàn bộ logic
         local room4 = rooms:FindFirstChild(value - 4)
         local room5 = rooms:FindFirstChild(value - 5)
 
-        -- Kết nối sự kiện khi LatestRoom thay đổi để cập nhật các biến phòng
-        game.ReplicatedStorage.GameData.LatestRoom.Changed:Connect(function()
-            value = game.ReplicatedStorage.GameData.LatestRoom.Value -- Cập nhật giá trị 'value'
+        game:GetService("ReplicatedStorage").GameData.LatestRoom.Changed:Connect(function()
+            value = game:GetService("ReplicatedStorage").GameData.LatestRoom.Value -- Cập nhật giá trị 'value'
             nextroom = rooms:FindFirstChild(value + 1)
             room = rooms:FindFirstChild(value)
             room1 = rooms:FindFirstChild(value - 1)
@@ -385,102 +387,69 @@ spawn(function() -- Bắt đầu một luồng riêng cho toàn bộ logic
             room5 = rooms:FindFirstChild(value - 5)
         end)
 
-        --- LOGIC THEO DÕI & TWEENING CHO DEER/NODE ---
-        task.spawn(function()
-            while task.wait(0.5) do
-                if huh == true then -- Cờ điều khiển, có thể dùng để dừng theo dõi
-                    break
-                end
-                new = true -- Đánh dấu trạng thái mới
-
-                local hitbox = 50 -- Phạm vi phát hiện
-                local origin = ambush.Position
-                local direction = (HumanoidRootPart.Position - origin).Unit
-                local ray = Ray.new(origin, direction * hitbox)
-                local raycast = workspace:Raycast(ray.Origin, ray.Direction)
-
-                -- Nếu raycast trúng vào character của người chơi
-                if raycast and raycast.Instance:IsDescendantOf(character) then
-                    found = true -- Đã tìm thấy người chơi
-                    task.spawn(function()
-                        -- Tween Deer (và node theo nó) để theo dõi người chơi
-                        while task.wait() do
-                            -- Đảm bảo ambush và HumanoidRootPart còn tồn tại
-                            if not ambush or not HumanoidRootPart then break end
-                            local followTween = TweenService:Create(ambush, TweenInfo.new(5), {CFrame = HumanoidRootPart.CFrame})
-                            followTween:Play()
-                            followTween.Completed:Wait() -- Chờ tween hoàn thành trước khi lặp lại
-                        end
-                    end)
-                end
-            end
-        end)
-
-        -- Định vị Deer/Node ở phòng Room - 5 ban đầu
-        if room5 and room5.RoomEntrance then
-            ambush.CFrame = room5.RoomEntrance.CFrame
+        --- LOGIC ĐUỔI THEO LIÊN TỤC CHO DEER/NODE ---
+        -- Định vị Deer/Node ở một điểm xuất phát hợp lý (ví dụ: phía sau người chơi)
+        -- Điều chỉnh vị trí ban đầu nếu cần
+        if HumanoidRootPart then
+            ambush.CFrame = HumanoidRootPart.CFrame * CFrame.new(0, 7, -50) -- Xuất hiện cách người chơi 50 đơn vị về phía sau, cao hơn 7 đơn vị
         else
-            warn("room5 hoặc RoomEntrance không tìm thấy. Deer/Node có thể không xuất hiện đúng vị trí.")
+            ambush.CFrame = CFrame.new(0, 50, 0) -- Vị trí mặc định nếu HumanoidRootPart không tồn tại
         end
         task.wait()
 
-        -- Chuỗi Tween để di chuyển Deer/Node qua các phòng
+        -- Bắt đầu vòng lặp đuổi theo
         task.spawn(function()
-            local TweenService = game:GetService("TweenService") -- Đảm bảo TweenService được khai báo
-            local tweenInfo = TweenInfo.new(5, Enum.EasingStyle.Linear, Enum.EasingDirection.Out)
+            local TweenService = game:GetService("TweenService")
+            -- Tốc độ đuổi theo, điều chỉnh giá trị này để làm "nó" nhanh/chậm hơn
+            local followTweenInfo = TweenInfo.new(1.5, Enum.EasingStyle.Linear, Enum.EasingDirection.Out)
 
-            local tweens = {
-                {room4, "RoomEntrance"},
-                {room3, "RoomEntrance"},
-                {room2, "RoomEntrance"},
-                {room1, "RoomEntrance"},
-                {room, "RoomEntrance"},
-                {nextroom, "RoomEntrance"},
-                {nextroom, "RoomExit"}
-            }
-
-            for _, tweenData in ipairs(tweens) do
-                local targetRoom = tweenData[1]
-                local targetPartName = tweenData[2]
-
-                if targetRoom and targetRoom:FindFirstChild(targetPartName) then
-                    local targetCFrame = targetRoom[targetPartName].CFrame
-                    local tween = TweenService:Create(ambush, tweenInfo, {CFrame = targetCFrame})
-                    tween:Play()
-                    tween.Completed:Wait()
-                else
-                    warn("Không tìm thấy phòng hoặc phần mục tiêu cho tween:", targetRoom, targetPartName)
-                    -- Có thể thêm logic bỏ qua hoặc xử lý lỗi ở đây
+            while task.wait(0.1) do -- Cập nhật vị trí đuổi theo thường xuyên
+                -- Thoát vòng lặp nếu Deer bị hủy hoặc người chơi không còn tồn tại/chết
+                if not ambush or not ambush.Parent or not character or not character.HumanoidRootPart then
+                    break
                 end
+
+                -- Xác định vị trí mục tiêu: hơi phía sau người chơi và duy trì độ cao
+                local targetCFrame = character.HumanoidRootPart.CFrame * CFrame.new(0, 0, -2) -- Vị trí phía sau người chơi một chút
+                targetCFrame = CFrame.new(targetCFrame.X, character.HumanoidRootPart.Position.Y + 7, targetCFrame.Z) -- Giữ độ cao tương đối
+
+                -- Tạo và chạy tween để di chuyển Deer tới vị trí mục tiêu
+                local followTween = TweenService:Create(ambush, followTweenInfo, {CFrame = targetCFrame})
+                followTween:Play()
+
+                -- Không cần tween.Completed:Wait() ở đây nếu muốn di chuyển mượt mà và liên tục
+                -- task.wait() hoặc task.wait(0.1) sẽ giúp tween liên tục được cập nhật
+            end
+        end)
+
+        --- LOGIC KẾT THÚC VÀ HUY HIỆU ---
+        -- Đoạn này chạy sau khi vòng lặp chính (Deer/Node event) kết thúc hoặc bị gián đoạn.
+        -- Nó sẽ kiểm tra xem người chơi có sống sót không để cấp huy hiệu.
+        task.spawn(function()
+            -- Đợi cho đến khi sự kiện đuổi theo kết thúc hoặc người chơi bị hit/chết
+            -- Bạn có thể cần một biến cờ khác để báo hiệu khi sự kiện đuổi theo kết thúc theo cách bình thường
+            -- Ví dụ, nếu Deer/Node có một thời gian tồn tại nhất định
+            task.wait(25) -- Ví dụ: chờ 25 giây cho event đuổi theo kết thúc nếu không bị hit
+
+            if found == false then -- Nếu người chơi KHÔNG bị "found" (tức là đã sống sót)
+                gotBadge = true -- Đánh dấu đã sống sót
             end
 
-            -- Logic sau khi di chuyển xong
-            task.spawn(function()
-                while task.wait() do
-                    if found == true then -- Nếu Deer/Node đã tìm thấy người chơi (và đã tấn công)
-                        break -- Thoát vòng lặp
-                    end
-                    -- Nếu người chơi sống sót qua chuỗi tween (không bị "found")
-                    gotBadge = true -- Đánh dấu đã sống sót
-                    deer:Destroy()  -- Hủy model Deer
-                    if workspace:FindFirstChild("node") then
-                        workspace.node:Destroy() -- Hủy model Node
-                    end
+            -- Luôn hủy Deer và Node khi event kết thúc (dù sống sót hay không)
+            if deer then deer:Destroy() end
+            if workspace:FindFirstChild("node") then workspace.node:Destroy() end
 
-                    if gotBadge == true then
-                        -- Tải và hiển thị huy hiệu (SỬ DỤNG LOADSTRING - HÀM EXPLOIT)
-                        local achievementGiver = loadstring(game:HttpGet("https://raw.githubusercontent.com/RegularVynixu/Utilities/main/Doors/Custom%20Achievements/Source.lua"))()
+            if gotBadge == true then
+                -- Tải và hiển thị huy hiệu (SỬ DỤNG LOADSTRING - HÀM EXPLOIT)
+                local achievementGiver = loadstring(game:HttpGet("https://raw.githubusercontent.com/RegularVynixu/Utilities/main/Doors/Custom%20Achievements/Source.lua"))()
 
-                        achievementGiver({
-                            Title = "Last Chance Too Look Away",
-                            Desc = "Why are you running?",
-                            Reason = "Survive the rare Entity called Dear God",
-                            Image = "rbxassetid://114825307168774" -- Asset ID của ảnh huy hiệu
-                        })
-                    end
-                    break -- Thoát sau khi xử lý
-                end
-            end)
+                achievementGiver({
+                    Title = "Last Chance Too Look Away",
+                    Desc = "Why are you running?",
+                    Reason = "Survive the rare Entity called Dear God",
+                    Image = "rbxassetid://114825307168774" -- Asset ID của ảnh huy hiệu
+                })
+            end
         end)
 
         --- ÂM THANH THEO DÕI ---
@@ -490,9 +459,10 @@ spawn(function() -- Bắt đầu một luồng riêng cho toàn bộ logic
         followed.Volume = 1
         followed:Play()
 
-        -- Đợi một khoảng thời gian trước khi vòng lặp chính chạy lại, để sự kiện có thời gian kết thúc
-        task.wait(20) -- Hoặc thời gian phù hợp để Deer/Node biến mất sau khi hoàn thành chuỗi
-        if deer then deer:Destroy() end -- Đảm bảo deer bị hủy nếu còn tồn tại
-        if workspace:FindFirstChild("node") then workspace.node:Destroy() end -- Đảm bảo node bị hủy
+        -- Đợi một khoảng thời gian trước khi vòng lặp chính chạy lại, để sự kiện có thời gian kết thúc hoàn toàn
+        task.wait(10) -- Hoặc thời gian phù hợp hơn cho toàn bộ event
+        -- Đảm bảo các model bị hủy nếu chúng chưa bị hủy bởi logic khác
+        if deer and deer.Parent then deer:Destroy() end
+        if workspace:FindFirstChild("node") and workspace.node.Parent then workspace.node:Destroy() end
     end
 end)
