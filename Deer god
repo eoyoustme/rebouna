@@ -268,7 +268,7 @@ entity:SetCallback("OnSpawned", function()
         end
         entityModel.PrimaryPart = entityPart
         print("DeerGod.PrimaryPart set to: " .. entityModel.PrimaryPart.Name)
-end
+   end
 
     coroutine.wrap(function()
         for i, v in ipairs(entityModel:GetDescendants()) do
