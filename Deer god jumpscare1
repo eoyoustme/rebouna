@@ -57,7 +57,7 @@ face.Parent = screenGui
 face.AnchorPoint = Vector2.new(0.5, 0.5)
 face.Position = UDim2.new(0.5, 0, 0.589, 0)
 face.Size = UDim2.new(0, 860, 0, 860)
-face.Image = "rbxassetid://73683518024275"
+face.Image = "rbxassetid://11395249132"
 face.ImageTransparency = 0
 face.BackgroundTransparency = 1
 
@@ -95,13 +95,13 @@ task.spawn(function()
             break
         end
         face.Rotation = 2
-        face.Image = "rbxassetid://122859819664215"
+        face.Image = "rbxassetid://11395249132"
         task.wait(0.0589)
         face.Rotation = -2
-        face.Image = "rbxassetid://84489429478798"
+        face.Image = "rbxassetid://11395249132"
         task.wait(0.0589)
         face.Rotation = 2
-        face.Image = "rbxassetid://73683518024275"
+        face.Image = "rbxassetid://11395249132"
         task.wait(0.0589)
         face.Rotation = -2
     end
