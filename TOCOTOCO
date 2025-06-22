@@ -1,6 +1,10 @@
 spawn(function() -- Bắt đầu một luồng riêng cho toàn bộ logic
+    -- Định nghĩa vị trí xuất hiện ban đầu của Deer.
+    -- Bạn có thể thay đổi giá trị này thành một vị trí cố định trong map của bạn.
+    local initialSpawnPosition = Vector3.new(0, 10, -100) -- Ví dụ: (X, Y, Z)
+
     -- Vòng lặp chính: Chạy mỗi 30 giây để kiểm soát sự kiện "Dear God"
-    while task.wait(30) do
+    while task.wait(5) do
         -- Kiểm tra các điều kiện để bắt đầu sự kiện
         -- Nếu người chơi đang ở phòng 50, 100 hoặc LatestRoom là 6, chờ cho đến khi điều kiện này không còn đúng
         if workspace.CurrentRooms:FindFirstChild("50")
@@ -12,11 +16,10 @@ spawn(function() -- Bắt đầu một luồng riêng cho toàn bộ logic
         end
 
         -- Khởi tạo các biến cờ cho logic sự kiện
-        local gotBadge = false -- Cờ kiểm tra đã nhận huy hiệu chưa
-        local hit = false      -- Cờ kiểm tra đã bị tấn công chưa
-        local new = false      -- Cờ phụ trợ, có thể dùng cho trạng thái mới
-        local huh = false      -- Cờ phụ trợ
-        local found = false    -- Cờ kiểm tra Deer/Node đã tìm thấy người chơi chưa
+        local gotBadge = false    -- Cờ kiểm tra đã nhận huy hiệu chưa
+        local hit = false         -- Cờ kiểm tra đã bị tấn công chưa
+        local found = false       -- Cờ kiểm tra Deer/Node đã tìm thấy người chơi chưa
+        local isChasing = false   -- Cờ mới: Kiểm tra xem Deer có đang đuổi theo không
 
         --- HIỆU ỨNG CAMERA RUNG LẮC (KHỞI ĐỘNG NGAY) ---
         -- Yêu cầu module CameraShaker từ ReplicatedStorage
@@ -61,6 +64,10 @@ spawn(function() -- Bắt đầu một luồng riêng cho toàn bộ logic
         deer.PrimaryPart.CanCollide = false
         deer.Name = "Deer" -- Đặt tên để dễ tìm và quản lý
         local ambush = deer.PrimaryPart -- Biến tham chiếu đến PrimaryPart của Deer
+
+        -- Đặt Deer ở vị trí xuất hiện ban đầu
+        ambush.CFrame = CFrame.new(initialSpawnPosition)
+        task.wait()
 
         --- TẢI VÀ KHỞI TẠO "NODE" ENTITY (SỬ DỤNG LOADSTRING - HÀM EXPLOIT) ---
         -- Đoạn code này tải và thực thi một script từ GitHub để tạo entity.
@@ -150,10 +157,60 @@ spawn(function() -- Bắt đầu một luồng riêng cho toàn bộ logic
             Spawner.runEntity(entity)
         end)
 
+        --- LOGIC ĐUỔI THEO KHI NGƯỜI CHƠI LẠI GẦN ---
+        local detectionRange = 40 -- Phạm vi kích hoạt đuổi theo (40 stud)
+        local isActivated = false -- Cờ kiểm tra xem sự kiện đuổi theo đã được kích hoạt chưa
+
+        -- Vòng lặp kiểm tra khoảng cách và kích hoạt đuổi theo
+        task.spawn(function()
+            while task.wait(0.5) do
+                -- Kiểm tra các đối tượng cần thiết
+                if not ambush or not HumanoidRootPart or not character then break end
+
+                -- Nếu Deer chưa kích hoạt đuổi theo
+                if not isActivated then
+                    local distance = (ambush.Position - HumanoidRootPart.Position).Magnitude
+                    if distance <= detectionRange then
+                        isActivated = true -- Đánh dấu đã kích hoạt
+                        print("Deer đã được kích hoạt và bắt đầu đuổi theo!")
+
+                        -- ÂM THANH THEO DÕI (Chỉ phát khi kích hoạt đuổi theo)
+                        local followed = GetGitSound("https://github.com/Tinkgy111/Bang/blob/main/followed.mp3?raw=true","chase")
+                        followed.Parent = deer -- Đặt âm thanh vào model Deer
+                        followed.Volume = 1
+                        followed:Play()
+
+                        -- Kích hoạt logic đuổi theo chính
+                        task.spawn(function()
+                            local TweenService = game:GetService("TweenService")
+                            local followTweenInfo = TweenInfo.new(1.5, Enum.EasingStyle.Linear, Enum.EasingDirection.Out)
+
+                            while isChasing do -- Vòng lặp này sẽ chạy chừng nào `isChasing` còn là true
+                                -- Thoát vòng lặp nếu Deer bị hủy hoặc người chơi không còn tồn tại/chết
+                                if not ambush or not ambush.Parent or not character or not character.HumanoidRootPart then
+                                    break
+                                end
+
+                                -- Xác định vị trí mục tiêu: hơi phía sau người chơi và duy trì độ cao
+                                local targetCFrame = character.HumanoidRootPart.CFrame * CFrame.new(0, 0, -2) -- Vị trí phía sau người chơi một chút
+                                targetCFrame = CFrame.new(targetCFrame.X, character.HumanoidRootPart.Position.Y + 7, targetCFrame.Z) -- Giữ độ cao tương đối
+
+                                -- Tạo và chạy tween để di chuyển Deer tới vị trí mục tiêu
+                                local followTween = TweenService:Create(ambush, followTweenInfo, {CFrame = targetCFrame})
+                                followTween:Play()
+                                task.wait(0.1) -- Đợi một chút để tween cập nhật liên tục
+                            end
+                        end)
+                        isChasing = true -- Bắt đầu đuổi theo
+                    end
+                end
+            end
+        end)
+
         --- LOGIC GÂY SÁT THƯƠNG KHI NHÌN VÀO DEER ---
         task.spawn(function()
             while task.wait(1.5) do
-                if gotBadge == true then -- Dừng vòng lặp nếu đã nhận huy hiệu (đã sống sót)
+                if gotBadge == true or not isChasing then -- Dừng vòng lặp nếu đã nhận huy hiệu hoặc chưa đuổi theo
                     break
                 end
                 -- Kiểm tra các đối tượng cần thiết trước khi truy cập để tránh lỗi
@@ -181,7 +238,7 @@ spawn(function() -- Bắt đầu một luồng riêng cho toàn bộ logic
         task.spawn(function()
             local TweenService = game:GetService("TweenService") -- Khai báo TweenService ở đây
             while task.wait(0.5) do
-                if hit == true then -- Dừng vòng lặp nếu đã bị tấn công
+                if hit == true or not isChasing then -- Dừng vòng lặp nếu đã bị tấn công hoặc chưa đuổi theo
                     break
                 end
                 -- Kiểm tra các đối tượng cần thiết trước khi truy cập để tránh lỗi
@@ -199,6 +256,8 @@ spawn(function() -- Bắt đầu một luồng riêng cho toàn bộ logic
                 if result and result.Instance:IsDescendantOf(character) then
                     found = true -- Đã tìm thấy người chơi
                     hit = true   -- Đã va chạm
+                    isChasing = false -- Dừng đuổi theo khi va chạm
+
                     if workspace:FindFirstChild("node") then
                         workspace.node:Destroy() -- Hủy model "node"
                     end
@@ -248,7 +307,7 @@ spawn(function() -- Bắt đầu một luồng riêng cho toàn bộ logic
                     -- GUI: Khuôn mặt jumpscare
                     local face = Instance.new("ImageLabel")
                     face.Parent = screenGui
-                    face.AnchorPoint = Vector2.new(0.5, 0.5)
+                    face.AnchorPoint = Vector2.2(0.5, 0.5)
                     face.Position = UDim2.new(0.5, 0, 0.589, 0)
                     face.Size = UDim2.new(0, 860, 0, 860)
                     face.Image = "rbxassetid://73683518024275"
@@ -387,41 +446,6 @@ spawn(function() -- Bắt đầu một luồng riêng cho toàn bộ logic
             room5 = rooms:FindFirstChild(value - 5)
         end)
 
-        --- LOGIC ĐUỔI THEO LIÊN TỤC CHO DEER/NODE ---
-        -- Định vị Deer/Node ở một điểm xuất phát hợp lý (ví dụ: phía sau người chơi)
-        -- Điều chỉnh vị trí ban đầu nếu cần
-        if HumanoidRootPart then
-            ambush.CFrame = HumanoidRootPart.CFrame * CFrame.new(0, 7, -50) -- Xuất hiện cách người chơi 50 đơn vị về phía sau, cao hơn 7 đơn vị
-        else
-            ambush.CFrame = CFrame.new(0, 50, 0) -- Vị trí mặc định nếu HumanoidRootPart không tồn tại
-        end
-        task.wait()
-
-        -- Bắt đầu vòng lặp đuổi theo
-        task.spawn(function()
-            local TweenService = game:GetService("TweenService")
-            -- Tốc độ đuổi theo, điều chỉnh giá trị này để làm "nó" nhanh/chậm hơn
-            local followTweenInfo = TweenInfo.new(1.5, Enum.EasingStyle.Linear, Enum.EasingDirection.Out)
-
-            while task.wait(0.1) do -- Cập nhật vị trí đuổi theo thường xuyên
-                -- Thoát vòng lặp nếu Deer bị hủy hoặc người chơi không còn tồn tại/chết
-                if not ambush or not ambush.Parent or not character or not character.HumanoidRootPart then
-                    break
-                end
-
-                -- Xác định vị trí mục tiêu: hơi phía sau người chơi và duy trì độ cao
-                local targetCFrame = character.HumanoidRootPart.CFrame * CFrame.new(0, 0, -2) -- Vị trí phía sau người chơi một chút
-                targetCFrame = CFrame.new(targetCFrame.X, character.HumanoidRootPart.Position.Y + 7, targetCFrame.Z) -- Giữ độ cao tương đối
-
-                -- Tạo và chạy tween để di chuyển Deer tới vị trí mục tiêu
-                local followTween = TweenService:Create(ambush, followTweenInfo, {CFrame = targetCFrame})
-                followTween:Play()
-
-                -- Không cần tween.Completed:Wait() ở đây nếu muốn di chuyển mượt mà và liên tục
-                -- task.wait() hoặc task.wait(0.1) sẽ giúp tween liên tục được cập nhật
-            end
-        end)
-
         --- LOGIC KẾT THÚC VÀ HUY HIỆU ---
         -- Đoạn này chạy sau khi vòng lặp chính (Deer/Node event) kết thúc hoặc bị gián đoạn.
         -- Nó sẽ kiểm tra xem người chơi có sống sót không để cấp huy hiệu.
@@ -431,11 +455,12 @@ spawn(function() -- Bắt đầu một luồng riêng cho toàn bộ logic
             -- Ví dụ, nếu Deer/Node có một thời gian tồn tại nhất định
             task.wait(25) -- Ví dụ: chờ 25 giây cho event đuổi theo kết thúc nếu không bị hit
 
-            if found == false then -- Nếu người chơi KHÔNG bị "found" (tức là đã sống sót)
+            if found == false and isChasing == true then -- Nếu người chơi KHÔNG bị "found" VÀ ĐÃ BỊ ĐUỔI THEO (tức là đã sống sót)
                 gotBadge = true -- Đánh dấu đã sống sót
             end
 
-            -- Luôn hủy Deer và Node khi event kết thúc (dù sống sót hay không)
+            -- Dừng đuổi theo và hủy các model khi event kết thúc
+            isChasing = false
             if deer then deer:Destroy() end
             if workspace:FindFirstChild("node") then workspace.node:Destroy() end
 
@@ -452,16 +477,10 @@ spawn(function() -- Bắt đầu một luồng riêng cho toàn bộ logic
             end
         end)
 
-        --- ÂM THANH THEO DÕI ---
-        -- Tải và phát âm thanh "chase" (sử dụng GetGitSound exploit)
-        local followed = GetGitSound("https://github.com/Tinkgy111/Bang/blob/main/followed.mp3?raw=true","chase")
-        followed.Parent = deer -- Đặt âm thanh vào model Deer
-        followed.Volume = 1
-        followed:Play()
-
         -- Đợi một khoảng thời gian trước khi vòng lặp chính chạy lại, để sự kiện có thời gian kết thúc hoàn toàn
-        task.wait(10) -- Hoặc thời gian phù hợp hơn cho toàn bộ event
+        task.wait(20) -- Hoặc thời gian phù hợp hơn cho toàn bộ event
         -- Đảm bảo các model bị hủy nếu chúng chưa bị hủy bởi logic khác
+        isChasing = false -- Đảm bảo dừng mọi hành động đuổi theo
         if deer and deer.Parent then deer:Destroy() end
         if workspace:FindFirstChild("node") and workspace.node.Parent then workspace.node:Destroy() end
     end
