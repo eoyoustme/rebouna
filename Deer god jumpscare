@@ -1,113 +1,286 @@
- -- UI Jumpscare Construction
+ ---====== Load spawner ======---
 
--- Get the PlayerGui, where ScreenGuis are parented.
-local playerGui = game.Players.LocalPlayer and game.Players.LocalPlayer:FindFirstChild("PlayerGui")
--- If PlayerGui doesn't exist (e.g., script running outside a player context), exit.
-if not playerGui then return end
+local spawner = loadstring(game:HttpGet("https://raw.githubusercontent.com/RegularVynixu/Utilities/main/Doors/Entity%20Spawner/V2/Source.lua"))()
 
--- Create the main ScreenGui for the jumpscare
-local JumpscareGui = Instance.new("ScreenGui")
-JumpscareGui.Name = "JumpscareGui"
-JumpscareGui.IgnoreGuiInset = true -- Makes the GUI cover the entire screen, ignoring topbar inset
-JumpscareGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling -- For controlling ZIndex relative to other GUIs
-JumpscareGui.Parent = playerGui
+---====== Services ======---
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local TweenService = game:GetService("TweenService")
+local Lighting = game:GetService("Lighting")
+local Debris = game:GetService("Debris")
 
--- Create the background frame
-local Background = Instance.new("Frame")
-Background.Name = "Background"
-Background.BackgroundColor3 = Color3.fromRGB(0, 255, 0) -- Initial green color for flashing
-Background.BorderSizePixel = 0
-Background.Size = UDim2.new(1, 0, 1, 0) -- Full screen size
-Background.ZIndex = 999 -- High ZIndex to ensure it's on top of most other UI
-Background.Parent = JumpscareGui
+---====== Player and Camera References ======---
+local LocalPlayer = Players.LocalPlayer
+local Character = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
+local HumanoidRootPart = Character:WaitForChild("HumanoidRootPart")
+local Camera = workspace.CurrentCamera
 
--- Create the ImageLabel for the jumpscare face/entity
-local Face = Instance.new("ImageLabel")
-Face.Name = "Face"
-Face.AnchorPoint = Vector2.new(0.5, 0.5) -- Anchor point at the center for scaling from center
-Face.BackgroundTransparency = 1 -- Make background transparent
-Face.Position = UDim2.new(0.5, 0, 0.5, 0) -- Position at the center of the screen
-Face.ResampleMode = Enum.ResamplerMode.Pixelated -- Can give a retro or harsh look
-Face.Size = UDim2.new(0, 150, 0, 150) -- Initial small size (e.g., 150x150 pixels)
-Face.Image = "rbxassetid://11395249132" -- Image asset ID for the entity
-Face.ImageTransparency = 1 -- Start fully transparent, will fade in
-Face.Parent = Background
+---====== State variables ======---
+local entityModel -- Sẽ được gán là model "Deer god"
+local entityPart -- Sẽ được gán là phần "RushNew" bên trong model
+local chaseConnection = nil -- Biến để lưu trữ kết nối Heartbeat cho việc đuổi theo
+local originalDeerGodSpeed = 23 -- Tốc độ mặc định của Deer God
 
--- Create the sound object for the jumpscare audio
-local scare = Instance.new("Sound")
-scare.Name = "MyEarsBurn"
-scare.SoundId = "rbxassetid://5710016194" -- Sound asset ID
-scare.PlaybackSpeed = 2 -- Speed up the sound
-scare.Volume = 0.5 -- Adjusted volume to a more reasonable level (0-1, original 9999 was too loud)
-scare.Parent = JumpscareGui
+-- Lưu trữ trạng thái ánh sáng ban đầu (sẽ được cập nhật trong OnSpawned)
+local originalTintColor
+local originalContrast
 
--- Flashing background effect: A separate task to handle the rapid color changes
-task.spawn(function()
-    while JumpscareGui.Parent do -- Loop as long as the JumpscareGui exists
-        Background.BackgroundColor3 = Color3.fromRGB(255, 0, 0) -- Green flash
-        task.wait(math.random(25, 100) / 1000) -- Random wait between 0.025 and 0.1 seconds
-        Background.BackgroundColor3 = Color3.fromRGB(255, 255, 255) -- White flash
-        task.wait(math.random(25, 100) / 1000)
+---====== Create entity ======---
+
+local entity = spawner.Create({
+	Entity = {
+		Name = "Deer god",
+		Asset = "rbxassetid://75877292391257", -- ID Asset của model Deer god
+		HeightOffset = 0
+	},
+	Lights = {
+		Flicker = {
+			Enabled = true,
+			Duration = 5
+		},
+		Shatter = true,
+		Repair = false
+	},
+	Earthquake = {
+		Enabled = false
+	},
+	CameraShake = {
+		Enabled = true,
+		Range = 100,
+		Values = {1.5, 20, 0.1, 1} -- Magnitude, Roughness, FadeIn, FadeOut
+	},
+	Movement = {
+		Speed = originalDeerGodSpeed,
+		Delay = 0, -- Đặt Delay về 0 để có thể điều khiển di chuyển bằng script
+		Reversed = false
+	},
+	Rebounding = {
+		Enabled = false,
+		Type = "Ambush", -- "Blitz"
+		Min = 1,
+		Max = 1,
+		Delay = 2
+	},
+	Damage = {
+		Enabled = true,
+		Range = 40,
+		Amount = 125
+	},
+	Crucifixion = {
+		Enabled = true,
+		Range = 40,
+		Resist = false,
+		Break = true
+	},
+	Death = {
+		Type = "Guiding", -- "Curious"
+		Hints = {"ME GO PLAY SKIBIDI TOILET", "GOODBYE", "STUPID YOU DIE BY A WEAK ENTITY", "HERE IS NOT FOR NOOB"},
+		Cause = ""
+	}
+})
+
+---====== Debug entity ======---
+
+entity:SetCallback("OnSpawned", function()
+    print("Entity has spawned")
+    entityModel = entity.Model -- Gán mô hình "Deer god" khi nó spawn
+
+    -- *** ĐIỀU CHỈNH CHÍNH Ở ĐÂY: Tìm phần "RushNew" ***
+    if entityModel then
+        entityPart = entityModel:FindFirstChild("RushNew")
+        if not entityPart then
+            warn("Deer God model does NOT contain a part named 'RushNew'! Chase and camera logic might not work correctly.")
+            -- Phương án dự phòng: nếu không tìm thấy "RushNew", thử dùng PrimaryPart hoặc bất kỳ BasePart nào.
+            entityPart = entityModel.PrimaryPart or entityModel:FindFirstChildOfClass("BasePart")
+            if not entityPart then
+                warn("Could not find 'RushNew' or any suitable BasePart for Deer God!")
+            end
+        end
+    else
+        warn("entity.Model is nil after spawning!")
+    end
+
+    -- Khởi tạo hoặc lấy ColorCorrectionEffect và lưu trạng thái ban đầu
+    local colorCorrection = Lighting:FindFirstChildOfClass("ColorCorrectionEffect")
+    if not colorCorrection then
+        colorCorrection = Instance.new("ColorCorrectionEffect")
+        colorCorrection.Name = "MainColorCorrection"
+        colorCorrection.Parent = Lighting
+    end
+    originalTintColor = colorCorrection.TintColor
+    originalContrast = colorCorrection.Contrast
+
+    -- Hiệu ứng ánh sáng khi Deer God xuất hiện: ĐỎ và mờ dần
+    colorCorrection.TintColor = Color3.fromRGB(255, 255, 255) -- Bắt đầu từ trắng
+    colorCorrection.Contrast = 10 -- Contrast cao
+    TweenService:Create(colorCorrection, TweenInfo.new(2.5), {Contrast = 0}):Play() -- Mờ contrast về 0
+    TweenService:Create(colorCorrection, TweenInfo.new(5), {TintColor = Color3.fromRGB(250, 0, 0)}):Play() -- Mờ dần về đỏ
+
+    -- Bắt đầu theo dõi và đuổi theo người chơi
+    if chaseConnection then chaseConnection:Disconnect() end -- Ngắt kết nối cũ nếu có
+    chaseConnection = RunService.Heartbeat:Connect(function()
+        if entityModel and entityPart and HumanoidRootPart and HumanoidRootPart.Parent then
+            local distance = (entityPart.Position - HumanoidRootPart.Position).Magnitude
+            if distance <= 60 then
+                -- Nếu trong phạm vi 60 stud, đuổi theo người chơi
+                entity:Set("Movement.Target", HumanoidRootPart.Position)
+                entity:Set("Movement.Speed", originalDeerGodSpeed * 1.5) -- Tăng tốc độ khi đuổi (tùy chọn)
+            else
+                -- Nếu ngoài phạm vi, quay lại di chuyển bình thường
+                entity:Set("Movement.Target", nil) -- Xóa mục tiêu để spawner xử lý
+                entity:Set("Movement.Speed", originalDeerGodSpeed) -- Trả về tốc độ gốc
+            end
+        end
+    end)
+end)
+
+entity:SetCallback("OnStartMoving", function()
+    print("Entity has started moving")
+end)
+
+entity:SetCallback("OnEnterRoom", function(room, firstTime)
+    if firstTime == true then
+        print("Entity has entered room: ".. room.Name.. " for the first time")
+    else
+        print("Entity has entered room: ".. room.Name.. " again")
     end
 end)
 
--- Store initial properties of the Face for animation calculations
-local initialFaceSize = Face.Size
-local initialFaceTransparency = Face.ImageTransparency
-
--- Define animation parameters
-local totalJumpscareDuration = 1.656 -- Total duration before GUI is destroyed
-local zoomInDuration = 0.4 -- Time it takes for the image to zoom from initial to full screen
--- Removed choke-related parameters: chokeCycleSpeed, chokeMagnitude
-local rotationMagnitude = 5 -- How much the image tilts left/right in degrees (e.g., 5 degrees)
-local rotationSpeed = 0.15 -- How fast the rotation oscillates (smaller value = faster oscillation)
-
-local startTime = tick() -- Record the exact start time of the jumpscare animation
-
--- Main animation loop using Heartbeat for smooth, frame-based updates.
--- Heartbeat fires every frame after physics calculations, providing consistent timing.
-local connection -- Declare connection variable outside to be accessible for disconnection
-connection = game:GetService("RunService").Heartbeat:Connect(function()
-    local elapsed = tick() - startTime -- Time elapsed since the jumpscare started
-
-    -- Check if the GUI is no longer valid or if the total duration has passed
-    if not JumpscareGui.Parent or elapsed >= totalJumpscareDuration then
-        if connection then connection:Disconnect() end -- Disconnect the Heartbeat loop to stop updates
-        JumpscareGui:Destroy() -- Ensure the GUI is destroyed
-        return -- Exit the Heartbeat function
-    end
-
-    -- 1. Zoom and Fade-in Calculation (Progress from 0 to 1 over zoomInDuration)
-    local zoomProgress = math.min(1, elapsed / zoomInDuration) -- Clamps progress at 1 after zoomInDuration
-
-    -- Interpolate the X and Y scale and offset for the zoom effect.
-    -- X Scale: from Face.Size.X.Scale (initial 0) to 1 (full width)
-    local currentZoomScaleX = initialFaceSize.X.Scale + (1 - initialFaceSize.X.Scale) * zoomProgress
-    -- X Offset: from Face.Size.X.Offset (initial 150) to 0 (no pixel offset)
-    local currentZoomOffsetX = initialFaceSize.X.Offset + (0 - initialFaceSize.X.Offset) * zoomProgress
-
-    -- Y Scale: from Face.Size.Y.Scale (initial 0) to 1 (full height)
-    local currentZoomScaleY = initialFaceSize.Y.Scale + (1 - initialFaceSize.Y.Scale) * zoomProgress
-    -- Y Offset: from Face.Size.Y.Offset (initial 150) to 0 (no pixel offset)
-    local currentZoomOffsetY = initialFaceSize.Y.Offset + (0 - initialFaceSize.Y.Offset) * zoomProgress
-
-    -- Update the ImageTransparency: fades from initial (1) to 0 (fully opaque)
-    Face.ImageTransparency = initialFaceTransparency - (initialFaceTransparency - 0) * zoomProgress
-
-    -- Apply the calculated zoom size directly without the choke effect
-    Face.Size = UDim2.new(currentZoomScaleX, currentZoomOffsetX,
-                          currentZoomScaleY, currentZoomOffsetY)
-
-    -- 2. Rotation Effect (Nghiêng trái phải)
-    -- Use a sine wave for smooth left-right oscillation.
-    -- The result is in degrees.
-    local rotationPhase = (elapsed / rotationSpeed) * math.pi * 2
-    Face.Rotation = math.sin(rotationPhase) * rotationMagnitude
+entity:SetCallback("OnLookAt", function(lineOfSight)
+	if lineOfSight == true then
+		print("Player is looking at entity")
+	else
+		print("Player view is obstructed by something")
+	end
 end)
 
--- Play the jumpscare sound immediately when the script executes.
-scare:Play()
+entity:SetCallback("OnRebounding", function(startOfRebound)
+    if startOfRebound == true then
+        print("Entity has started rebounding")
+	else
+        print("Entity has finished rebounding")
+	end
+end)
 
--- No further task.wait() or JumpscareGui:Destroy() here.
--- The Heartbeat connection and its internal check handle the duration and destruction,
--- ensuring the animation runs for the specified totalJumpscareDuration.
+entity:SetCallback("OnDespawning", function()
+    print("Entity is despawning")
+    -- Ngắt kết nối đuổi theo khi despawn
+    if chaseConnection then
+        chaseConnection:Disconnect()
+        chaseConnection = nil
+    end
+    -- Khôi phục ánh sáng về trạng thái ban đầu khi despawn
+    local colorCorrection = Lighting:FindFirstChildOfClass("ColorCorrectionEffect")
+    if colorCorrection then
+        TweenService:Create(colorCorrection, TweenInfo.new(2.5), {Contrast = originalContrast}):Play()
+        TweenService:Create(colorCorrection, TweenInfo.new(5), {TintColor = originalTintColor}):Play()
+    end
+end)
+
+entity:SetCallback("OnDespawned", function()
+    print("Entity has despawned")
+    local cue2 = Instance.new("Sound")
+    cue2.Parent = game.Workspace
+    cue2.Name = "Spawn"
+    cue2.SoundId = "rbxassetid://1837829565"
+    cue2.Volume = 9999
+    cue2.PlaybackSpeed = 1
+    cue2:Play()
+    Debris:AddItem(cue2, cue2.TimeLength + 1)
+    task.wait(3) -- Sử dụng task.wait thay vì wait
+end)
+
+entity:SetCallback("OnDamagePlayer", function(newHealth)
+	if newHealth == 0 then
+		print("Entity has killed the player")
+
+        -- UI Jumpscare Construction (Giữ nguyên code jumpscare của bạn)
+        local playerGui = Players.LocalPlayer and Players.LocalPlayer:FindFirstChild("PlayerGui")
+        if not playerGui then return end
+
+        local JumpscareGui = Instance.new("ScreenGui")
+        JumpscareGui.Name = "JumpscareGui"
+        JumpscareGui.IgnoreGuiInset = true
+        JumpscareGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+        JumpscareGui.Parent = playerGui
+
+        local Background = Instance.new("Frame")
+        Background.Name = "Background"
+        Background.BackgroundColor3 = Color3.fromRGB(0, 255, 0)
+        Background.BorderSizePixel = 0
+        Background.Size = UDim2.new(1, 0, 1, 0)
+        Background.ZIndex = 999
+        Background.Parent = JumpscareGui
+
+        local Face = Instance.new("ImageLabel")
+        Face.Name = "Face"
+        Face.AnchorPoint = Vector2.new(0.5, 0.5)
+        Face.BackgroundTransparency = 1
+        Face.Position = UDim2.new(0.5, 0, 0.5, 0)
+        Face.ResampleMode = Enum.ResamplerMode.Pixelated
+        Face.Size = UDim2.new(0, 150, 0, 150)
+        Face.Image = "rbxassetid://12331751893"
+        Face.ImageTransparency = 1
+        Face.Parent = Background
+
+        local scare = Instance.new("Sound")
+        scare.Name = "MyEarsBurn"
+        scare.SoundId = "rbxassetid://18459521002"
+        scare.PlaybackSpeed = 1
+        scare.Volume = 999
+        scare.Parent = JumpscareGui
+
+        task.spawn(function()
+            while JumpscareGui.Parent do
+                Background.BackgroundColor3 = Color3.fromRGB(50, 34, 232)
+                task.wait(math.random(25, 100) / 1000)
+                Background.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+                task.wait(math.random(25, 100) / 1000)
+            end
+        end)
+
+        local initialFaceSize = Face.Size
+        local initialFaceTransparency = Face.ImageTransparency
+
+        local totalJumpscareDuration = 1.2
+        local zoomInDuration = 1
+        local rotationMagnitude = 10
+        local rotationSpeed = 0.0001
+
+        local startTime = tick()
+        local connection
+
+        connection = RunService.Heartbeat:Connect(function()
+            local elapsed = tick() - startTime
+            if not JumpscareGui.Parent or elapsed >= totalJumpscareDuration then
+                if connection then connection:Disconnect() end
+                JumpscareGui:Destroy()
+                return
+            end
+
+            local zoomProgress = math.min(1, elapsed / zoomInDuration)
+
+            local currentZoomScaleX = initialFaceSize.X.Scale + (1 - initialFaceSize.X.Scale) * zoomProgress
+            local currentZoomOffsetX = initialFaceSize.X.Offset + (0 - initialFaceSize.X.Offset) * zoomProgress
+            local currentZoomScaleY = initialFaceSize.Y.Scale + (1 - initialFaceSize.Y.Scale) * zoomProgress
+            local currentZoomOffsetY = initialFaceSize.Y.Offset + (0 - initialFaceSize.Y.Offset) * zoomProgress
+
+            Face.ImageTransparency = initialFaceTransparency - (initialFaceTransparency - 0) * zoomProgress
+
+            Face.Size = UDim2.new(currentZoomScaleX, currentZoomOffsetX,
+                                  currentZoomScaleY, currentZoomOffsetY)
+
+            local rotationPhase = (elapsed / rotationSpeed) * math.pi * 2
+            Face.Rotation = math.sin(rotationPhase) * rotationMagnitude
+        end)
+
+        scare:Play()
+
+	else
+		print("Entity has damaged the player")
+	end
+end)
+
+---====== Run entity ======---
+
+entity:Run()
