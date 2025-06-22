@@ -94,7 +94,7 @@ function CustomGitSound(soundlink, vol, filename)
     local sound = Instance.new("Sound")
     sound.SoundId = GitAud(soundlink, filename)
     sound.Parent = workspace
-    sound.Volume = 6
+    sound.Volume = 60
     sound.PlaybackSpeed = 0.5
     sound.Name = "DoorBreak"
    sound:Play()
@@ -119,10 +119,10 @@ local done = false
 
 local kill = Instance.new("Sound")
 kill.Parent = workspace
-kill.PlaybackSpeed = 1
+kill.PlaybackSpeed = 0.5
 kill.SoundId = "rbxassetid://140225556550357"
 kill.Name = "Dear god death sound chat"
-kill.Volume = 10
+kill.Volume = 100
 kill.Looped = true
 
 
