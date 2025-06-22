@@ -2,7 +2,7 @@
 local A60_Spawned = false -- Flag to ensure A-60 logic only runs once
 
 spawn(function()
-    while task.wait(600) do
+    while task.wait(0) do
         print("A-60 is here!!!!")
         -- Only proceed if A-60 hasn't been spawned/initialized yet
         if not A60_Spawned and (workspace:FindFirstChild("SeekMovingNewClone")
