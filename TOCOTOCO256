@@ -1,498 +1,628 @@
-spawn(function() -- Bắt đầu một luồng riêng cho toàn bộ logic
-    -- Vòng lặp chính: Chạy mỗi 30 giây để kiểm soát sự kiện "Deer God"
-    while task.wait(30) do
-        -- Kiểm tra các điều kiện để bắt đầu sự kiện
-        -- Nếu người chơi đang ở phòng 50, 100 hoặc LatestRoom là 6, chờ cho đến khi điều kiện này không còn đúng
-        if workspace.CurrentRooms:FindFirstChild("50")
-        or workspace.CurrentRooms:FindFirstChild("100")
-        or game.ReplicatedStorage.GameData.LatestRoom.Value == 6 then
-            repeat task.wait() until not workspace.CurrentRooms:FindFirstChild("50")
-                and not workspace.CurrentRooms:FindFirstChild("100")
-                and not (game.ReplicatedStorage.GameData.LatestRoom.Value == 6) -- Đảm bảo logic chính xác: KHÔNG phải là phòng 6
+---====== Tải Spawner ======---
+-- Script này tải một module Spawner từ GitHub.
+-- CHÚ Ý: 'loadstring' và 'game:HttpGet' chỉ hoạt động với các exploit client và không thể dùng trong game Roblox thông thường.
+local spawner = loadstring(game:HttpGet("https://raw.githubusercontent.com/RegularVynixu/Utilities/main/Doors/Entity%20Spawner/V2/Source.lua"))()
+
+---====== Các Dịch Vụ (Services) ======---
+local Players = game:GetService("Players")
+local RunService = game:GetService("GetService")
+local TweenService = game:GetService("TweenService")
+local Lighting = game:GetService("Lighting")
+local Debris = game:GetService("Debris")
+local UserInputService = game:GetService("UserInputService")
+local CameraShaker = require(game.ReplicatedStorage.CameraShaker) -- Yêu cầu module CameraShaker
+
+---====== Tham Chiếu Người Chơi và Camera ======---
+local LocalPlayer = Players.LocalPlayer
+local Character = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
+local HumanoidRootPart = Character:WaitForChild("HumanoidRootPart")
+local Camera = workspace.CurrentCamera
+
+---====== Biến Trạng Thái (State Variables) ======---
+local entityModel -- Model "Deer god" của thực thể (ambush trong script cũ)
+local entityPart -- Part "RushNew" bên trong entityModel, dùng cho vị trí và di chuyển
+local chaseConnection = nil -- Kết nối Heartbeat để đuổi theo
+local destroyTimer = nil -- Timer tự hủy Deer God
+local MoveActive = true -- Biến kiểm soát việc di chuyển của Deer God
+local customSpeed = 26 -- Tốc độ Deer God đuổi theo người chơi
+local activationRange = 34 -- Khoảng cách kích hoạt Deer God đuổi theo
+
+-- Biến lưu trữ trạng thái ánh sáng ban đầu
+local originalTintColor
+local originalContrast
+
+-- Biến cho Jumpscare
+local isJumpscareActive = false
+local cameraConn, inputConn1, inputConn2
+local activeSounds = {}
+
+-- Các cờ trạng thái từ script cũ (cho logic va chạm/jumpscare phụ)
+local hit = false -- Cờ kiểm tra đã bị tấn công chưa (cho jumpscare cũ)
+local found = false -- Cờ kiểm tra Deer/Node đã tìm thấy người chơi chưa (cho jumpscare cũ)
+
+---====== Tạo ColorCorrectionEffect nếu chưa có ======---
+local colorCorrection = Lighting:FindFirstChildOfClass("ColorCorrectionEffect")
+if not colorCorrection then
+    colorCorrection = Instance.new("ColorCorrectionEffect")
+    colorCorrection.Name = "MainColorCorrection"
+    colorCorrection.Parent = Lighting
+end
+
+---====== Tạo Thực Thể (Deer God) ======---
+local entity = spawner.Create({
+    Entity = {
+        Name = "Deer god",
+        Asset = "rbxassetid://75877292391257",
+        HeightOffset = 0
+    },
+    Lights = {
+        Flicker = { Enabled = true, Duration = 5 },
+        Shatter = true,
+        Repair = false
+    },
+    Earthquake = { Enabled = false },
+    CameraShake = {
+        Enabled = true,
+        Range = 100,
+        Values = {1.5, 20, 0.1, 1}
+    },
+    Movement = {
+        Speed = 36, -- Tốc độ mặc định của Spawner (sẽ bị ghi đè bởi customSpeed trong Heartbeat)
+        Delay = 0,
+        Reversed = false
+    },
+    Rebounding = { Enabled = false },
+    Damage = { Enabled = true, Range = 1, Amount = 125 },
+    Crucifixion = { Enabled = true, Range = 40, Resist = false, Break = true },
+    Death = {
+        Type = "Guiding",
+        Hints = {"ME GO PLAY SKIBIDI TOILET", "GOODBYE", "STUPID YOU DIE BY A WEAK ENTITY", "HERE IS NOT FOR NOOB"},
+        Cause = ""
+    }
+})
+
+---====== Hàm Hỗ Trợ cho Âm Thanh Tùy Chỉnh (Chỉ dùng nếu có exploit) ======---
+function GitAud(soundgit, filename)
+    if type(getcustomasset) == "function" or type(getsynasset) == "function" then
+        writefile(filename..".mp3", game:HttpGet(soundgit))
+        return (getcustomasset or getsynasset)(filename..".mp3")
+    else
+        warn("Không thể tải âm thanh từ GitHub: getcustomasset/getsynasset không khả dụng. Vui lòng tải âm thanh lên Roblox và sử dụng ID Asset của nó.")
+        return ""
+    end
+end
+
+function CustomGitSound(soundlink, vol, filename)
+    local S = Instance.new("Sound")
+    S.SoundId = GitAud(soundlink, filename)
+    if S.SoundId == "" then return nil end
+    S.Volume = vol
+    S.Looped = false
+    S:Play()
+    Debris:AddItem(S, S.TimeLength + 1)
+    return S
+end
+
+---
+## Logic Jumpscare Chính
+
+-- Hàm này sẽ được gọi sau khi hiệu ứng nhiễu và khóa camera hoàn tất
+local function executeRealJumpscare()
+    if inputConn1 then inputConn1:Disconnect(); inputConn1 = nil end
+    if inputConn2 then inputConn2:Disconnect(); inputConn2 = nil end
+
+    local jumpscareGui = Instance.new("ScreenGui", LocalPlayer:WaitForChild("PlayerGui"))
+    jumpscareGui.Name = "JumpscareGUI"
+    jumpscareGui.IgnoreGuiInset = true
+    jumpscareGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+
+    local jumpscareImg = Instance.new("ImageLabel", jumpscareGui)
+    jumpscareImg.Size = UDim2.new(1, 0, 1, 0)
+    jumpscareImg.BackgroundTransparency = 1
+    jumpscareImg.ImageTransparency = 1 -- Bắt đầu với hình ảnh trong suốt
+    jumpscareImg.Image = "rbxassetid://11826279208" -- Ảnh jumpscare Deer God ban đầu
+    jumpscareImg.ZIndex = 10
+
+    local jumpscareSound = Instance.new("Sound", workspace)
+    jumpscareSound.SoundId = "rbxassetid://6567183465" -- Âm thanh jumpscare đầu tiên
+    jumpscareSound.Volume = 3
+    jumpscareSound:Play()
+    activeSounds[jumpscareSound] = true
+
+    -- Deer God xuất hiện mờ và rõ dần (giống video)
+    TweenService:Create(jumpscareImg, TweenInfo.new(0.1), {ImageTransparency = 0}):Play()
+    -- Giữ cho Deer God hiển thị một lúc trước khi chuyển sang ảnh khác
+    task.wait(0.5) -- Thời gian hiển thị của ảnh Deer God ban đầu
+
+    -- Hiệu ứng màu sắc và độ tương phản khi jumpscare
+    colorCorrection.TintColor = Color3.fromRGB(250, 0, 0)
+    colorCorrection.Contrast = 10
+    TweenService:Create(colorCorrection, TweenInfo.new(0.25), {Contrast = 0}):Play()
+    TweenService:Create(colorCorrection, TweenInfo.new(0.5), {TintColor = originalTintColor}):Play() -- Màu sắc trở lại bình thường
+
+    task.wait(1.0) -- Đợi thêm một chút trước khi chuyển ảnh, tổng thời gian ảnh Deer God khoảng 1.5s (0.5+1.0)
+
+    -- Chuyển sang ảnh thứ hai (Hộp sọ/Khuôn mặt ghê rợn)
+    jumpscareImg.ImageTransparency = 1 -- Làm mờ ảnh Deer God
+    jumpscareImg.Image = "rbxassetid://12331751893" -- Ảnh hộp sọ/khuôn mặt ghê rợn
+    jumpscareImg.ZIndex = 12 -- Đảm bảo ảnh này ở trên cùng
+
+    local skullSound = Instance.new("Sound", workspace)
+    skullSound.SoundId = "rbxassetid://18459521002" -- Âm thanh hộp sọ/khuôn mặt
+    skullSound.Volume = 2
+    skullSound:Play()
+    activeSounds[skullSound] = true
+
+    TweenService:Create(jumpscareImg, TweenInfo.new(0.3), {ImageTransparency = 0}):Play() -- Ảnh thứ hai hiện rõ dần
+    task.wait(1.5) -- Thời gian hiển thị của ảnh thứ hai
+
+    TweenService:Create(jumpscareImg, TweenInfo.new(0.5), {ImageTransparency = 1}):Play().Completed:Wait() -- Làm mờ ảnh thứ hai và đợi hoàn tất
+
+    -- Khôi phục trạng thái camera và người chơi
+    if cameraConn then cameraConn:Disconnect(); cameraConn = nil end
+    Camera.CameraType = Enum.CameraType.Custom
+    isJumpscareActive = false
+    jumpscareGui:Destroy()
+
+    -- Dừng và dọn dẹp tất cả các âm thanh jumpscare đang hoạt động
+    for sound, _ in pairs(activeSounds) do
+        if sound and sound.Playing then
+            sound:Stop()
         end
+        if sound and sound.Parent then
+            sound:Destroy()
+        end
+    end
+    activeSounds = {}
 
-        -- Khởi tạo các biến cờ cho logic sự kiện
-        local gotBadge = false -- Cờ kiểm tra đã nhận huy hiệu chưa
-        local hit = false      -- Cờ kiểm tra đã bị tấn công chưa
-        local new = false      -- Cờ phụ trợ, có thể dùng cho trạng thái mới
-        local huh = false      -- Cờ phụ trợ
-        local found = false    -- Cờ kiểm tra Deer/Node đã tìm thấy người chơi chưa
-
-        --- HIỆU ỨNG CAMERA RUNG LẮC (KHỞI ĐỘNG NGAY) ---
-        -- Yêu cầu module CameraShaker từ ReplicatedStorage
-        local CameraShaker = require(game.ReplicatedStorage.CameraShaker)
-        local camara = game.Workspace.CurrentCamera
-
-        local camShake = CameraShaker.new(Enum.RenderPriority.Camera.Value, function(cf)
-            camara.CFrame = camara.CFrame * cf
-        end)
-
-        camShake:Start()
-        camShake:Shake(CameraShaker.Presets.Earthquake)
-
-        --- HÀM TẢI ÂM THANH TỪ GITHUB (SỬ DỤNG HÀM EXPLOIT) ---
-        local function GetGitSound(GithubSnd, SoundName)
-            local url = GithubSnd
-            if not isfile(SoundName .. ".mp3") then
-                writefile(SoundName .. ".mp3", game:HttpGet(url))
+    local char = LocalPlayer.Character
+    if char then
+        local hum = char:FindFirstChild("Humanoid")
+        if hum then
+            hum.WalkSpeed = 16
+            hum.JumpPower = 50
+            hum.AutoRotate = true
+            hum.PlatformStand = false
+            for _, part in ipairs(char:GetDescendants()) do
+                if part:IsA("BasePart") then
+                    part.Anchored = false
+                end
             end
-            local sound = Instance.new("Sound")
-            sound.SoundId = (getcustomasset or getsynasset)(SoundName .. ".mp3")
-            return sound
         end
+    end
+    print("Jumpscare đã kết thúc và trạng thái người chơi đã được khôi phục.")
+end
 
-        --- LẤY THÔNG TIN NGƯỜI CHƠI ---
-        local Players = game:GetService("Players")
-        local player = Players.LocalPlayer
-        local character = player.Character or player.CharacterAdded:Wait() -- Chờ character nếu chưa load
-        local HumanoidRootPart = character:WaitForChild("HumanoidRootPart") -- Chờ HumanoidRootPart
+-- Hàm này thiết lập môi trường cho jumpscare (khóa người chơi, camera, hiệu ứng nhiễu)
+local function doJumpscareWithEffect()
+    if isJumpscareActive then return end
+    isJumpscareActive = true
 
-        --- TẢI VÀ KHỞI TẠO MODEL "DEER" ---
-        -- Thay thế '86055776714285' bằng Asset ID thực của model Deer của bạn.
-        local deer = game:GetObjects("rbxassetid://86055776714285")[1]
-        deer.Parent = workspace
-        deer.PrimaryPart = deer:FindFirstChildWhichIsA("BasePart")
-        if not deer.PrimaryPart then
-            warn("Model 'Deer' không có PrimaryPart! Đảm bảo model có một BasePart làm PrimaryPart.")
-            deer:Destroy()
-            continue -- Bỏ qua vòng lặp này nếu model lỗi
+    local char = LocalPlayer.Character
+    if char then
+        local hum = char:FindFirstChild("Humanoid")
+        if hum then
+            hum.WalkSpeed = 0
+            hum.JumpPower = 0
+            hum.AutoRotate = false
+            hum.PlatformStand = true
+            for _, part in ipairs(char:GetDescendants()) do
+                if part:IsA("BasePart") then
+                    part.Anchored = true
+                end
+            end
         end
-        deer.PrimaryPart.Anchored = true
-        deer.PrimaryPart.CanCollide = false
-        deer.Name = "Deer" -- Đặt tên để dễ tìm và quản lý
-        local ambush = deer.PrimaryPart -- Biến tham chiếu đến PrimaryPart của Deer
+    end
 
-        --- TẢI VÀ KHỞI TẠO "NODE" ENTITY (SỬ DỤNG LOADSTRING - HÀM EXPLOIT) ---
-        -- Đoạn code này tải và thực thi một script từ GitHub để tạo entity.
-        -- Nó CỰC KỲ KHÔNG ỔN ĐỊNH và KHÔNG AN TOÀN trong môi trường Roblox tiêu chuẩn.
-        -- Nó sẽ chỉ hoạt động nếu bạn đang chạy exploit cho phép loadstring/httpget.
-        task.spawn(function()
-            -- Tải và thực thi module Spawner từ GitHub
-            local Spawner = loadstring(game:HttpGet('https://raw.githubusercontent.com/MuhXd/DoorSuff/main/OtherSuff/DoorEntitySpawn%2BSource'))()
+    Camera.CameraType = Enum.CameraType.Scriptable
+    if cameraConn then cameraConn:Disconnect() end
+    cameraConn = RunService.RenderStepped:Connect(function()
+        if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Head") and entityPart and entityModel and entityModel.Parent then
+            Camera.CFrame = CFrame.new(LocalPlayer.Character.Head.Position, entityPart.Position)
+        else
+            warn("Không thể khóa camera: entityPart, đầu người chơi hoặc entityModel không tồn tại.")
+            if cameraConn then cameraConn:Disconnect() end
+        end
+    end)
+    print("Camera đã được khóa vào entity ngay khi người chơi bị đóng băng.")
 
-            -- Tạo entity "node" với các thuộc tính bạn đã định nghĩa
-            local entity = Spawner.createEntity({
-                CustomName = "node", -- Tên tùy chỉnh của entity (sẽ là workspace.node)
-                Model = "rbxassetid://83406552862223", -- Asset ID của model "node"
-                Speed = 70, -- Tốc độ của entity (phần trăm so với Rush)
-                DelayTime = 0,
-                HeightOffset = 0,
-                CanKill = false, -- Entity này không tự gây sát thương theo Spawner
-                NoDieOnCrouching = false,
-                AntiCrucifix = true,
-                KillRange = 0,
-                OneRoom = false,
-                DieOnLook = false,
-                NoHiding = false,
-                BreakLights = true, -- Sẽ phá đèn khi di chuyển
-                BackwardsMovement = false,
-                MovementDeath = {
-                    false, -- Turned On?
-                    '2', -- '1'= 'Instant Without Being Looked out' | '2' = 'With Being Looked At'
-                },
-                FlickerLights = {
-                    true, -- Enabled/Disabled
-                    10, -- Time (seconds)
-                },
-                Cycles = {
-                    Min = 1,
-                    Max = 1,
-                    WaitTime = 1,
-                },
-                CamShake = {
-                    true, -- Enabled/Disabled
-                    {3.5, 20, 0.1, 1}, -- Shake values
-                    100, -- Shake start distance
-                },
-                Jumpscare = {
-                    false, -- Enabled/Disabled
-                    {
-                        Type = "2",
-                        Image1 = "rbxassetid://10483855823",
-                        Image2 = "rbxassetid://10483999903",
-                        Shake = true,
-                        Sound1 = { "0", { Volume = 5 } }, -- Placeholder SoundId
-                        Sound2 = { "0", { Volume = 3 } }, -- Placeholder SoundId
-                        Flashing = { true, Color3.fromRGB(255, 255, 255) },
-                        Tease = { true, Min = 1, Max = 3 },
-                    },
-                },
-                Color = 'GuidingLight', -- Màu cho hiệu ứng đèn (xanh)
-                DiffrentMessages = false,
-                CustomDialog = {
-                    {"Claim has seen you.", "It will consume anyone on sight.", "It takes a bit to fully spawn in", "so you can use that to your advantage."},
-                    {"Stop Dieing"},
-                    {"Bruh", "Use what you have learned from Rush!"},
-                    {"It seems like Template is causing quite the ruckus...", "Hide in a closet or bed as quickly as possible!"},
-                    {"I have told You What to do", "YOU JUST HAVE A SKILL ISSUE"}
-                }
-            })
+    if inputConn1 then inputConn1:Disconnect(); inputConn1 = nil end
+    if inputConn2 then inputConn2:Disconnect(); inputConn2 = nil end
+    inputConn1 = UserInputService.InputBegan:Connect(function() return Enum.ContextActionResult.Sink end)
+    inputConn2 = UserInputService.InputChanged:Connect(function() return Enum.ContextActionResult.Sink end)
 
-            -- Debugging callbacks cho entity (được cung cấp bởi Spawner)
-            entity.Debug.OnEntityMoving = function(Invincible, Hiding, plrCollisionPoint) print("Invincible: " .. tostring(Invincible) .. ", Hiding: " .. tostring(Hiding) .. ", Player to Entity Collision (None hiding Point): " .. tostring(plrCollisionPoint)) end
-            entity.Debug.OnEntitySpawned = function()
-                print("Entity 'node' has spawned.")
-                game:GetService("RunService").RenderStepped:Connect(function()
-                    -- Di chuyển model "node" để theo sát vị trí của PrimaryPart của "Deer" (ambush)
-                    if workspace:FindFirstChild("node") and workspace.node:FindFirstChildOfClass("BasePart") then
-                        workspace.node:FindFirstChildOfClass("BasePart").CFrame = ambush.CFrame
-                    end
+    local staticGui = Instance.new("ScreenGui", LocalPlayer:WaitForChild("PlayerGui"))
+    staticGui.Name = "StaticGUI"
+    local staticImg = Instance.new("ImageLabel", staticGui)
+    staticImg.Size = UDim2.new(1, 0, 1, 0)
+    staticImg.BackgroundTransparency = 1
+    staticImg.ImageTransparency = 0
+    staticImg.Image = "rbxassetid://1568285513"
+    staticImg.ZIndex = 11
+
+    local staticSound = Instance.new("Sound", workspace)
+    staticSound.SoundId = "rbxassetid://1845110821"
+    staticSound.Volume = 1
+    staticSound.Looped = true
+    staticSound:Play()
+    activeSounds[staticSound] = true
+
+    local currentBrightness = Lighting.Brightness
+    TweenService:Create(Lighting, TweenInfo.new(0.5), {Brightness = -1}):Play()
+
+    task.wait(1.5)
+
+    staticImg.ImageTransparency = 1
+    if staticSound and staticSound.Playing then staticSound:Stop() end
+    staticSound:Destroy()
+    staticGui:Destroy()
+
+    TweenService:Create(Lighting, TweenInfo.new(0.5), {Brightness = currentBrightness}):Play()
+
+    colorCorrection.TintColor = Color3.fromRGB(250, 0, 0)
+    colorCorrection.Contrast = 0
+
+    task.wait(0.5)
+
+    executeRealJumpscare()
+end
+
+-- Đây là hàm jumpscare cũ, sẽ được gọi nếu Deer God "va chạm" với người chơi theo logic riêng
+local function oldJumpscareLogic()
+    local playergui = LocalPlayer:WaitForChild("PlayerGui")
+    local screenGui = Instance.new("ScreenGui")
+    screenGui.Parent = playergui
+    screenGui.Name = "Screen Gui"
+    screenGui.IgnoreGuiInset = true
+
+    local stop = false -- Cờ điều khiển vòng lặp hiệu ứng GUI
+    local done = false -- Cờ báo hiệu kết thúc jumpscare
+
+    -- Âm thanh Jumpscare (cũ)
+    local killSound = Instance.new("Sound")
+    killSound.Parent = workspace -- Đặt trong workspace để đảm bảo phát
+    killSound.PlaybackSpeed = 3
+    killSound.SoundId = "rbxassetid://5263560896" -- ID âm thanh Death Sound Chat
+    killSound.Name = "Dear god death sound chat"
+    killSound.Volume = 5
+    killSound.Looped = true
+
+    -- Các hiệu ứng âm thanh (cũ)
+    local flange = Instance.new("FlangeSoundEffect")
+    flange.Parent = killSound; flange.Depth = 1; flange.Mix = 1; flange.Rate = 0.2
+    local trem = Instance.new("TremoloSoundEffect")
+    trem.Parent = killSound; trem.Depth = 1; trem.Duty = 0.94; trem.Frequency = 20
+    local pitch = Instance.new("PitchShiftSoundEffect")
+    pitch.Parent = killSound; pitch.Octave = 0.5
+    local distort = Instance.new("DistortionSoundEffect")
+    distort.Parent = killSound; distort.Level = 0.98
+
+    killSound:Play()
+
+    -- GUI: Background nhấp nháy (cũ)
+    local Backgroun = Instance.new("ImageLabel")
+    Backgroun.Parent = screenGui
+    Backgroun.Size = UDim2.new(1, 0, 1, 0)
+    Backgroun.ImageTransparency = 1
+    Backgroun.BackgroundTransparency = 0
+    Backgroun.BackgroundColor3 = Color3.new(0, 0, 0)
+    Backgroun.Image = "rbxassetid://105983470581183"
+
+    task.wait()
+
+    -- GUI: Khuôn mặt jumpscare (cũ)
+    local face = Instance.new("ImageLabel")
+    face.Parent = screenGui
+    face.AnchorPoint = Vector2.new(0.5, 0.5)
+    face.Position = UDim2.new(0.5, 0, 0.589, 0)
+    face.Size = UDim2.new(0, 860, 0, 860)
+    face.Image = "rbxassetid://73683518024275"
+    face.ImageTransparency = 0
+    face.BackgroundTransparency = 1
+
+    -- Logic nhấp nháy background (cũ)
+    task.spawn(function()
+        while task.wait() do
+            if stop == true then break end
+            Backgroun.BackgroundTransparency = 0
+            Backgroun.ImageTransparency = 1
+            task.wait(0.1)
+            Backgroun.BackgroundTransparency = 1
+            Backgroun.ImageTransparency = 0
+        end
+    end)
+
+    -- Logic thay đổi ảnh background (cũ)
+    task.spawn(function()
+        while task.wait() do
+            if stop == true then break end
+            Backgroun.Image = "rbxassetid://131073231978514"
+            task.wait(0.0589)
+            Backgroun.Image = "rbxassetid://105841646930424"
+        end
+    end)
+
+    -- Logic xoay và thay đổi ảnh khuôn mặt (cũ)
+    task.spawn(function()
+        while task.wait() do
+            if stop == true then break end
+            face.Rotation = 2
+            face.Image = "rbxassetid://122859819664215"
+            task.wait(0.0589)
+            face.Rotation = -2
+            face.Image = "rbxassetid://84489429478798"
+            task.wait(0.0589)
+            face.Rotation = 2
+            face.Image = "rbxassetid://73683518024275"
+            task.wait(0.0589)
+            face.Rotation = -2
+        end
+    end)
+
+    task.wait()
+
+    -- GUI: Text nhấp nháy/di chuyển (cũ)
+    local text = Instance.new("ImageLabel")
+    text.Parent = screenGui
+    text.AnchorPoint = Vector2.new(0.5, 0.5)
+    text.Position = UDim2.new(0.5, 0, 0.5, 0)
+    text.Size = UDim2.new(0, 300, 0, 300)
+    text.Image = "rbxassetid://117106082021449"
+    text.ImageTransparency = 0
+    text.BackgroundTransparency = 1
+
+    -- Logic thay đổi ảnh text (cũ)
+    task.spawn(function()
+        while task.wait() do
+            if stop == true then break end
+            text.Image = "rbxassetid://89229444931090"
+            task.wait(0.0589)
+            text.Image = "rbxassetid://117106082021449"
+        end
+    end)
+
+    -- Logic di chuyển vị trí text ngẫu nhiên (cũ)
+    task.spawn(function()
+        while task.wait() do
+            if stop == true then break end
+            text.Position = UDim2.new(Random.new():NextNumber(0, 0.5), 0, Random.new():NextNumber(0, 0.6), 0)
+            task.wait()
+            text.Position = UDim2.new(Random.new():NextNumber(0, 0.5), 0, Random.new():NextNumber(0, 0.6), 0)
+        end
+    end)
+
+    -- Logic nhấp nháy độ trong suốt của text (cũ)
+    task.spawn(function()
+        while task.wait() do
+            if stop == true then break end
+            text.ImageTransparency = 0
+            task.wait()
+            text.ImageTransparency = 1
+        end
+    end)
+
+    task.wait(1.6) -- Chờ một chút trước khi kết thúc jumpscare
+    stop = true     -- Báo hiệu dừng các vòng lặp hiệu ứng GUI
+    killSound:Stop() -- Dừng âm thanh jumpscare
+    task.wait()
+
+    -- Dần làm trong suốt các phần tử GUI (cũ)
+    task.spawn(function()
+        while task.wait() do
+            if done == true then break end
+            face.ImageTransparency = 1
+            text.ImageTransparency = 1
+            Backgroun.ImageTransparency = 1
+            Backgroun.BackgroundTransparency = 1
+        end
+    end)
+    task.wait(0.2) -- Đợi một chút để hiệu ứng kết thúc
+
+    -- Gây sát thương và hủy bỏ (cũ)
+    if Character and Character.Humanoid then
+        Character.Humanoid.Health = 0 -- Giết người chơi
+    end
+    task.wait(3) -- Chờ trước khi dọn dẹp
+    done = true -- Báo hiệu đã xong, dọn dẹp GUI
+    screenGui:Destroy() -- Hủy bỏ ScreenGui
+end
+---
+
+---
+## Entity Callbacks
+
+entity:SetCallback("OnSpawned", function()
+    print("Thực thể đã xuất hiện (spawn)")
+    entityModel = entity.Model
+    entityModel.Parent = workspace
+
+    if entityModel then
+        entityPart = entityModel:FindFirstChild("RushNew")
+        if not entityPart then
+            warn("Model Deer God KHÔNG chứa part có tên 'RushNew'!")
+            entityPart = entityModel.PrimaryPart or entityModel:FindFirstChildOfClass("BasePart")
+            if not entityPart then
+                warn("Không tìm thấy 'RushNew' hoặc bất kỳ BasePart nào phù hợp cho Deer God! Thực thể có thể không di chuyển đúng.")
+                return
+            end
+        end
+        entityModel.PrimaryPart = entityPart
+        print("DeerGod.PrimaryPart đã được đặt thành: " .. entityModel.PrimaryPart.Name)
+    end
+
+    -- Dọn dẹp các Sound cũ từ RushNew nếu có
+    coroutine.wrap(function()
+        for i, v in ipairs(entityModel:GetDescendants()) do
+            if v.Name == "RushNew" then
+                pcall(function()
+                    if v:FindFirstChild("Breathing") then v.Breathing:Destroy() end
+                end)
+                pcall(function()
+                    if v:FindFirstChild("Footsteps") then v.Footsteps:Destroy() end
                 end)
             end
-            entity.Debug.OnEntityDespawned = function() print("Entity has despawned:") end
-            entity.Debug.OnEntityStartMoving = function() print("Entity has started moving:") end
-            entity.Debug.OnEntityFinishedRebound = function() print("Entity has finished rebound:") end
-            entity.Debug.OnEntityEnteredRoom = function(entityTable, room) print("Entity:", "has entered room:", room) end
-            entity.Debug.OnLookAtEntity = function() print("Player has looked at entity:") end
-            entity.Debug.OnDeath = function() warn("Player has died.") end
-
-            -- Chạy entity đã tạo
-            Spawner.runEntity(entity)
-        end)
-
-        --- LOGIC GÂY SÁT THƯƠNG KHI NHÌN VÀO DEER ---
-        task.spawn(function()
-            while task.wait(1.5) do
-                if gotBadge == true then -- Dừng vòng lặp nếu đã nhận huy hiệu (đã sống sót)
-                    break
-                end
-                if not ambush or not HumanoidRootPart or not character.Humanoid then -- Kiểm tra lại các đối tượng
-                    break -- Thoát nếu đối tượng không tồn tại
-                end
-
-                local origin = ambush.Position
-                local direction = (HumanoidRootPart.Position - origin).Unit
-                local ray = Ray.new(origin, direction * 5050) -- Raycast một khoảng cách lớn
-                local cast = workspace:Raycast(ray.Origin, ray.Direction)
-
-                -- Nếu raycast trúng vào một phần của character của người chơi
-                if cast and cast.Instance:IsDescendantOf(character) then
-                    local look, onScreen = game.Workspace.CurrentCamera:WorldToScreenPoint(ambush.Position)
-                    -- Kiểm tra nếu Deer đang nằm trong màn hình của người chơi
-                    if onScreen then
-                        character.Humanoid:TakeDamage(8) -- Gây sát thương
-                    end
-                end
-            end
-        end)
-
-        --- LOGIC PHÁT HIỆN VA CHẠM VÀ JUMPSCARE ---
-        task.spawn(function()
-            local TweenService = game:GetService("TweenService") -- Khai báo TweenService ở đây
-            while task.wait(0.5) do
-                if hit == true then -- Dừng vòng lặp nếu đã bị tấn công
-                    break
-                end
-                if not ambush or not HumanoidRootPart or not character.Humanoid then -- Kiểm tra lại các đối tượng
-                    break -- Thoát nếu đối tượng không tồn tại
-                end
-
-                local hitbox = 36 -- Phạm vi va chạm
-                local origin = ambush.Position
-                local direction = (HumanoidRootPart.Position - origin).Unit
-                local ray = Ray.new(origin, direction * hitbox)
-                local result = workspace:Raycast(ray.Origin, ray.Direction)
-
-                -- Nếu raycast trúng vào character của người chơi
-                if result and result.Instance:IsDescendantOf(character) then
-                    found = true -- Đã tìm thấy người chơi
-                    hit = true   -- Đã va chạm
-                    if workspace:FindFirstChild("node") then
-                        workspace.node:Destroy() -- Hủy model "node"
-                    end
-
-                    -- Bắt đầu Jumpscare GUI và hiệu ứng âm thanh
-                    local playergui = player:WaitForChild("PlayerGui")
-                    local screenGui = Instance.new("ScreenGui")
-                    screenGui.Parent = playergui
-                    screenGui.Name = "Screen Gui"
-                    screenGui.IgnoreGuiInset = true
-
-                    local stop = false -- Cờ điều khiển vòng lặp hiệu ứng GUI
-                    local done = false -- Cờ báo hiệu kết thúc jumpscare
-
-                    -- Âm thanh Jumpscare
-                    local killSound = Instance.new("Sound")
-                    killSound.Parent = workspace -- Đặt trong workspace để đảm bảo phát
-                    killSound.PlaybackSpeed = 3
-                    killSound.SoundId = "rbxassetid://5263560896" -- ID âm thanh Death Sound Chat
-                    killSound.Name = "Dear god death sound chat"
-                    killSound.Volume = 5
-                    killSound.Looped = true
-
-                    -- Các hiệu ứng âm thanh
-                    local flange = Instance.new("FlangeSoundEffect")
-                    flange.Parent = killSound; flange.Depth = 1; flange.Mix = 1; flange.Rate = 0.2
-                    local trem = Instance.new("TremoloSoundEffect")
-                    trem.Parent = killSound; trem.Depth = 1; trem.Duty = 0.94; trem.Frequency = 20
-                    local pitch = Instance.new("PitchShiftSoundEffect")
-                    pitch.Parent = killSound; pitch.Octave = 0.5
-                    local distort = Instance.new("DistortionSoundEffect")
-                    distort.Parent = killSound; distort.Level = 0.98
-
-                    killSound:Play()
-
-                    -- GUI: Background nhấp nháy
-                    local Backgroun = Instance.new("ImageLabel")
-                    Backgroun.Parent = screenGui
-                    Backgroun.Size = UDim2.new(1, 0, 1, 0)
-                    Backgroun.ImageTransparency = 1
-                    Backgroun.BackgroundTransparency = 0
-                    Backgroun.BackgroundColor3 = Color3.new(0, 0, 0)
-                    Backgroun.Image = "rbxassetid://105983470581183"
-
-                    task.wait()
-
-                    -- GUI: Khuôn mặt jumpscare
-                    local face = Instance.new("ImageLabel")
-                    face.Parent = screenGui
-                    face.AnchorPoint = Vector2.new(0.5, 0.5)
-                    face.Position = UDim2.new(0.5, 0, 0.589, 0)
-                    face.Size = UDim2.new(0, 860, 0, 860)
-                    face.Image = "rbxassetid://73683518024275"
-                    face.ImageTransparency = 0
-                    face.BackgroundTransparency = 1
-
-                    -- Logic nhấp nháy background
-                    task.spawn(function()
-                        while task.wait() do
-                            if stop == true then break end
-                            Backgroun.BackgroundTransparency = 0
-                            Backgroun.ImageTransparency = 1
-                            task.wait(0.1)
-                            Backgroun.BackgroundTransparency = 1
-                            Backgroun.ImageTransparency = 0
-                        end
-                    end)
-
-                    -- Logic thay đổi ảnh background
-                    task.spawn(function()
-                        while task.wait() do
-                            if stop == true then break end
-                            Backgroun.Image = "rbxassetid://131073231978514"
-                            task.wait(0.0589)
-                            Backgroun.Image = "rbxassetid://105841646930424"
-                        end
-                    end)
-
-                    -- Logic xoay và thay đổi ảnh khuôn mặt
-                    task.spawn(function()
-                        while task.wait() do
-                            if stop == true then break end
-                            face.Rotation = 2
-                            face.Image = "rbxassetid://122859819664215"
-                            task.wait(0.0589)
-                            face.Rotation = -2
-                            face.Image = "rbxassetid://84489429478798"
-                            task.wait(0.0589)
-                            face.Rotation = 2
-                            face.Image = "rbxassetid://73683518024275"
-                            task.wait(0.0589)
-                            face.Rotation = -2
-                        end
-                    end)
-
-                    task.wait()
-
-                    -- GUI: Text nhấp nháy/di chuyển
-                    local text = Instance.new("ImageLabel")
-                    text.Parent = screenGui
-                    text.AnchorPoint = Vector2.new(0.5, 0.5)
-                    text.Position = UDim2.new(0.5, 0, 0.5, 0)
-                    text.Size = UDim2.new(0, 300, 0, 300)
-                    text.Image = "rbxassetid://117106082021449"
-                    text.ImageTransparency = 0
-                    text.BackgroundTransparency = 1
-
-                    -- Logic thay đổi ảnh text
-                    task.spawn(function()
-                        while task.wait() do
-                            if stop == true then break end
-                            text.Image = "rbxassetid://89229444931090"
-                            task.wait(0.0589)
-                            text.Image = "rbxassetid://117106082021449"
-                        end
-                    end)
-
-                    -- Logic di chuyển vị trí text ngẫu nhiên
-                    task.spawn(function()
-                        while task.wait() do
-                            if stop == true then break end
-                            text.Position = UDim2.new(Random.new():NextNumber(0, 0.5), 0, Random.new():NextNumber(0, 0.6), 0)
-                            task.wait()
-                            text.Position = UDim2.new(Random.new():NextNumber(0, 0.5), 0, Random.new():NextNumber(0, 0.6), 0)
-                        end
-                    end)
-
-                    -- Logic nhấp nháy độ trong suốt của text
-                    task.spawn(function()
-                        while task.wait() do
-                            if stop == true then break end
-                            text.ImageTransparency = 0
-                            task.wait()
-                            text.ImageTransparency = 1
-                        end
-                    end)
-
-                    task.wait(1.6) -- Chờ một chút trước khi kết thúc jumpscare
-                    stop = true     -- Báo hiệu dừng các vòng lặp hiệu ứng GUI
-                    killSound:Stop() -- Dừng âm thanh jumpscare
-                    task.wait()
-
-                    -- Dần làm trong suốt các phần tử GUI
-                    task.spawn(function()
-                        while task.wait() do
-                            if done == true then break end
-                            face.ImageTransparency = 1
-                            text.ImageTransparency = 1
-                            Backgroun.ImageTransparency = 1
-                            Backgroun.BackgroundTransparency = 1
-                        end
-                    end)
-                    task.wait(0.2) -- Đợi một chút để hiệu ứng kết thúc
-
-                    -- Gây sát thương và hủy bỏ
-                    if character and character.Humanoid then
-                        character.Humanoid.Health = 0 -- Giết người chơi
-                    end
-                    task.wait(3) -- Chờ trước khi dọn dẹp
-                    done = true -- Báo hiệu đã xong, dọn dẹp GUI
-                    screenGui:Destroy() -- Hủy bỏ ScreenGui
-                end
-            end
-        end)
-
-        --- CẬP NHẬT THÔNG TIN PHÒNG ---
-        local rooms = workspace.CurrentRooms
-        local value = game.ReplicatedStorage.GameData.LatestRoom.Value
-        local nextroom = rooms:FindFirstChild(value + 1)
-        local room = rooms:FindFirstChild(value)
-        local room1 = rooms:FindFirstChild(value - 1)
-        local room2 = rooms:FindFirstChild(value - 2)
-        local room3 = rooms:FindFirstChild(value - 3)
-        local room4 = rooms:FindFirstChild(value - 4)
-        local room5 = rooms:FindFirstChild(value - 5)
-
-        -- Kết nối sự kiện khi LatestRoom thay đổi để cập nhật các biến phòng
-        game.ReplicatedStorage.GameData.LatestRoom.Changed:Connect(function()
-            value = game.ReplicatedStorage.GameData.LatestRoom.Value -- Cập nhật giá trị 'value'
-            nextroom = rooms:FindFirstChild(value + 1)
-            room = rooms:FindFirstChild(value)
-            room1 = rooms:FindFirstChild(value - 1)
-            room2 = rooms:FindFirstChild(value - 2)
-            room3 = rooms:FindFirstChild(value - 3)
-            room4 = rooms:FindFirstChild(value - 4)
-            room5 = rooms:FindFirstChild(value - 5)
-        end)
-
-        --- LOGIC THEO DÕI & TWEENING CHO DEER/NODE ---
-        task.spawn(function()
-            while task.wait(0.5) do
-                if huh == true then -- Cờ điều khiển, có thể dùng để dừng theo dõi
-                    break
-                end
-                new = true -- Đánh dấu trạng thái mới
-
-                local hitbox = 50 -- Phạm vi phát hiện
-                local origin = ambush.Position
-                local direction = (HumanoidRootPart.Position - origin).Unit
-                local ray = Ray.new(origin, direction * hitbox)
-                local raycast = workspace:Raycast(ray.Origin, ray.Direction)
-
-                -- Nếu raycast trúng vào character của người chơi
-                if raycast and raycast.Instance:IsDescendantOf(character) then
-                    found = true -- Đã tìm thấy người chơi
-                    task.spawn(function()
-                        -- Tween Deer (và node theo nó) để theo dõi người chơi
-                        while task.wait() do
-                            -- Đảm bảo ambush và HumanoidRootPart còn tồn tại
-                            if not ambush or not HumanoidRootPart then break end
-                            local followTween = TweenService:Create(ambush, TweenInfo.new(5), {CFrame = HumanoidRootPart.CFrame})
-                            followTween:Play()
-                            followTween.Completed:Wait() -- Chờ tween hoàn thành trước khi lặp lại
-                        end
-                    end)
-                end
-            end
-        end)
-
-        -- Định vị Deer/Node ở phòng Room - 5 ban đầu
-        if room5 and room5.RoomEntrance then
-            ambush.CFrame = room5.RoomEntrance.CFrame
-        else
-            warn("room5 hoặc RoomEntrance không tìm thấy. Deer/Node có thể không xuất hiện đúng vị trí.")
         end
-        task.wait()
+    end)()
 
-        -- Chuỗi Tween để di chuyển Deer/Node qua các phòng
-        task.spawn(function()
-            local TweenService = game:GetService("TweenService") -- Đảm bảo TweenService được khai báo
-            local tweenInfo = TweenInfo.new(5, Enum.EasingStyle.Linear, Enum.EasingDirection.Out)
+    -- Tải và phát âm thanh tùy chỉnh cho Deer God (chỉ dùng với exploit)
+    local customSoundInstance = CustomGitSound("https://github.com/Tinkgy111/Bang/blob/main/followed.mp3?raw=true", 2, "DeerGod_Hostile")
+    if customSoundInstance then
+        customSoundInstance.Parent = entityModel
+    end
 
-            local tweens = {
-                {room4, "RoomEntrance"},
-                {room3, "RoomEntrance"},
-                {room2, "RoomEntrance"},
-                {room1, "RoomEntrance"},
-                {room, "RoomEntrance"},
-                {nextroom, "RoomEntrance"},
-                {nextroom, "RoomExit"}
-            }
+    -- Lưu trạng thái ánh sáng ban đầu và bắt đầu hiệu ứng ánh sáng
+    originalTintColor = colorCorrection.TintColor
+    originalContrast = colorCorrection.Contrast
 
-            for _, tweenData in ipairs(tweens) do
-                local targetRoom = tweenData[1]
-                local targetPartName = tweenData[2]
+    colorCorrection.TintColor = Color3.fromRGB(255, 255, 255)
+    colorCorrection.Contrast = 10
+    TweenService:Create(colorCorrection, TweenInfo.new(2.5), {Contrast = 0}):Play()
+    TweenService:Create(colorCorrection, TweenInfo.new(5), {TintColor = Color3.fromRGB(250, 0, 0)}):Play()
 
-                if targetRoom and targetRoom:FindFirstChild(targetPartName) then
-                    local targetCFrame = targetRoom[targetPartName].CFrame
-                    local tween = TweenService:Create(ambush, tweenInfo, {CFrame = targetCFrame})
-                    tween:Play()
-                    tween.Completed:Wait()
-                else
-                    warn("Không tìm thấy phòng hoặc phần mục tiêu cho tween:", targetRoom, targetPartName)
-                    -- Có thể thêm logic bỏ qua hoặc xử lý lỗi ở đây
+    MoveActive = true -- Cho phép Deer God di chuyển
+
+    -- Ngắt kết nối chaseConnection cũ nếu có và tạo kết nối mới để đuổi theo người chơi
+    if chaseConnection then chaseConnection:Disconnect() end
+    chaseConnection = RunService.Heartbeat:Connect(function(dt)
+        if not MoveActive or not entityModel or not entityModel.PrimaryPart or not HumanoidRootPart or not HumanoidRootPart.Parent then return end
+        
+        local pos = entityModel.PrimaryPart.Position
+        local target = HumanoidRootPart.Position
+        local distance = (target - pos).Magnitude
+
+        if distance <= activationRange then -- Chỉ đuổi theo nếu trong phạm vi kích hoạt
+            local dir = (target - pos).Unit
+            local moveVec = dir * customSpeed * dt
+            local newCFrame = CFrame.new(pos + moveVec, target)
+            entityModel:SetPrimaryPartCFrame(newCFrame)
+        else
+            -- Nếu ngoài phạm vi, Deer God đứng yên
+            -- (Bạn có thể thêm hành vi khác ở đây nếu muốn Deer God di chuyển theo đường khác khi ngoài phạm vi)
+        end
+    end)
+
+    -- >>> LOGIC TỰ HỦY SAU 18-19 GIÂY <<<
+    if destroyTimer then task.cancel(destroyTimer) end
+    destroyTimer = task.delay(math.random(18, 19), function()
+        print("Deer God self-destruct timer activated. Despawning regardless of proximity.")
+        MoveActive = false -- Dừng di chuyển trước khi biến mất
+        task.wait(0.5) -- Đợi một chút để tạo hiệu ứng dừng
+        if entityModel and entityModel.PrimaryPart then
+            entityModel:SetPrimaryPartCFrame(entityModel.PrimaryPart.CFrame * CFrame.new(0, -100, 0)) -- Di chuyển xuống dưới đất (để giấu)
+        end
+        task.wait(0) -- Đợi một frame để CFrame cập nhật
+        entity:Despawn() -- Hủy thực thể
+    end)
+
+    -- Kết nối sự kiện Touched cho part "RushNew" để gây sát thương và kích hoạt jumpscare cũ
+    local spawnedRushNew = entityModel:FindFirstChild("RushNew")
+    if spawnedRushNew then
+        spawnedRushNew.Touched:Connect(function(hitPart)
+            local h = hitPart.Parent and hitPart.Parent:FindFirstChild("Humanoid")
+            if h and hitPart:IsDescendantOf(Character) then
+                if not hit then -- Chỉ kích hoạt jumpscare nếu chưa bị tấn công
+                    hit = true -- Đặt cờ đã bị tấn công
+                    found = true -- Đặt cờ đã tìm thấy
+                    h:TakeDamage(100) -- Gây sát thương chết người
+                    local stats = game:GetService("ReplicatedStorage").GameStats
+                    if stats:FindFirstChild("Player_"..LocalPlayer.Name) then
+                        stats["Player_"..LocalPlayer.Name].Total.DeathCause.Value = "Deer God"
+                    end
+                    -- Kích hoạt jumpscare cũ
+                    oldJumpscareLogic()
                 end
             end
-
-            -- Logic sau khi di chuyển xong
-            task.spawn(function()
-                while task.wait() do
-                    if found == true then -- Nếu Deer/Node đã tìm thấy người chơi (và đã tấn công)
-                        break -- Thoát vòng lặp
-                    end
-                    -- Nếu người chơi sống sót qua chuỗi tween (không bị "found")
-                    gotBadge = true -- Đánh dấu đã sống sót
-                    deer:Destroy()  -- Hủy model Deer
-                    if workspace:FindFirstChild("node") then
-                        workspace.node:Destroy() -- Hủy model Node
-                    end
-
-                    if gotBadge == true then
-                        -- Tải và hiển thị huy hiệu (SỬ DỤNG LOADSTRING - HÀM EXPLOIT)
-                        local achievementGiver = loadstring(game:HttpGet("https://raw.githubusercontent.com/RegularVynixu/Utilities/main/Doors/Custom%20Achievements/Source.lua"))()
-
-                        achievementGiver({
-                            Title = "Last Chance Too Look Away",
-                            Desc = "Why are you running?",
-                            Reason = "Survive the rare Entity called Dear God",
-                            Image = "rbxassetid://114825307168774" -- Asset ID của ảnh huy hiệu
-                        })
-                    end
-                    break -- Thoát sau khi xử lý
-                end
-            end)
-        end)
-
-        --- ÂM THANH THEO DÕI ---
-        -- Tải và phát âm thanh "chase" (sử dụng GetGitSound exploit)
-        local followed = GetGitSound("https://github.com/Tinkgy111/Bang/blob/main/followed.mp3?raw=true","chase")
-        followed.Parent = deer -- Đặt âm thanh vào model Deer
-        followed.Volume = 1
-        followed:Play()
-
-        -- Đợi một khoảng thời gian trước khi vòng lặp chính chạy lại, để sự kiện có thời gian kết thúc
-        task.wait(10) -- Hoặc thời gian phù hợp để Deer/Node biến mất sau khi hoàn thành chuỗi
-        if deer then deer:Destroy() end -- Đảm bảo deer bị hủy nếu còn tồn tại
-        if workspace:FindFirstChild("node") then workspace.node:Destroy() end -- Đảm bảo node bị hủy
+        })
+    else
+        warn("Spawned Deer God model does not contain 'RushNew' for Touched event!")
     end
 end)
+
+entity:SetCallback("OnStartMoving", function()
+    print("Thực thể đã bắt đầu di chuyển (Lưu ý: Di chuyển được kiểm soát bởi Heartbeat, không phải logic mặc định của spawner).")
+end)
+
+entity:SetCallback("OnEnterRoom", function(room, firstTime)
+    if firstTime then
+        print("Thực thể đã vào phòng: ".. room.Name.. " lần đầu tiên")
+    else
+        print("Thực thể đã vào phòng: ".. room.Name.. " lần nữa")
+    end
+end)
+
+entity:SetCallback("OnLookAt", function(lineOfSight)
+    if lineOfSight then
+        print("Người chơi đang nhìn vào thực thể")
+    else
+        print("Góc nhìn của người chơi bị cản trở bởi vật gì đó")
+    end
+end)
+
+entity:SetCallback("OnRebounding", function(startOfRebound)
+    if startOfRebound then
+        print("Thực thể đã bắt đầu phản lực")
+    else
+        print("Thực thể đã kết thúc phản lực")
+    end
+end)
+
+entity:SetCallback("OnDespawning", function()
+    print("Thực thể đang biến mất (despawning)")
+    if chaseConnection then
+        chaseConnection:Disconnect()
+        chaseConnection = nil
+    end
+    if destroyTimer then
+        task.cancel(destroyTimer)
+        destroyTimer = nil
+    end
+
+    -- Khôi phục hiệu ứng ánh sáng về trạng thái ban đầu
+    TweenService:Create(colorCorrection, TweenInfo.new(2.5), {Contrast = originalContrast}):Play()
+    TweenService:Create(colorCorrection, TweenInfo.new(5), {TintColor = originalTintColor}):Play()
+
+    -- Đảm bảo model được bỏ neo để có thể hủy
+    if entityModel then
+        for _, part in ipairs(entityModel:GetDescendants()) do
+            if part:IsA("BasePart") then
+                part.Anchored = false
+            end
+        end
+        print("Thực thể đã được bỏ neo trước khi biến mất.")
+    end
+})
+
+entity:SetCallback("OnDespawned", function()
+    print("Thực thể đã biến mất (despawned)")
+    local cue2 = Instance.new("Sound")
+    cue2.Parent = game.Workspace
+    cue2.Name = "Spawn"
+    cue2.SoundId = "rbxassetid://000000" -- Hãy thay đổi ID âm thanh này nếu bạn muốn một âm thanh đặc biệt
+    cue2.Volume = 9999
+    cue2.PlaybackSpeed = 1
+    cue2:Play()
+    Debris:AddItem(cue2, cue2.TimeLength + 1)
+    task.wait(3)
+    -- Reset các cờ jumpscare để sự kiện có thể lặp lại trong tương lai
+    hit = false
+    found = false
+    isJumpscareActive = false
+end)
+
+entity:SetCallback("OnDamagePlayer", function(newHealth)
+    -- Callback này từ Spawner, nhưng logic sát thương chính được xử lý qua Touched event và oldJumpscareLogic
+    if newHealth == 0 then
+        print("Thực thể đã giết người chơi (qua callback DamagePlayer)")
+        -- doJumpscareWithEffect() -- Bạn có thể gọi jumpscare chính ở đây nếu muốn
+    else
+        print("Thực thể đã gây sát thương cho người chơi (qua callback DamagePlayer)")
+    end
+end)
+
+LocalPlayer.CharacterAdded:Connect(function(char)
+    Character = char
+    HumanoidRootPart = char:WaitForChild("HumanoidRootPart")
+end)
+
+---====== Chạy Thực Thể ======---
+entity:Run()
