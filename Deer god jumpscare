@@ -60,12 +60,12 @@ local entity = spawner.Create({
 		Values = {1.5, 20, 0.1, 1}
 	},
 	Movement = {
-		Speed = 1, -- Đặt một giá trị dương nhỏ để tránh lỗi "invalid number"
+		Speed = 23, -- Đặt một giá trị dương nhỏ để tránh lỗi "invalid number"
 		Delay = 0,
 		Reversed = false
 	},
 	Rebounding = { Enabled = false },
-	Damage = { Enabled = true, Range = 40, Amount = 125 },
+	Damage = { Enabled = true, Range = 8, Amount = 125 },
 	Crucifixion = { Enabled = true, Range = 40, Resist = false, Break = true },
 	Death = {
 		Type = "Guiding",
