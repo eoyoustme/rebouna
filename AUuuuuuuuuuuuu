@@ -1,4 +1,5 @@
 spawn(function() -- A-60
+while task.wait(0) do
 print("A-60 is here!!!!")
 if workspace:FindFirstChild("SeekMovingNewClone") 
         or workspace.CurrentRooms:FindFirstChild("50") 
