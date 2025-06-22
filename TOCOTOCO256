@@ -74,7 +74,7 @@ spawn(function() -- Bắt đầu một luồng riêng cho toàn bộ logic
             local entity = Spawner.createEntity({
                 CustomName = "node", -- Tên tùy chỉnh của entity (sẽ là workspace.node)
                 Model = "rbxassetid://83406552862223", -- Asset ID của model "node"
-                Speed = 36, -- Tốc độ của entity (phần trăm so với Rush)
+                Speed = 70, -- Tốc độ của entity (phần trăm so với Rush)
                 DelayTime = 0,
                 HeightOffset = 0,
                 CanKill = false, -- Entity này không tự gây sát thương theo Spawner
@@ -187,7 +187,7 @@ spawn(function() -- Bắt đầu một luồng riêng cho toàn bộ logic
                     break -- Thoát nếu đối tượng không tồn tại
                 end
 
-                local hitbox = 9 -- Phạm vi va chạm
+                local hitbox = 36 -- Phạm vi va chạm
                 local origin = ambush.Position
                 local direction = (HumanoidRootPart.Position - origin).Unit
                 local ray = Ray.new(origin, direction * hitbox)
