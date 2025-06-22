@@ -45,7 +45,7 @@ kill:Play()
 local Backgroun = Instance.new("ImageLabel")
 Backgroun.Parent = screenGui
 Backgroun.Size = UDim2.new(1, 0, 1, 0)
-Backgroun.ImageTransparency = 1
+Backgroun.ImageTransparency = 0.5
 Backgroun.BackgroundTransparency = 0
 Backgroun.BackgroundColor3 = Color3.new(0, 0, 0)
 Backgroun.Image = "rbxassetid://1712510813"
