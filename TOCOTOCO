@@ -52,7 +52,7 @@ local character = player.Character or player.CharacterAdded:Wait()
 local HumanoidRootPart = character:WaitForChild("HumanoidRootPart")
 
 
-local deer = game:GetObjects("rbxassetid://86055776714285")[1]
+local deer = game:GetObjects("rbxassetid://75877292391257")[1]
 deer.Parent = workspace
 deer.PrimaryPart = deer:FindFirstChildWhichIsA("BasePart")
 deer.PrimaryPart.Anchored = true
