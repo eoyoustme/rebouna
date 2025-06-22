@@ -115,7 +115,7 @@ local text = Instance.new("ImageLabel")
 text.Parent = screenGui
 text.AnchorPoint = Vector2.new(0.5, 0.5)
 text.Position = UDim2.new(0.5, 0, 0.5, 0)
-text.Size = UDim2.new(0, 300, 0, 300)
+text.Size = UDim2.new(0, 150, 0, 150)
 text.Image = "rbxassetid://117106082021449"
 text.ImageTransparency = 0
 text.BackgroundTransparency = 1
@@ -126,9 +126,9 @@ task.spawn(function()
         if stop == true then
             break
         end
-        text.Image = "rbxassetid://89229444931090"
+        text.Image = "rbxassetid://88490592395124"
         task.wait(0.0589)
-        text.Image = "rbxassetid://117106082021449"
+        text.Image = "rbxassetid://99132041298170"
     end
 end)
 
