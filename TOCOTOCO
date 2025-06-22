@@ -1,5 +1,5 @@
 spawn(function() --oh dear god man
-while task.wait(350) do
+while task.wait(35) do
         if workspace.CurrentRooms:FindFirstChild("50") 
         or workspace.CurrentRooms:FindFirstChild("100") 
 or game.ReplicatedStorage.GameData.LatestRoom.Value == 6 then
