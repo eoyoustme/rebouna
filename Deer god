@@ -333,7 +333,7 @@ entity:SetCallback("OnSpawned", function()
 
     -- >>> PHẦN TỰ HỦY SAU 13-15 GIÂY ĐƯỢC ĐẶT LẠI VÀO ĐÂY <<<
     if destroyTimer then task.cancel(destroyTimer) end
-    destroyTimer = task.delay(math.random(21, 22), function()
+    destroyTimer = task.delay(math.random(18, 19), function()
         print("Deer God self-destruct timer activated. Despawning regardless of proximity.")
         MoveActive = false -- Dừng di chuyển trước khi biến mất
         task.wait(0.5) -- Đợi một chút để tạo hiệu ứng dừng
