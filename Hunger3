@@ -41,7 +41,8 @@ task.spawn(function()
     damageSound.Parent = player.Character -- Parent to character so it moves with them
 
     while Kill == true do
-        task.wait(0.001)
+        -- Damage occurs every 0.2 seconds if the player isn't looking
+        task.wait(0.2)
         local _, camera = game.Workspace.CurrentCamera:WorldToViewportPoint(part.Position)
 
         -- If the player is not looking at DepthTer, they take damage and are "frozen" in camera rotation
@@ -63,7 +64,7 @@ task.spawn(function()
                 humanoid.JumpPower = 0
                 humanoid.PlatformStand = true -- Keep player stationary
 
-                -- Wait for 0.3 seconds
+                -- Wait for 0.01 seconds for the "freeze" effect (very brief)
                 task.wait(0.01)
 
                 -- Unfreeze camera and movement
