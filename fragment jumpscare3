@@ -54,8 +54,8 @@ background.Image = "rbxassetid://1712510813"
 local face = Instance.new("ImageLabel")
 face.Parent = screenGui
 face.AnchorPoint = Vector2.new(0.5, 0.5)
-face.Position = UDim2.new(0.5, 0, 0.589, 0)
-face.Size = UDim2.new(0, 300, 0, 300)
+face.Position = UDim2.new(0.5, 0, 0.589, 0) -- Vị trí ban đầu của mặt
+face.Size = UDim2.new(0, 300, 0, 300)      -- Kích thước ban đầu của mặt
 face.Image = "rbxassetid://11395249132"
 face.ImageTransparency = 0
 face.BackgroundTransparency = 1
@@ -70,136 +70,131 @@ text.Image = "rbxassetid://117106082021449"
 text.ImageTransparency = 0
 text.BackgroundTransparency = 1
 
---
--- Concurrent Effects
---
+---
+--- Concurrent Effects
+---
 
 -- Task for background transparency and image transparency blinking
 task.spawn(function()
-    while not stopEffects do
-        background.BackgroundTransparency = 0
-        background.ImageTransparency = 1
-        task.wait(0.1)
-        background.BackgroundTransparency = 1
-        background.ImageTransparency = 0
-        task.wait(0.1)
-    end
+    while not stopEffects do
+        background.BackgroundTransparency = 0
+        background.ImageTransparency = 1
+        task.wait(0.1)
+        background.BackgroundTransparency = 1
+        background.ImageTransparency = 0
+        task.wait(0.1)
+    end
 end)
 
 -- Task for background image changing
 task.spawn(function()
-    while not stopEffects do
-        background.Image = "rbxassetid://131073231978514"
-        task.wait(0.0589)
-        background.Image = "rbxassetid://105841646930424"
-        task.wait(0.0589)
-    end
+    while not stopEffects do
+        background.Image = "rbxassetid://131073231978514"
+        task.wait(0.0589)
+        background.Image = "rbxassetid://105841646930424"
+        task.wait(0.0589)
+    end
 end)
 
 -- Task for face rotation and image changing
 task.spawn(function()
-    while not stopEffects do
-        face.Rotation = 10
-        face.Image = "rbxassetid://17215733855"
-        task.wait(0.0589)
-        face.Rotation = -10
-        face.Image = "rbxassetid://17215733855"
-        task.wait(0.0589)
-        face.Rotation = 10
-        face.Image = "rbxassetid://17215733855"
-        task.wait(0.0589)
-        face.Rotation = -10
-        task.wait(0.0589) -- Added task.wait for the last rotation state
-    end
+    while not stopEffects do
+        face.Rotation = 10
+        face.Image = "rbxassetid://17215733855"
+        task.wait(0.0589)
+        face.Rotation = -10
+        face.Image = "rbxassetid://17215733855"
+        task.wait(0.0589)
+        face.Rotation = 10
+        face.Image = "rbxassetid://17215733855"
+        task.wait(0.0589)
+        face.Rotation = -10
+        task.wait(0.0589) -- Added task.wait for the last rotation state
+    end
 end)
 
 -- Task for text image changing
 task.spawn(function()
-    while not stopEffects do
-        text.Image = "rbxassetid://88490592395124"
-        task.wait(0.0589)
-        text.Image = "rbxassetid://99132041298170"
-        task.wait(0.0589)
-    end
+    while not stopEffects do
+        text.Image = "rbxassetid://88490592395124"
+        task.wait(0.0589)
+        text.Image = "rbxassetid://99132041298170"
+        task.wait(0.0589)
+    end
 end)
 
 -- Task for text position (random movement)
 task.spawn(function()
-    while not stopEffects do
-        text.Position = UDim2.new(Random.new():NextNumber(0, 0.5), 0, Random.new():NextNumber(0, 0.6), 0)
-        task.wait(0.05) -- Adjusted wait time for smoother/more frequent movement
-        text.Position = UDim2.new(Random.new():NextNumber(0.5, 1), 0, Random.new():NextNumber(0.4, 1), 0) -- Added some variation
-        task.wait(0.05)
-    end
+    while not stopEffects do
+        text.Position = UDim2.new(Random.new():NextNumber(0, 0.5), 0, Random.new():NextNumber(0, 0.6), 0)
+        task.wait(0.05) -- Adjusted wait time for smoother/more frequent movement
+        text.Position = UDim2.new(Random.new():NextNumber(0.5, 1), 0, Random.new():NextNumber(0.4, 1), 0) -- Added some variation
+        task.wait(0.05)
+    end
 end)
 
 -- Task for text image transparency blinking
 task.spawn(function()
-    while not stopEffects do
-        text.ImageTransparency = 0
-        task.wait(0.1) -- Adjusted wait time for blinking
-        text.ImageTransparency = 1
-        task.wait(0.1)
-    end
+    while not stopEffects do
+        text.ImageTransparency = 0
+        task.wait(0.1) -- Adjusted wait time for blinking
+        text.ImageTransparency = 1
+        task.wait(0.1)
+    end
 end)
 
---
--- Jump Scare Sequence
---
+---
+--- Jump Scare Sequence
+---
 
 -- Wait for the initial jump scare duration
 task.wait(0.7)
 stopEffects = true -- Stop the looping visual effects
 killSound:Stop() -- Stop the sound
 
--- Camera Zoom Effect
+-- Camera FOV Zoom (vẫn giữ hiệu ứng này để khung hình hẹp lại)
 local startFov = camera.FieldOfView
-local zoomFov = 20 -- Zoom into this FoV (adjust as needed, lower is more zoomed in)
-local zoomDuration = 0.7 -- How long the zoom takes
+local zoomFov = 20 -- Zoom vào FOV này (thấp hơn là zoom nhiều hơn)
+local zoomDuration = 0.7 -- Thời gian zoom
 
 camera.CameraType = Enum.CameraType.Scriptable
-local originalCFrame = camera.CFrame
+local originalCFrame = camera.CFrame -- Lưu CFrame ban đầu của camera
 
--- Smoothly zoom the camera
-local tweenInfo = TweenInfo.new(zoomDuration, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
-local properties = {FieldOfView = zoomFov}
-local tween = game:GetService("TweenService"):Create(camera, tweenInfo, properties)
-tween:Play()
+-- Tạo Tween cho FOV của camera
+local tweenInfoFov = TweenInfo.new(zoomDuration, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+local propertiesFov = {FieldOfView = zoomFov}
+local tweenFov = game:GetService("TweenService"):Create(camera, tweenInfoFov, propertiesFov)
+tweenFov:Play()
 
--- You might want the camera to focus on the face, adjust CFrame
--- This will smoothly move the camera *towards* the face's approximate position on screen
-local targetLookAt = face.AbsolutePosition + face.AbsoluteSize / 2 -- Center of the face UI element
-local cameraOffset = Vector3.new(0, 0, -2) -- Adjust this to control how close the camera gets
-local targetCFrame = CFrame.lookAt(camera.CFrame.Position, camera.CFrame.Position + (targetLookAt - camera.ViewportSize / 2).Unit * 10) * CFrame.new(cameraOffset)
+-- Đồng thời, Tween để phóng to và di chuyển hình ảnh jump scare
+local targetImageSize = UDim2.new(0, 1200, 0, 1200) -- Kích thước cuối cùng của mặt (điều chỉnh cho phù hợp)
+local targetImagePosition = UDim2.new(0.5, 0, 0.5, 0) -- Đảm bảo nó ở giữa màn hình
 
--- More advanced camera movement towards the face:
--- This is a more involved way to move the camera to center on the face while zooming.
--- It might require some fine-tuning based on your game's setup and desired effect.
--- For simplicity, let's just zoom the FoV and keep the player's CFrame for a moment.
--- If you want the camera to *follow* the face, it's better to calculate a lookAt CFrame.
--- For a sudden scare, just reducing FoV is often enough.
+local tweenInfoImage = TweenInfo.new(zoomDuration, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+local propertiesImage = {
+    Size = targetImageSize,
+    Position = targetImagePosition
+}
+local tweenImage = game:GetService("TweenService"):Create(face, tweenInfoImage, propertiesImage)
+tweenImage:Play()
 
--- If you want the camera to point directly at the face:
--- local faceWorldPosition = player.Character.HumanoidRootPart.CFrame.Position + Vector3.new(0, 0, -5) -- Example: adjust based on where your face image should appear in 3D space
--- camera.CFrame = CFrame.new(camera.CFrame.Position, faceWorldPosition)
-
--- Wait for the zoom to complete
-tween.Completed:Wait()
+-- Chờ cho cả hai tween hoàn tất (hoặc tween dài hơn)
+tweenFov.Completed:Wait() -- Chỉ cần chờ 1 trong 2 tween nếu chúng có cùng thời gian
 
 -- Fade out UI and reset camera
 task.spawn(function()
-    while not doneFading do
-        face.ImageTransparency = face.ImageTransparency + 0.1 -- Gradually fade out
-        text.ImageTransparency = text.ImageTransparency + 0.1
-        background.ImageTransparency = background.ImageTransparency + 0.1
-        background.BackgroundTransparency = background.BackgroundTransparency + 0.1
-        if face.ImageTransparency >= 1 then -- Check if fully faded
-            doneFading = true
-        end
-        task.wait(0.05) -- Fade speed
-    end
-    -- Clean up GUI elements after fading
-    screenGui:Destroy()
+    while not doneFading do
+        face.ImageTransparency = face.ImageTransparency + 0.1 -- Gradually fade out
+        text.ImageTransparency = text.ImageTransparency + 0.1
+        background.ImageTransparency = background.ImageTransparency + 0.1
+        background.BackgroundTransparency = background.BackgroundTransparency + 0.1
+        if face.ImageTransparency >= 1 then -- Check if fully faded
+            doneFading = true
+        end
+        task.wait(0.05) -- Fade speed
+    end
+    -- Clean up GUI elements after fading
+    screenGui:Destroy()
 end)
 
 -- Player death and camera reset
