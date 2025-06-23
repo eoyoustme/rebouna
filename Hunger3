@@ -26,7 +26,7 @@ depthsTer.Parent = game.Workspace
 local part = depthsTer:FindFirstChildWhichIsA("BasePart") or depthsTer:FindFirstChildWhichIsA("Part")
 
 -- Set the position of DepthsTer in the room
-part.CFrame = game.Workspace.CurrentRooms:GetChildren()[#game.Workspace.CurrentRooms:GetChildren() - 1].Parts.Floor.CFrame + Vector3.new(0, 2, 0)
+part.CFrame = game.Workspace.CurrentRooms:GetChildren()[#game.Workspace.CurrentRooms:GetChildren() - 1].Parts.Floor.CFrame + Vector3.new(0, 4, 0)
 
 wait(0.01)
 
