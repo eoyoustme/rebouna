@@ -122,7 +122,6 @@ end
 
 entity.Debug.OnDeath = function()
     print("Player has died")
-
 local player = game.Players.LocalPlayer
 local playerGui = player:WaitForChild("PlayerGui")
 
