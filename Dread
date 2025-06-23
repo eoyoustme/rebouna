@@ -4,8 +4,8 @@ local Spawner = loadstring(game:HttpGet('https://raw.githubusercontent.com/MuhXd
 -- Create entity
 local entity = Spawner.createEntity({
     CustomName = "Nightmare Rush", -- Custom name of your entity
-    Model = "rbxassetid://73813782576461", -- Can be GitHub file or rbxassetid
-    Speed = 100, -- Percentage, 100 = default Rush speed
+    Model = "rbxassetid://12329981842", -- Can be GitHub file or rbxassetid
+    Speed = 120, -- Percentage, 100 = default Rush speed
     DelayTime = 3, -- Time before starting cycles (seconds)
     HeightOffset = 1,
     CanKill = true,
@@ -26,9 +26,9 @@ local entity = Spawner.createEntity({
         80 -- Time (seconds)
     },
     Cycles = {
-        Min = 1,
-        Max = 1,
-        WaitTime = 1,
+        Min = 3,
+        Max = 3,
+        WaitTime = 0.2,
     },
     CamShake = {
         true, -- Enabled/Disabled
