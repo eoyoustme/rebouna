@@ -340,8 +340,6 @@ task.wait(0.4) -- Chờ một chút sau khi fade out trước khi reset camera v
 if camera then
     camera.CameraType = Enum.CameraType.Custom
     camera.FieldOfView = startFov -- Reset về FoV ban đầu
-
-	firesignal(game.ReplicatedStorage.RemotesFolder.DeathHint.OnClientEvent, {"You died to who you call Dread","A Clock appears in the middle of the room","Hide in a closet when this clock stops."},"Blue")
 end
 
 ---====== Run entity ======---
