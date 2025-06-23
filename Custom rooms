@@ -16,11 +16,12 @@ local sussyroom = game:GetObjects("rbxassetid://11626479968")[1]
 
 -- Đảm bảo sussyroom được đặt đúng vị trí và hiển thị trong workspace
 sussyroom.Parent = workspace
--- Bạn CẦN đặt sussyroom ở một vị trí cụ thể trong thế giới game của bạn.
--- Nếu không, nó có thể xuất hiện ở (0,0,0) hoặc chồng lên các phòng khác.
--- Ví dụ: sussyroom:SetPrimaryPartCFrame(CFrame.new(0, 50, 0)) -- Thay đổi tọa độ này cho phù hợp
+-- RẤT QUAN TRỌNG: Bạn CẦN đặt sussyroom ở một vị trí cụ thể trong thế giới game của bạn
+-- để nó không chồng chéo với các phòng Doors khác và người chơi có thể tương tác.
+-- Ví dụ, đặt nó ở một vị trí trống xa các phòng Doors mặc định:
+sussyroom:SetPrimaryPartCFrame(CFrame.new(0, 10, 0)) -- Điều chỉnh tọa độ này cho phù hợp với game của bạn
 
-wait(2) -- Chờ một chút để phòng load
+wait(2) -- Chờ một chút để phòng load hoàn chỉnh và hiển thị trong thế giới
 
 local camara = game.Workspace.CurrentCamera
 local camShake = CameraShaker.new(Enum.RenderPriority.Camera.Value, function(shakeCf)
@@ -30,32 +31,65 @@ camShake:Start()
 camShake:ShakeOnce(300,300,0.3,0.5)
 wait(0.5)
 
--- Di chuyển người chơi đến vị trí trong sussyroom
--- Đảm bảo sussy_part là một phần tử có trong model sussyroom của bạn
-if sussyroom:FindFirstChild("sussy_part") then
-    LocalPlayer.Character:PivotTo(CF(sussyroom.sussy_part.Position))
-    warn("Người chơi đã được dịch chuyển đến sussy_part trong phòng custom.")
-else
-    warn("Không tìm thấy 'sussy_part' trong sussyroom. Người chơi sẽ không được Pivot đến vị trí cụ thể.")
-    -- Fallback: Pivot đến trung tâm của sussyroom nếu sussy_part không tồn tại
-    if sussyroom.PrimaryPart then
-        LocalPlayer.Character:PivotTo(CF(sussyroom.PrimaryPart.Position))
+-- **Xác định vị trí spawn người chơi trong sussyroom (không teleport)**
+local spawnLocation = nil
+local doorsInSussyRoom = {}
+
+-- Tìm tất cả các Model con có tên là "Door" bên trong sussyroom
+for _, child in pairs(sussyroom:GetChildren()) do
+    if child:IsA("Model") and child.Name == "Door" then
+        if child.PrimaryPart then
+            table.insert(doorsInSussyRoom, child)
+        else
+            warn("Cửa '" .. child.Name .. "' trong sussyroom không có PrimaryPart. Không thể dùng để spawn.")
+        end
     end
 end
 
--- Xử lý sự kiện chạm vào sussy_part2 trong sussyroom
+-- Kiểm tra tiêu chí "nhiều cửa" cho sussyroom
+if #doorsInSussyRoom > 2 then -- Điều kiện "nhiều cửa", bạn có thể thay đổi số 2 này
+    -- Chọn ngẫu nhiên một trong các cửa để làm vị trí spawn
+    -- (Người chơi không dịch chuyển ngay lập tức, mà game sẽ spawn họ ở đây)
+    spawnLocation = doorsInSussyRoom[math.random(1, #doorsInSussyRoom)].PrimaryPart.CFrame
+    warn("Căn phòng custom có nhiều cửa. Sẽ dùng một cửa ngẫu nhiên làm vị trí spawn mặc định.")
+else
+    warn("Căn phòng custom không đủ tiêu chí 'nhiều cửa' (>2 cửa). Sẽ dùng PrimaryPart của phòng làm vị trí spawn mặc định.")
+    if sussyroom.PrimaryPart then
+        spawnLocation = sussyroom.PrimaryPart.CFrame
+    else
+        warn("Căn phòng custom không có PrimaryPart, không thể xác định vị trí spawn.")
+        -- Fallback: Nếu không có PrimaryPart, người chơi sẽ spawn ở vị trí mặc định của game.
+    end
+end
+
+-- **Script sẽ không PivotTo người chơi ngay lập tức.**
+-- Thay vào đó, nếu bạn muốn người chơi **bắt đầu trong căn phòng này**,
+-- bạn sẽ cần một cách để game Roblox biết đây là điểm spawn khởi đầu.
+-- Thông thường, điều này được xử lý trên server hoặc bằng cách thay đổi CFrame của Player.Character
+-- TRƯỚC KHI Character hoàn toàn tải, hoặc đặt SpawnLocation.
+-- Với LocalScript, việc thay đổi vị trí spawn khởi đầu có thể phức tạp.
+-- Nếu bạn muốn **buộc người chơi xuất hiện ở đây ngay lập tức (teleport)**, hãy bỏ chú thích dòng dưới:
+-- if spawnLocation then
+--     LocalPlayer.Character:PivotTo(spawnLocation)
+--     warn("Người chơi đã được dịch chuyển đến vị trí khởi đầu trong căn phòng custom.")
+-- end
+
+-- Xử lý sự kiện chạm vào sussy_part2 trong sussyroom (nếu có trong model của bạn)
 if sussyroom:FindFirstChild("sussy_part2") then
-    sussyroom.sussy_part2.Touched:Connect(function()
-        -- Vị trí này 0.352394, -0.3796, 3263.22 có vẻ là cố định, hãy kiểm tra lại
-        LocalPlayer.Character:PivotTo(CF(0.352394, -0.3796, 3263.22))
-        game.Lighting.MainColorCorrection.TintColor = Color3.fromRGB(255, 147, 15)
-        game.Lighting.MainColorCorrection.Contrast = 1
-        camShake:ShakeOnce(300,300,0.3,0.5)
-        local TW = TweenService:Create(game.Lighting.MainColorCorrection, TweenInfo.new(math.random(2.5,3)),{TintColor = Color3.fromRGB(255, 255, 255)})
-        TW:Play()
-        wait(0.3)
-        local tween = TweenService
-        tween:Create(game.Lighting.MainColorCorrection, TweenInfo.new(6), {Contrast = 0}):Play()
+    sussyroom.sussy_part2.Touched:Connect(function(hit)
+        if hit.Parent:FindFirstChild("Humanoid") then -- Đảm bảo đó là người chơi chạm vào
+            -- Vị trí này 0.352394, -0.3796, 3263.22 có vẻ là một vị trí cố định rất xa.
+            -- Bạn có muốn người chơi dịch chuyển đến đây khi chạm vào sussy_part2 không?
+            LocalPlayer.Character:PivotTo(CF(0.352394, -0.3796, 3263.22))
+            game.Lighting.MainColorCorrection.TintColor = Color3.fromRGB(255, 147, 15)
+            game.Lighting.MainColorCorrection.Contrast = 1
+            camShake:ShakeOnce(300,300,0.3,0.5)
+            local TW = TweenService:Create(game.Lighting.MainColorCorrection, TweenInfo.new(math.random(2.5,3)),{TintColor = Color3.fromRGB(255, 255, 255)})
+            TW:Play()
+            wait(0.3)
+            local tween = TweenService
+            tween:Create(game.Lighting.MainColorCorrection, TweenInfo.new(6), {Contrast = 0}):Play()
+        end
     end)
 else
     warn("Không tìm thấy 'sussy_part2' trong sussyroom. Sự kiện Touched sẽ không được thiết lập.")
@@ -69,15 +103,7 @@ if workspace:FindFirstChild("The Damned") then
     workspace["The Damned"].Looped = true
     workspace["The Damned"].Volume = 1
 else
-    warn("Không tìm thấy Sound 'The Damned' trong Workspace. Vui lòng tạo Sound 'The Damned' trong Workspace.")
-    -- Ví dụ cách tạo nếu muốn script tự động tạo:
-    -- local damnedSound = Instance.new("Sound", workspace)
-    -- damnedSound.Name = "The Damned"
-    -- damnedSound.SoundId = "rbxassetid://9113731836"
-    -- damnedSound.Pitch = 1
-    -- damnedSound.Looped = true
-    -- damnedSound.Volume = 1
-    -- damnedSound:Play()
+    warn("Không tìm thấy Sound 'The Damned' trong Workspace. Vui lòng tạo Sound 'The Damned' trong Workspace hoặc thêm logic tạo tự động.")
 end
 
 -- Hàm ambiance (chạy song song)
@@ -108,7 +134,8 @@ task.spawn(function()
     end
 end)
 
--- Tạo và đặt LightPivot và Light vào ReplicatedStorage (chỉ một lần)
+-- Tạo và đặt LightPivot và Light vào ReplicatedStorage (chỉ một lần khi script khởi chạy)
+-- Đây là các assets cần thiết cho việc thay đổi đèn trong phòng.
 local lightpivotAsset = game:GetObjects((getcustomasset or getsynasset)("LightPivot.rbxm"))[1]
 local lightAsset = game:GetObjects((getcustomasset or getsynasset)("Light.rbxm"))[1]
 lightAsset.Parent = game.ReplicatedStorage
@@ -116,14 +143,16 @@ lightpivotAsset.Parent = game.ReplicatedStorage
 lightpivotAsset.Transparency = 1
 
 
---- VẬN DỤNG CÁC THAY ĐỔI VÀO CĂN PHÒNG CUSTOM (sussyroom)
+--- **ÁP DỤNG CÁC THAY ĐỔI VỀ VẬT LIỆU, ÁNH SÁNG, VÀ ĐỒ VẬT TRONG CĂN PHÒNG ĐƯỢC TẢI TỪ RBXASSETID (sussyroom)**
 -- Thay đổi vật liệu và màu sắc của tường trong sussyroom
--- Giả sử các bức tường trong phòng có tên là "Wall" hoặc là một phần của folder "Parts"
+-- Giả sử các bức tường trong phòng của bạn nằm trong một folder/model con tên là "Parts"
 if sussyroom:FindFirstChild("Parts") then
     for i, v in pairs(sussyroom.Parts:GetChildren()) do
+        -- Áp dụng cho các Part có tên là "Wall" và là BasePart
         if v.Name == "Wall" and v:IsA("BasePart") then
             v.Material = Enum.Material.Limestone
             v.Color = Color3.fromRGB(30,30,30)
+            -- Xóa Wallpaper nếu có
             if v:FindFirstChild("Wallpaper") ~= nil then
                 v.Wallpaper:Destroy()
             end
@@ -138,6 +167,7 @@ if sussyroom:FindFirstChild("Parts") then
                 v.Color = Color3.fromRGB(86, 86, 86)
             end
         end
+        -- Nếu có một Model con bên trong DropCeiling chứa các phần của trần
         if sussyroom.Parts.DropCeiling:FindFirstChild("Model") then
              for i, v in pairs(sussyroom.Parts.DropCeiling.Model:GetChildren()) do
                 if v:IsA("BasePart") then
@@ -150,30 +180,32 @@ if sussyroom:FindFirstChild("Parts") then
 end
 
 
--- Xử lý đèn và vật phẩm ánh sáng trong sussyroom
+-- Xử lý đèn và vật phẩm ánh sáng (Light_Fixtures) trong sussyroom
 if sussyroom:FindFirstChild("Assets") and sussyroom.Assets:FindFirstChild("Light_Fixtures") then
     for i, r in pairs(sussyroom.Assets.Light_Fixtures:GetChildren()) do
         if r.Name == "LightStand" then
-            local pivotcloney = game.ReplicatedStorage.LightPivot:Clone() -- Dùng LightPivot đã tạo ở trên
-            pivotcloney.Parent = sussyroom
+            local pivotcloney = game.ReplicatedStorage.LightPivot:Clone() -- Sao chép LightPivot đã lưu trong ReplicatedStorage
+            pivotcloney.Parent = sussyroom -- Đặt vào căn phòng custom
+            -- Pivot LightPivot đến vị trí của LightFixture gốc
             pivotcloney:PivotTo(r.LightFixture.CFrame)
-            pivotcloney.CFrame = pivotcloney.CFrame - Vector3.new(0, 6, 0)
-            pivotcloney.Transparency = 1 -- Giữ Transparency = 1 như trong script của bạn
+            pivotcloney.CFrame = pivotcloney.CFrame - Vector3.new(0, 6, 0) -- Dịch chuyển xuống một chút
+            pivotcloney.Transparency = 1 -- Giữ Transparency = 1
             r:Destroy() -- Xóa LightStand gốc
         end
     end
 end
 
--- Thêm đèn công nghiệp vào các Pivot đã tạo
+-- Thêm đèn công nghiệp (Light) vào các Pivot đã tạo trong sussyroom
 for i, r in pairs(sussyroom:GetChildren()) do
-    if r.Name == "Pivot" then -- Tìm các Pivot đã được đặt tên là "Pivot" (nếu asset bạn tải về đặt tên như vậy)
-        local copylight = game.ReplicatedStorage.Light:Clone() -- Dùng Light đã tạo ở trên
-        copylight.Parent = sussyroom
-        copylight:PivotTo(r.CFrame)
+    -- Tìm các "Pivot" đã được đặt tên là "LightPivot" (hoặc tên khác nếu bạn đã đổi)
+    if r.Name == "LightPivot" then
+        local copylight = game.ReplicatedStorage.Light:Clone() -- Sao chép Light đã lưu trong ReplicatedStorage
+        copylight.Parent = sussyroom -- Đặt vào căn phòng custom
+        copylight:PivotTo(r.CFrame) -- Đặt Light vào vị trí của Pivot
     end
 end
 
--- Xóa các Chandelier trong sussyroom
+-- Xóa các Chandelier (đèn chùm) trong sussyroom
 if sussyroom:FindFirstChild("Assets") then
     for i, r in pairs(sussyroom.Assets:GetChildren()) do
         if r.Name == "Chandelier" then
@@ -182,25 +214,21 @@ if sussyroom:FindFirstChild("Assets") then
     end
 end
 
--- === LOGIC SINH ENTITY (DEPTH, A-60, MONOXIDE) ===
--- Các phần này vẫn giữ nguyên logic ngẫu nhiên của bạn.
--- Vì logic này dùng `game.ReplicatedStorage.GameData.LatestRoom.Changed`,
--- các entity này sẽ xuất hiện khi phòng thay đổi trong game chính,
--- KHÔNG phải khi sussyroom được tải. Đây là hành vi bạn mong muốn, phải không?
+
+--- **LOGIC SINH ENTITY (DEPTH, A-60, MONOXIDE)**
+-- Phần này vẫn giữ nguyên logic của bạn, kích hoạt dựa trên `game.ReplicatedStorage.GameData.LatestRoom.Changed`.
+-- Điều này có nghĩa là các entity này sẽ xuất hiện khi game Doors chuyển sang phòng mới (LatestRoom thay đổi),
+-- KHÔNG phải khi căn phòng custom của bạn được tải.
 
 game.ReplicatedStorage.GameData.LatestRoom.Changed:Connect(function()
     local currentRoomNumber = game.ReplicatedStorage.GameData.LatestRoom.Value
+    local currentMainGameRoom = workspace.CurrentRooms[currentRoomNumber] -- Phòng hiện tại trong game chính
 
-    -- Các thay đổi vật liệu/ánh sáng cho phòng hiện tại trong game chính
-    local lightpivot = game:GetObjects((getcustomasset or getsynasset)("LightPivot.rbxm"))[1]
-    local light = game:GetObjects((getcustomasset or getsynasset)("Light.rbxm"))[1]
-    light.Parent = game.ReplicatedStorage
-    lightpivot.Parent = game.ReplicatedStorage
-    lightpivot.Transparency = 1
-
-    local room = workspace.CurrentRooms[currentRoomNumber]
-    if room then
-        for i, v in pairs(room.Parts:GetChildren()) do
+    -- --- CÁC THAY ĐỔI VỀ VẬT LIỆU/ÁNH SÁNG CHO PHÒNG HIỆN TẠI TRONG GAME CHÍNH ---
+    -- (Những thay đổi này sẽ áp dụng cho phòng Doors hiện tại, không phải phòng sussyroom của bạn,
+    -- trừ khi sussyroom chính là currentMainGameRoom nếu game Doors sử dụng nó.)
+    if currentMainGameRoom then
+        for i, v in pairs(currentMainGameRoom.Parts:GetChildren()) do
             if v.Name == "Wall" then
                 v.Material = Enum.Material.Limestone
                 v.Color = Color3.fromRGB(86, 86, 86)
@@ -209,32 +237,38 @@ game.ReplicatedStorage.GameData.LatestRoom.Changed:Connect(function()
                 end
             end
         end
-        for i, v in pairs(room.Parts.DropCeiling:GetChildren()) do
-            if v.Name == "Ceiling" then
-                v.Material = Enum.Material.Limestone
-                v.Color = Color3.fromRGB(86, 86, 86)
+        if currentMainGameRoom.Parts:FindFirstChild("DropCeiling") then
+            for i, v in pairs(currentMainGameRoom.Parts.DropCeiling:GetChildren()) do
+                if v.Name == "Ceiling" then
+                    v.Material = Enum.Material.Limestone
+                    v.Color = Color3.fromRGB(86, 86, 86)
+                end
+            end
+            if currentMainGameRoom.Parts.DropCeiling:FindFirstChild("Model") then
+                 for i, v in pairs(currentMainGameRoom.Parts.DropCeiling.Model:GetChildren()) do
+                    v.Material = Enum.Material.Limestone
+                    v.Color = Color3.fromRGB(86, 86, 86)
+                end
             end
         end
-        for i, v in pairs(room.Parts.DropCeiling.Model:GetChildren()) do
-            v.Material = Enum.Material.Limestone
-            v.Color = Color3.fromRGB(86, 86, 86)
-        end
-        for i, r in pairs(room.Assets.Light_Fixtures:GetChildren()) do
-            if r.Name == "LightStand" then
-                local pivotcloney = game.ReplicatedStorage.LightPivot:Clone()
-                pivotcloney.Parent = room
-                pivotcloney:PivotTo(r.LightFixture.CFrame)
-                pivotcloney.CFrame = pivotcloney.CFrame - Vector3.new(0, 6, 0)
-                r:Destroy()
+        if currentMainGameRoom:FindFirstChild("Assets") and currentMainGameRoom.Assets:FindFirstChild("Light_Fixtures") then
+            for i, r in pairs(currentMainGameRoom.Assets.Light_Fixtures:GetChildren()) do
+                if r.Name == "LightStand" then
+                    local pivotcloney = game.ReplicatedStorage.LightPivot:Clone()
+                    pivotcloney.Parent = currentMainGameRoom
+                    pivotcloney:PivotTo(r.LightFixture.CFrame)
+                    pivotcloney.CFrame = pivotcloney.CFrame - Vector3.new(0, 6, 0)
+                    r:Destroy()
+                end
             end
         end
-        for i, r in pairs(room:GetChildren()) do
+        for i, r in pairs(currentMainGameRoom:GetChildren()) do
             if r.Name == "Pivot" then
                 local copylight = game.ReplicatedStorage.Light:Clone()
-                copylight.Parent = room
+                copylight.Parent = currentMainGameRoom
                 copylight:PivotTo(r.CFrame)
                 workspace.Ambience_Dark.Played:Connect(function()
-                    for i, r in pairs(room:GetChildren()) do
+                    for i, r in pairs(currentMainGameRoom:GetChildren()) do
                         if r.Name == "IndustrialLight" then
                             r:Destroy()
                         end
@@ -242,9 +276,11 @@ game.ReplicatedStorage.GameData.LatestRoom.Changed:Connect(function()
                 end)
             end
         end
-        for i, r in pairs(room.Assets:GetChildren()) do
-            if r.Name == "Chandelier" then
-                r:Destroy()
+        if currentMainGameRoom:FindFirstChild("Assets") then
+            for i, r in pairs(currentMainGameRoom.Assets:GetChildren()) do
+                if r.Name == "Chandelier" then
+                    r:Destroy()
+                end
             end
         end
     end
@@ -396,8 +432,8 @@ game.ReplicatedStorage.GameData.LatestRoom.Changed:Connect(function()
         end)
         camShake:Start()
         camShake:ShakeOnce(40,40,0.5,0.5)
-        -- Sử dụng room (phòng hiện tại) thay vì CurrentRooms[LatestRoom.Value]
-        firesignal(game.ReplicatedStorage.Bricks.UseEventModule.OnClientEvent, "breakLights", room, 0.416, 60)
+        -- Sử dụng currentMainGameRoom (phòng hiện tại trong game chính) để break lights
+        firesignal(game.ReplicatedStorage.Bricks.UseEventModule.OnClientEvent, "breakLights", currentMainGameRoom, 0.416, 60)
         game.Lighting.Ambient = Color3.fromRGB(20,20,20)
         game.Lighting.MainColorCorrection.Contrast = 0
     else
@@ -409,8 +445,8 @@ game.ReplicatedStorage.GameData.LatestRoom.Changed:Connect(function()
         firesignal(game.ReplicatedStorage.Bricks.Caption.OnClientEvent, "I NEED TO HIDE!")
         game.Lighting.MainColorCorrection.TintColor = Color3.fromRGB(255,0,0)
         game.Lighting.MainColorCorrection.Contrast = 1
-        -- Sử dụng room (phòng hiện tại) thay vì CurrentRooms[LatestRoom.Value]
-        firesignal(game.ReplicatedStorage.Bricks.UseEventModule.OnClientEvent, "flickerLights", room, 4)
+        -- Sử dụng currentMainGameRoom (phòng hiện tại trong game chính) để flicker lights
+        firesignal(game.ReplicatedStorage.Bricks.UseEventModule.OnClientEvent, "flickerLights", currentMainGameRoom, 4)
         local tween = TweenService
         tween:Create(game.Lighting.MainColorCorrection, TweenInfo.new(6), {Contrast = 0}):Play()
         local TW = TweenService:Create(game.Lighting.MainColorCorrection, TweenInfo.new(6),{TintColor = Color3.fromRGB(255, 255, 255)})
@@ -503,7 +539,6 @@ game.ReplicatedStorage.GameData.LatestRoom.Changed:Connect(function()
                 l__ImageLabel__1.Position = UDim2.new(v2:NextNumber(0.4, 0.6), 0, v2:NextNumber(0.45, 0.55), 0);
                 l__ImageLabel__1.Size = l__ImageLabel__1.Size + UDim2.new(l__SizeValue__3.Value, 0, l__SizeValue__3.Value, 0);
                 l__ImageLabel__1.Rotation = math.random(-10, 10);
-                l__SizeValue__3.Value = l__SizeValue__3.Value - 0.01;
                 task.wait(0);
             end;
             l__ImageLabel__1.ImageColor3 = Color3.new(1, 1, 1);
@@ -518,7 +553,7 @@ game.ReplicatedStorage.GameData.LatestRoom.Changed:Connect(function()
     if chancemonoxide == false then -- Điều kiện này sẽ luôn là false, hãy sửa lại nếu bạn muốn nó kích hoạt
         game.Lighting.MainColorCorrection.TintColor = Color3.fromRGB(0,0,255)
         game.Lighting.MainColorCorrection.Contrast = 1
-        firesignal(game.ReplicatedStorage.Bricks.UseEventModule.OnClientEvent, "flickerLights", room, 1)
+        firesignal(game.ReplicatedStorage.Bricks.UseEventModule.OnClientEvent, "flickerLights", currentMainGameRoom, 1)
         local tween = TweenService
         tween:Create(game.Lighting.MainColorCorrection, TweenInfo.new(1), {Contrast = 0}):Play()
         local TW = TweenService:Create(game.Lighting.MainColorCorrection, TweenInfo.new(1),{TintColor = Color3.fromRGB(255, 255, 255)})
@@ -646,19 +681,5 @@ workspace.ChildAdded:Connect(function(seek)
         -- Tuy nhiên, việc xóa nội thất thường nên được xử lý trên server để đồng bộ hóa.
         -- Nếu bạn muốn Seek di chuyển từ một cửa và biến mất ở cửa khác trong `sussyroom`
         -- bạn sẽ cần thêm logic định vị các cửa trong `sussyroom` và tạo tween/animation cho Seek ở đây.
-        -- Ví dụ:
-        -- local doorsInSussyRoom = {}
-        -- for _, child in pairs(sussyroom:GetChildren()) do
-        --     if child.Name == "Door" and child:IsA("Model") then
-        --         table.insert(doorsInSussyRoom, child)
-        --     end
-        -- end
-        -- if #doorsInSussyRoom >= 2 then
-        --     local startDoor = doorsInSussyRoom[1]
-        --     local endDoor = doorsInSussyRoom[2] -- Hoặc chọn ngẫu nhiên
-        --     seek:SetPrimaryPartCFrame(startDoor.PrimaryPart.CFrame)
-        --     -- Tween hoặc Animation để di chuyển seek từ startDoor đến endDoor
-        -- end
-    else
     end
 end)
