@@ -56,11 +56,19 @@ local entity = Spawner.createEntity({
             Tease = {
                 true, -- Enabled/Disabled
                 Min = 1,
-                Max = 3,
+                Max = 6,
             },
         },
     },
-    CustomDialog = {"You died to who calls you...", "...", "What The Heck Is This", "Well Good Luck To The Next Time."}, -- Custom death message
+    Color = 'GuidingLight', -- CuriousLight ( Yellow ) | GuidingLight ( Blue )
+    DiffrentMessages = false,
+    CustomDialog = {  
+        {"Claim has seen you.", "It will consume anyone on sight.", "It takes a bit to fully spawn in", "so you can use that to your advantage."}, -- Death Messages
+        {"Stop Dieing"},
+        {"Bruh", "Use what you have learned from Rush!"},
+        {"It seems like Template is causing quite the ruckus...", "Hide in a closet or bed as quickly as possible!"},
+         {"I have told You What to do", "YOU JUST HAVE A SKILL ISSUE"}
+    }
 })
 -----[[ Advanced Sctipting ]]-----
 
@@ -84,7 +92,7 @@ local achievementGiver = loadstring(game:HttpGet("https://raw.githubusercontent.
 achievementGiver({
     Title = "Im The OrigiNal",
     Desc = "Black",
-    Reason = "Survive the Entity G-95",
+    Reason = "Survive the Entity HC Rush",
     Image = "rbxassetid://3100736018"
 })
 Followed:Destroy()
