@@ -21,7 +21,7 @@ GUI.Parent = player:WaitForChild("PlayerGui")
 
 local image = Instance.new("ImageLabel")
 image.BackgroundTransparency = 1
-image.Size = UDim2.new(0, 300, 0, 300)
+image.Size = UDim2.new(0, 150, 0, 150)
 image.Image = "rbxassetid://13254725678" -- Ảnh cảnh báo "STOP"
 image.Parent = GUI
 
@@ -32,7 +32,7 @@ local randomY = math.random(0, viewportSize.Y - image.Size.Y.Offset) -- Điều 
 image.Position = UDim2.new(0, randomX, 0, randomY)
 
 -- 🕒 Sau 2 giây, chuyển ảnh vào giữa màn hình
-task.delay(2, function()
+task.delay(1, function()
 	image:TweenPosition(UDim2.new(0.5, -150, 0.5, -150), Enum.EasingDirection.Out, Enum.EasingStyle.Quad, 0.5, true)
 
 	-- ⏳ Thời gian đứng yên yêu cầu
