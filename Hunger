@@ -5,9 +5,8 @@ cue2.SoundId = "rbxassetid://933230732"
 cue2.Volume = 45
 cue2.PlaybackSpeed = 1
 cue2:Play()
--- The 'end' here seems misplaced if it's meant to close the 'local cue2' block. Assuming it was a typo and this is the end of an implied block or should be removed.
 
-wait(16)
+wait(17)
 
 -- Check current room
 local entityModel = true
@@ -27,54 +26,62 @@ depthsTer.Parent = game.Workspace
 local part = depthsTer:FindFirstChildWhichIsA("BasePart") or depthsTer:FindFirstChildWhichIsA("Part")
 
 -- Set the position of DepthsTer in the room
-part.CFrame = game.Workspace.CurrentRooms:GetChildren()[#game.Workspace.CurrentRooms:GetChildren() - 1].Parts.Floor.CFrame + Vector3.new(0, 6, 0)
+part.CFrame = game.Workspace.CurrentRooms:GetChildren()[#game.Workspace.CurrentRooms:GetChildren() - 1].Parts.Floor.CFrame + Vector3.new(0, 2, 0)
 
 wait(1)
 
 task.spawn(function()
+    local player = game.Players.LocalPlayer
+    local humanoid = player.Character and player.Character:FindFirstChildOfClass("Humanoid")
+
+    -- Create the damage sound instance
+    local damageSound = Instance.new("Sound")
+    damageSound.SoundId = "rbxassetid://6664373487" -- Example sound ID for damage. **Change this to your desired sound.**
+    damageSound.Volume = 1 -- Adjust volume as needed
+    damageSound.Parent = player.Character -- Parent to character so it moves with them
+
     while Kill == true do
-        task.wait(0.7)  -- Reduce the wait time to increase damage speed
+        task.wait(0.3)
         local _, camera = game.Workspace.CurrentCamera:WorldToViewportPoint(part.Position)
 
-        -- If the player is not looking at DepthTer, they take damage and are frozen
+        -- If the player is not looking at DepthTer, they take damage and are "frozen" in camera rotation
         if not camera then
-            game.Players.LocalPlayer.Character.Humanoid:TakeDamage(5)
-
-            -- Freeze player movement and mouse input
-            local player = game.Players.LocalPlayer
-            local humanoid = player.Character and player.Character:FindFirstChildOfClass("Humanoid")
             if humanoid then
+                humanoid:TakeDamage(5)
+                damageSound:Play() -- Play damage sound
+
+                -- Store current camera properties
+                local originalCameraMode = player.CameraMode
+                local originalDevEnableMouseLock = player.DevEnableMouseLock
+                local originalWalkSpeed = humanoid.WalkSpeed
+                local originalJumpPower = humanoid.JumpPower
+
+                -- Freeze camera and movement
+                player.CameraMode = Enum.CameraMode.LockFirstPerson -- Locks camera to first person, preventing rotation
+                player.DevEnableMouseLock = false -- Disable mouse lock
                 humanoid.WalkSpeed = 0
                 humanoid.JumpPower = 0
-                player.CameraMinZoomDistance = 0
-                player.CameraMaxZoomDistance = 0
-                player.DevEnableMouseLock = false
-                player.DevCameraOcclusionMode = Enum.DevCameraOcclusionMode.Invisicam
-                player.CameraMode = Enum.CameraMode.LockFirstPerson -- Optional: force first person view
-                player.Character.Humanoid.PlatformStand = true -- Prevents movement and applies a "falling" state
+                humanoid.PlatformStand = true -- Keep player stationary
 
                 -- Wait for 0.3 seconds
                 task.wait(0.3)
 
-                -- Unfreeze player movement and mouse input
-                humanoid.WalkSpeed = 16 -- Default WalkSpeed
-                humanoid.JumpPower = 50 -- Default JumpPower
-                player.CameraMinZoomDistance = 0.5 -- Default min zoom
-                player.CameraMaxZoomDistance = 400 -- Default max zoom
-                player.DevEnableMouseLock = true -- Re-enable mouse lock
-                player.DevCameraOcclusionMode = Enum.DevCameraOcclusionMode.Zoom -- Default camera occlusion
-                player.CameraMode = Enum.CameraMode.Classic -- Revert to classic camera mode
-                player.Character.Humanoid.PlatformStand = false
+                -- Unfreeze camera and movement
+                player.CameraMode = originalCameraMode -- Revert to original camera mode
+                player.DevEnableMouseLock = originalDevEnableMouseLock -- Re-enable mouse lock
+                humanoid.WalkSpeed = originalWalkSpeed
+                humanoid.JumpPower = originalJumpPower
+                humanoid.PlatformStand = false
             end
         end
 
         -- If the player dies, update the death cause and show the death hint
-        if game.Players.LocalPlayer.Character.Humanoid.Health <= 0 then
+        if humanoid and humanoid.Health <= 0 then
             -- Show death hint
             firesignal(game.ReplicatedStorage.RemotesFolder.DeathHint.OnClientEvent, {"You died to who you call owner...", "He spawns in center of room and he will damage you if you dont look at him", "He doesnt like to be ignoring"}, "Blue")
             wait(0.01)
             -- Update the death cause in the game stats
-            game:GetService("ReplicatedStorage").GameStats["Player_" .. game.Players.LocalPlayer.Name].Total.DeathCause.Value = "HUGERRORED"
+            game:GetService("ReplicatedStorage").GameStats["Player_" .. player.Name].Total.DeathCause.Value = "HUGERRORED"
         end
     end
 end)
@@ -94,5 +101,5 @@ achievementGiver({
     Title = "Pro gamer",
     Desc = "Last chance to not look at me",
     Reason = "Encounter HUGERRORED",
-    Image = "rbxassetid://97059893535136"
+    Image = "rbxassetid://"
 })
