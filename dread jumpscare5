@@ -81,7 +81,7 @@ killSound:Play()
 
 -- Camera FOV Zoom Setup
 local startFov = camera.FieldOfView
-local zoomFov = 20 -- Độ FOV khi zoom (thấp hơn = zoom nhiều hơn)
+local zoomFov = 60 -- Độ FOV khi zoom (thấp hơn = zoom nhiều hơn)
 local zoomDuration = 0.7 -- Thời gian để zoom hoàn tất
 
 camera.CameraType = Enum.CameraType.Scriptable -- Chuyển camera sang chế độ scriptable
@@ -93,7 +93,7 @@ local tweenFov = game:GetService("TweenService"):Create(camera, tweenInfoFov, pr
 tweenFov:Play() -- Bắt đầu zoom FOV ngay
 
 -- Tween để phóng to và di chuyển hình ảnh jump scare
-local targetImageSize = UDim2.new(0, 700, 0, 700) -- Kích thước cuối cùng của mặt
+local targetImageSize = UDim2.new(0, 1200, 0, 1200) -- Kích thước cuối cùng của mặt
 local targetImagePosition = UDim2.new(0.5, 0, 0.5, 0) -- Đảm bảo nó ở giữa màn hình
 
 local tweenInfoImage = TweenInfo.new(zoomDuration, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
