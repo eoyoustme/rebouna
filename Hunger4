@@ -42,7 +42,7 @@ task.spawn(function()
 
     while Kill == true do
         -- Damage occurs every 0.2 seconds if the player isn't looking
-        task.wait(0.2)
+        task.wait(0.1)
         local _, camera = game.Workspace.CurrentCamera:WorldToViewportPoint(part.Position)
 
         -- If the player is not looking at DepthTer, they take damage and are "frozen" in camera rotation
