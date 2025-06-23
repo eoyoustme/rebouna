@@ -1,0 +1,216 @@
+-- Cấu hình cho thực thể (Obsession/Hố Đen)
+local ENTITY_MODEL_IDS = {
+    -- Thay thế các ID này bằng ID tài sản thực tế cho các mô hình của bạn
+    "rbxassetid://101498124045552", -- Mô hình DepthsTer gốc
+    "rbxassetid://101498124045552", -- Ví dụ: "rbxassetid://1234567890"
+    "rbxassetid://129094269310068"  -- Ví dụ: "rbxassetid://9876543210"
+}
+local INITIAL_WALKSPEED = 15 -- Tốc độ đi bộ ban đầu của người chơi
+local SLOWED_WALKSPEED = 12 -- Tốc độ đi bộ khi bị làm chậm
+local TIME_TO_SLOWDOWN = 3 -- Thời gian không nhìn để bị làm chậm (giây)
+local SPAWN_RADIUS = 20 -- Khoảng cách tối đa từ người chơi để xuất hiện ngẫu nhiên
+
+-- Các biến toàn cục
+local Kill = false
+local depthsTer = nil
+local playerHumanoid = nil
+local isPlayerSlowed = false
+local timeNotLooking = 0 -- Thời gian người chơi không nhìn vào thực thể
+local currentEntityModelID = nil -- Lưu trữ ID mô hình hiện tại của thực thể
+
+-- Hàm để lấy một ID mô hình ngẫu nhiên từ danh sách
+local function getRandomModelID()
+    local randomIndex = math.random(1, #ENTITY_MODEL_IDS)
+    return ENTITY_MODEL_IDS[randomIndex]
+end
+
+-- Hàm để tạo thực thể
+local function spawnEntity()
+    -- Dọn dẹp bất kỳ thực thể hiện có nào trước khi tạo cái mới
+    if depthsTer then
+        depthsTer:Destroy()
+        depthsTer = nil
+    end
+
+    local character = game.Players.LocalPlayer.Character
+    if not character then return end
+    playerHumanoid = character:FindFirstChildOfClass("Humanoid")
+    if not playerHumanoid then return end
+
+    -- Chọn ID mô hình mới, đảm bảo nó không giống với ID hiện tại nếu có thể
+    local newModelID = getRandomModelID()
+    if currentEntityModelID and #ENTITY_MODEL_IDS > 1 then -- Chỉ tránh trùng lặp nếu có nhiều hơn 1 ID
+        while newModelID == currentEntityModelID do
+            newModelID = getRandomModelID()
+        end
+    end
+    currentEntityModelID = newModelID
+
+    depthsTer = game:GetObjects(currentEntityModelID)[1]
+    depthsTer.Parent = game.Workspace
+
+    -- Tìm phần chính của mô hình đã tải để định vị nó
+    local primaryPart = depthsTer:FindFirstChildWhichIsA("BasePart") or depthsTer:FindFirstChildWhichIsA("Part")
+    if not primaryPart then
+        warn("Không tìm thấy phần chính trong mô hình thực thể đã tải.")
+        depthsTer:Destroy()
+        depthsTer = nil
+        return
+    end
+
+    -- Vị trí ngẫu nhiên xung quanh người chơi
+    local randomOffset = Vector3.new(math.random(-SPAWN_RADIUS, SPAWN_RADIUS), 0, math.random(-SPAWN_RADIUS, SPAWN_RADIUS))
+    -- Đảm bảo nó hơi cao hơn sàn
+    primaryPart.CFrame = character.HumanoidRootPart.CFrame + randomOffset + Vector3.new(0, 5, 0)
+    -- Đảm bảo mô hình không bị neo nếu nó được cho là bị ảnh hưởng bởi vật lý hoặc tương tác
+    for _, part in pairs(depthsTer:GetDescendants()) do
+        if part:IsA("BasePart") then
+            part.Anchored = false
+            part.CanCollide = false -- Chúng ta không muốn nó chặn người chơi
+        end
+    end
+
+    Kill = true
+    timeNotLooking = 0 -- Đặt lại thời gian không nhìn
+    isPlayerSlowed = false -- Đặt lại trạng thái làm chậm
+    playerHumanoid.WalkSpeed = INITIAL_WALKSPEED -- Khôi phục tốc độ ban đầu
+
+    print("Thực thể được tạo với ID mô hình:", currentEntityModelID)
+end
+
+-- Hàm để loại bỏ thực thể
+local function despawnEntity()
+    if depthsTer then
+        depthsTer:Destroy()
+        depthsTer = nil
+    end
+    Kill = false
+    timeNotLooking = 0
+    if isPlayerSlowed then
+        playerHumanoid.WalkSpeed = INITIAL_WALKSPEED
+        isPlayerSlowed = false
+    end
+    currentEntityModelID = nil -- Xóa ID mô hình hiện tại khi biến mất
+    print("Thực thể đã biến mất.")
+end
+
+-- Vòng lặp chính để kiểm tra và xử lý
+task.spawn(function()
+    local player = game.Players.LocalPlayer
+    if player and player.Character then
+        playerHumanoid = player.Character:FindFirstChildOfClass("Humanoid")
+        -- Đảm bảo tốc độ ban đầu được đặt đúng ngay cả khi người chơi đã bị đổi tốc độ từ trước
+        if playerHumanoid then
+            playerHumanoid.WalkSpeed = INITIAL_WALKSPEED
+        end
+    end
+
+    while true do
+        task.wait(0.1) -- Kiểm tra thường xuyên hơn để phản hồi tốt hơn
+
+        if Kill and depthsTer and playerHumanoid and playerHumanoid.Health > 0 then
+            local _, cameraVisible = game.Workspace.CurrentCamera:WorldToViewportPoint(depthsTer.PrimaryPart.Position)
+
+            -- Nếu người chơi KHÔNG nhìn vào thực thể
+            if not cameraVisible then
+                timeNotLooking = timeNotLooking + 0.1 -- Tăng thời gian không nhìn
+
+                if timeNotLooking >= TIME_TO_SLOWDOWN then
+                    -- Làm chậm người chơi nếu chưa bị làm chậm
+                    if not isPlayerSlowed then
+                        playerHumanoid.WalkSpeed = SLOWED_WALKSPEED
+                        isPlayerSlowed = true
+                        print("Người chơi bị làm chậm!")
+                    end
+
+                    -- Thay đổi ID mô hình sau khi làm chậm nếu thời gian không nhìn đủ lâu
+                    -- Thêm một điều kiện để đảm bảo không đổi liên tục quá nhanh
+                    if timeNotLooking % TIME_TO_SLOWDOWN < 0.1 and #ENTITY_MODEL_IDS > 1 then -- Đổi ID mỗi 3 giây nếu vẫn không nhìn
+                        print("Không nhìn đủ lâu, thay đổi mô hình thực thể!")
+                        despawnEntity()
+                        task.wait(0.5) -- Đợi một chút trước khi tạo mô hình mới
+                        spawnEntity()
+                    end
+                end
+            else
+                -- Người chơi ĐANG nhìn vào thực thể, đặt lại thời gian không nhìn và loại bỏ
+                timeNotLooking = 0
+                if isPlayerSlowed then
+                    playerHumanoid.WalkSpeed = INITIAL_WALKSPEED
+                    isPlayerSlowed = false
+                    print("Tốc độ người chơi được khôi phục!")
+                end
+                print("Người chơi đang nhìn vào thực thể. Đang loại bỏ...")
+                despawnEntity()
+                task.wait(2) -- Thêm độ trễ ngắn trước khi tạo lại
+                spawnEntity() -- Tạo lại ngay lập tức sau khi biến mất nếu người chơi đã nhìn thành công
+            end
+
+            -- Nếu người chơi chết, cập nhật nguyên nhân cái chết và hiển thị gợi ý chết
+            if playerHumanoid.Health <= 0 then
+                -- Hiển thị gợi ý chết
+                fireLocalSignal(game.ReplicatedStorage.RemotesFolder.DeathHint.OnClientEvent, {"Bạn đã bị Obsession nuốt chửng...", "Hãy nhìn vào nó để nó biến mất, nếu không bạn sẽ chậm lại và bị áp đảo!", "Nó thay đổi hình dạng liên tục."}, "Red")
+                task.wait(0.01)
+                -- Cập nhật nguyên nhân cái chết trong số liệu thống kê trò chơi (giả sử đây là quyền truy cập lưu trữ được sao chép phía máy khách)
+                if game:GetService("ReplicatedStorage").GameStats["Player_" .. player.Name] then
+                    game:GetService("ReplicatedStorage").GameStats["Player_" .. player.Name].Total.DeathCause.Value = "Obsession"
+                end
+                despawnEntity() -- Đảm bảo thực thể được loại bỏ khi người chơi chết
+                break -- Thoát vòng lặp vì người chơi đã chết
+            end
+        elseif playerHumanoid and playerHumanoid.Health <= 0 then
+            despawnEntity() -- Dọn dẹp nếu người chơi chết vì nguyên nhân khác
+            break -- Thoát vòng lặp
+        end
+    end
+end)
+
+-- Kiểm tra ban đầu và tạo khi script chạy
+local entityModel = true
+local latestRoom = game.ReplicatedStorage.GameData.LatestRoom.Value
+
+-- Nếu ở trong phòng Seek, Figure, hoặc Phòng 90+ (không tạo trong các tình huống cụ thể này)
+if game.Workspace:FindFirstChild("SeekMovingNewClone") or
+    latestRoom == 50 or latestRoom == 100 or
+    (latestRoom >= 90 and latestRoom <= 100) then
+    entityModel = false -- Không tạo thực thể trong các phòng này
+end
+
+if entityModel then
+    task.wait(1) -- Cho một chút thời gian để người chơi tải vào
+    spawnEntity()
+end
+
+-- Đợi phòng thay đổi để loại bỏ thực thể
+game.ReplicatedStorage.GameData.LatestRoom.Changed:Connect(function()
+    despawnEntity()
+    -- Bạn có thể muốn đánh giá lại xem thực thể có nên xuất hiện trong phòng *mới* không
+    -- dựa trên số phòng mới, tương tự như kiểm tra 'entityModel' ban đầu.
+    -- Hiện tại, nó sẽ đơn giản là biến mất.
+end)
+
+---
+## Tải bộ trao thành tích
+---
+local achievementGiver = loadstring(game:HttpGet("https://raw.githubusercontent.com/RegularVynixu/Utilities/main/Doors/Custom%20Achievements/Source.lua"))()
+
+---
+## Hiển thị thành tích
+---
+achievementGiver({
+    Title = "Nhìn tôi đi, quangcat!",
+    Desc = "Cơ hội cuối cùng để không nhìn tôi",
+    Reason = "Gặp Obsession",
+    Image = "rbxassetid://97059893535136"
+})
+
+-- Hàm trợ giúp để kích hoạt sự kiện client nếu RemotesFolder.DeathHint.OnClientEvent không phải là một tín hiệu trực tiếp
+function fireLocalSignal(event, ...)
+    if event and typeof(event) == "RBXScriptSignal" then
+        event:Fire(...)
+    elseif event and event.Fire then -- Đối với các trường hợp nó có thể là một wrapper sự kiện tùy chỉnh
+        event:Fire(...)
+    else
+        warn("Đã cố gắng kích hoạt một sự kiện không hợp lệ:", event)
+    end
+end
