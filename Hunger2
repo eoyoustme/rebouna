@@ -41,7 +41,7 @@ task.spawn(function()
     damageSound.Parent = player.Character -- Parent to character so it moves with them
 
     while Kill == true do
-        task.wait(0.3)
+        task.wait(0.09)
         local _, camera = game.Workspace.CurrentCamera:WorldToViewportPoint(part.Position)
 
         -- If the player is not looking at DepthTer, they take damage and are "frozen" in camera rotation
