@@ -22,8 +22,8 @@ local entity = Spawner.createEntity({
         '1',  --- '1'= 'Instant Without Being Looked out' | '2' = 'With Being Looked At'
     },
     FlickerLights = {
-        false, -- Enabled/Disabled
-        80 -- Time (seconds)
+        true, -- Enabled/Disabled
+        2 -- Time (seconds)
     },
     Cycles = {
         Min = 1,
