@@ -74,7 +74,7 @@ task.delay(1, function()
 		jumpSound:Play()
 
 		-- 🩸 Gây sát thương sau 2 giây
-		task.wait(2)
+		task.wait(0.7)
 		humanoid:TakeDamage(40)
 
 		-- 📜 Death message
