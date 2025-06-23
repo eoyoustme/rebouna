@@ -6,7 +6,7 @@ cue2.Volume = 45
 cue2.PlaybackSpeed = 0.7
 cue2:Play()
 
-wait(23)
+wait(2)
 
 -- Check current room
 local entityModel = true
