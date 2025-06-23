@@ -70,9 +70,9 @@ text.Image = "rbxassetid://117106082021449"
 text.ImageTransparency = 0
 text.BackgroundTransparency = 1
 
----
-### Concurrent Effects
----
+--
+-- Concurrent Effects
+--
 
 -- Task for background transparency and image transparency blinking
 task.spawn(function()
@@ -143,9 +143,9 @@ task.spawn(function()
     end
 end)
 
----
-### Jump Scare Sequence
----
+--
+-- Jump Scare Sequence
+--
 
 -- Wait for the initial jump scare duration
 task.wait(0.7)
