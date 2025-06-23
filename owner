@@ -28,7 +28,7 @@ local entity = spawner.Create({
 	},
 	Movement = {
 		Speed = 400,
-		Delay = 13,
+		Delay = 9,
 		Reversed = false
 	},
 	Rebounding = {
@@ -208,13 +208,13 @@ task.spawn(function()
         face.Rotation = 10
         face.Image = "rbxassetid://87334855659812"
         task.wait(0.0589)
-        face.Rotation = 10
+        face.Rotation = -10
         face.Image = "rbxassetid://87334855659812"
         task.wait(0.0589)
         face.Rotation = 10
         face.Image = "rbxassetid://87334855659812"
         task.wait(0.0589)
-        face.Rotation = 10
+        face.Rotation = -10
     end
 end)
 
