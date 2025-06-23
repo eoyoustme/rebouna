@@ -1,11 +1,9 @@
 local player = game.Players.LocalPlayer
 local playerGui = player:WaitForChild("PlayerGui")
 
--- Đảm bảo Character đã tải trước khi tiếp tục
 local character = player.Character or player.CharacterAdded:Wait()
--- Đảm bảo Humanoid đã tải
 local humanoid = character:WaitForChild("Humanoid")
-local camera = workspace.CurrentCamera -- Lấy camera hiện tại
+local camera = workspace.CurrentCamera
 
 local screenGui = Instance.new("ScreenGui")
 screenGui.Parent = playerGui
@@ -44,7 +42,6 @@ local distort = Instance.new("DistortionSoundEffect")
 distort.Parent = killSound
 distort.Level = 0.2
 
-killSound:Play()
 
 -- Background Image
 local background = Instance.new("ImageLabel")
@@ -76,17 +73,49 @@ text.ImageTransparency = 0
 text.BackgroundTransparency = 1
 
 ---
---- Concurrent Effects
+--- Khởi động hiệu ứng và Zoom đồng thời
+---
+
+-- Bắt đầu âm thanh ngay lập tức
+killSound:Play()
+
+-- Camera FOV Zoom Setup
+local startFov = camera.FieldOfView
+local zoomFov = 20 -- Độ FOV khi zoom (thấp hơn = zoom nhiều hơn)
+local zoomDuration = 0.7 -- Thời gian để zoom hoàn tất
+
+camera.CameraType = Enum.CameraType.Scriptable -- Chuyển camera sang chế độ scriptable
+
+-- Tween cho FOV của camera
+local tweenInfoFov = TweenInfo.new(zoomDuration, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+local propertiesFov = {FieldOfView = zoomFov}
+local tweenFov = game:GetService("TweenService"):Create(camera, tweenInfoFov, propertiesFov)
+tweenFov:Play() -- Bắt đầu zoom FOV ngay
+
+-- Tween để phóng to và di chuyển hình ảnh jump scare
+local targetImageSize = UDim2.new(0, 700, 0, 700) -- Kích thước cuối cùng của mặt
+local targetImagePosition = UDim2.new(0.5, 0, 0.5, 0) -- Đảm bảo nó ở giữa màn hình
+
+local tweenInfoImage = TweenInfo.new(zoomDuration, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+local propertiesImage = {
+    Size = targetImageSize,
+    Position = targetImagePosition
+}
+local tweenImage = game:GetService("TweenService"):Create(face, tweenInfoImage, propertiesImage)
+tweenImage:Play() -- Bắt đầu phóng to hình ảnh ngay
+
+---
+--- Concurrent Effects (tiếp tục chạy song song)
 ---
 
 -- Task for background transparency and image transparency blinking
 task.spawn(function()
     while not stopEffects do
-        background.BackgroundTransparency = 0.6
+        background.BackgroundTransparency = 0
         background.ImageTransparency = 1
         task.wait(0.1)
         background.BackgroundTransparency = 1
-        background.ImageTransparency = 0.6
+        background.ImageTransparency = 0
         task.wait(0.1)
     end
 end)
@@ -104,16 +133,16 @@ end)
 -- Task for face rotation and image changing
 task.spawn(function()
     while not stopEffects do
-        face.Rotation = 12
+        face.Rotation = 10
         face.Image = "rbxassetid://17215733855"
         task.wait(0.0589)
-        face.Rotation = -12
+        face.Rotation = -10
         face.Image = "rbxassetid://17215733855"
         task.wait(0.0589)
-        face.Rotation = 12
+        face.Rotation = 10
         face.Image = "rbxassetid://17215733855"
         task.wait(0.0589)
-        face.Rotation = -12
+        face.Rotation = -10
         task.wait(0.0589)
     end
 end)
@@ -149,48 +178,20 @@ task.spawn(function()
 end)
 
 ---
---- Jump Scare Sequence
+--- Kết thúc Jumpscare và Dọn dẹp
 ---
 
-task.wait(0.4) -- Chờ thời gian jump scare ban đần
+-- Chờ cho hiệu ứng chính (bao gồm zoom) hoàn tất
+task.wait(zoomDuration) -- Sử dụng zoomDuration để chờ đủ thời gian zoom
+
 stopEffects = true -- Dừng các hiệu ứng lặp
 killSound:Stop() -- Dừng âm thanh
-
--- Camera FOV Zoom
-local startFov = camera.FieldOfView
-local zoomFov = 20
-local zoomDuration = 0.7
-
-camera.CameraType = Enum.CameraType.Scriptable
-local originalCFrame = camera.CFrame -- Lưu CFrame ban đầu của camera (để reset nếu cần)
-
--- Tạo Tween cho FOV của camera
-local tweenInfoFov = TweenInfo.new(zoomDuration, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
-local propertiesFov = {FieldOfView = zoomFov}
-local tweenFov = game:GetService("TweenService"):Create(camera, tweenInfoFov, propertiesFov)
-tweenFov:Play()
-
--- Đồng thời, Tween để phóng to và di chuyển hình ảnh jump scare
-local targetImageSize = UDim2.new(0, 700, 0, 700)
-local targetImagePosition = UDim2.new(0.5, 0, 0.5, 0)
-
-local tweenInfoImage = TweenInfo.new(zoomDuration, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
-local propertiesImage = {
-    Size = targetImageSize,
-    Position = targetImagePosition
-}
-local tweenImage = game:GetService("TweenService"):Create(face, tweenInfoImage, propertiesImage)
-tweenImage:Play()
-
--- Chờ cho cả hai tween hoàn tất
-tweenFov.Completed:Wait()
 
 -- Fade out UI
 task.spawn(function()
     while not doneFading do
-        -- Đảm bảo các GUI vẫn tồn tại trước khi thay đổi thuộc tính
         if face and text and background then
-            face.ImageTransparency = math.min(face.ImageTransparency + 0.1, 1) -- Đảm bảo không vượt quá 1
+            face.ImageTransparency = math.min(face.ImageTransparency + 0.1, 1)
             text.ImageTransparency = math.min(text.ImageTransparency + 0.1, 1)
             background.ImageTransparency = math.min(background.ImageTransparency + 0.1, 1)
             background.BackgroundTransparency = math.min(background.BackgroundTransparency + 0.1, 1)
@@ -199,27 +200,19 @@ task.spawn(function()
                 doneFading = true
             end
         else
-            -- Nếu một trong các GUI đã bị hủy, dừng vòng lặp fade
             doneFading = true
         end
         task.wait(0.05)
     end
-    -- Clean up GUI elements after fading
-    if screenGui then -- Đảm bảo screenGui vẫn tồn tại trước khi hủy
+    if screenGui then
         screenGui:Destroy()
     end
 end)
 
--- Player death and camera reset
-task.wait(0.4) -- Chờ một chút sau khi zoom và trước khi người chơi chết/reset camera
+task.wait(0.4) -- Chờ một chút sau khi fade out trước khi reset camera và kill player
 
 -- Reset camera type back to Custom (player control) and its FOV
-if camera then -- Đảm bảo camera vẫn tồn tại
+if camera then
     camera.CameraType = Enum.CameraType.Custom
     camera.FieldOfView = startFov -- Reset về FoV ban đầu
-end
-
--- Kill the player (đảm bảo humanoid tồn tại)
-if humanoid then
-    humanoid.Health = 0
 end
