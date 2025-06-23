@@ -82,11 +82,11 @@ text.BackgroundTransparency = 1
 -- Task for background transparency and image transparency blinking
 task.spawn(function()
     while not stopEffects do
-        background.BackgroundTransparency = 0
+        background.BackgroundTransparency = 0.6
         background.ImageTransparency = 1
         task.wait(0.1)
         background.BackgroundTransparency = 1
-        background.ImageTransparency = 0
+        background.ImageTransparency = 0.6
         task.wait(0.1)
     end
 end)
@@ -104,16 +104,16 @@ end)
 -- Task for face rotation and image changing
 task.spawn(function()
     while not stopEffects do
-        face.Rotation = 10
+        face.Rotation = 12
         face.Image = "rbxassetid://17215733855"
         task.wait(0.0589)
-        face.Rotation = -10
+        face.Rotation = -12
         face.Image = "rbxassetid://17215733855"
         task.wait(0.0589)
-        face.Rotation = 10
+        face.Rotation = 12
         face.Image = "rbxassetid://17215733855"
         task.wait(0.0589)
-        face.Rotation = -10
+        face.Rotation = -12
         task.wait(0.0589)
     end
 end)
@@ -152,7 +152,7 @@ end)
 --- Jump Scare Sequence
 ---
 
-task.wait(0.7) -- Chờ thời gian jump scare ban đầu
+task.wait(0.4) -- Chờ thời gian jump scare ban đần
 stopEffects = true -- Dừng các hiệu ứng lặp
 killSound:Stop() -- Dừng âm thanh
 
@@ -211,7 +211,7 @@ task.spawn(function()
 end)
 
 -- Player death and camera reset
-task.wait(0.7) -- Chờ một chút sau khi zoom và trước khi người chơi chết/reset camera
+task.wait(0.4) -- Chờ một chút sau khi zoom và trước khi người chơi chết/reset camera
 
 -- Reset camera type back to Custom (player control) and its FOV
 if camera then -- Đảm bảo camera vẫn tồn tại
