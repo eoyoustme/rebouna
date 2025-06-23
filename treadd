@@ -39,9 +39,9 @@ function CustomGitSound(soundlink, vol, filename, duration)
     DreadSound:Destroy()  
 end
 
-CustomGitSound("https://github.com/Kotyara19k-Doorsspawner/Random-files/raw/main/ClockSounds.mp3", 1, "DreadClock", 35)
+CustomGitSound("https://github.com/Kotyara19k-Doorsspawner/Random-files/raw/main/ClockSounds.mp3", 1, "DreadClock", 10)
 
-wait(1)
+wait(0)
 
 ---====== Define spawner ======---
 
@@ -52,11 +52,11 @@ local Spawner = loadstring(game:HttpGet("https://raw.githubusercontent.com/Regul
 local entity = Spawner.createEntity({
     CustomName = "Dread",
     Model = "rbxassetid://12329981842", -- Your entity's model url here ("rbxassetid://1234567890" or GitHub raw url)
-    Speed = 999999,
+    Speed = 120,
     MoveDelay = 1,
     HeightOffset = 0,
     CanKill = true,
-    KillRange = 10000000,
+    KillRange = 10,
     SpawnInFront = false,
     ShatterLights = false,
     FlickerLights = {
@@ -88,7 +88,7 @@ end
 
 entity.Debug.OnEntityDespawned = function()
     print("Entity has despawned")
-game.Workspace.DreadClock:Destroy()
+game.Workspace.Grandfather_Clock:Destroy()
 
     ---====== Load achievement giver ======---
     local achievementGiver = loadstring(game:HttpGet("https://raw.githubusercontent.com/RegularVynixu/Utilities/main/Doors/Custom%20Achievements/Source.lua"))()
