@@ -7,46 +7,71 @@ local TweenService = game:GetService("TweenService")
 local Debris = game:GetService("Debris")
 
 local LocalPlayer = Players.LocalPlayer
-local Character = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
-local Humanoid = Character:WaitForChild("Humanoid") -- Đảm bảo Humanoid đã có
 
--- Tạo và phát âm thanh
-local static = Instance.new("Sound")
-static.SoundId = "rbxassetid://5681392074"
-static.Parent = ReplicatedStorage -- Hoặc tốt hơn là SoundService nếu chỉ dùng client-side
-static.Name = "Se"
-static.Pitch = 0.7
-static.Volume = 5
-static.TimePosition = 0.2
-static:Play()
+-- Đảm bảo Character và Humanoid đã tải
+local Character = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
+local Humanoid = Character:WaitForChild("Humanoid")
+
+-- Tạo và phát âm thanh static
+local staticSound = Instance.new("Sound") -- Đổi tên biến để tránh trùng lặp nếu có
+staticSound.SoundId = "rbxassetid://5681392074"
+staticSound.Parent = SoundService -- Tốt hơn là đặt trong SoundService cho âm thanh client-side
+staticSound.Name = "Se"
+staticSound.Pitch = 0.7
+staticSound.Volume = 5
+staticSound.TimePosition = 0.2
+staticSound.Looped = true -- Giả định âm thanh này lặp để nó có thể tiếp tục chơi
+staticSound:Play()
 
 -- Tạo và hiển thị GUI
-local GUI = Instance.new("ScreenGui")
-GUI.Name = "TemporaryScareGUI" -- Đặt tên để dễ kiểm soát hơn
-GUI.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
-GUI.IgnoreGuiInset = true
-GUI.Parent = LocalPlayer.PlayerGui -- Gán Parent ngay lập tức để đảm bảo GUI xuất hiện
+local scareGUI = Instance.new("ScreenGui") -- Đổi tên biến để rõ ràng hơn
+scareGUI.Name = "ScareEffectGUI"
+scareGUI.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+scareGUI.IgnoreGuiInset = true
+scareGUI.Parent = LocalPlayer.PlayerGui
 
-local Image = Instance.new("ImageLabel")
-Image.BackgroundColor3 = Color3.fromRGB(0,0,255) -- Màu nền xanh, nhưng Transparency = 1 nên không thấy
-Image.BackgroundTransparency = 1
-Image.Size = UDim2.new(1,0,1,0)
-Image.Image = "rbxassetid://12466328200"
-Image.ImageTransparency = 0
-Image.Parent = GUI -- Gán Parent cuối cùng để tránh render từng phần
+local scareImage = Instance.new("ImageLabel") -- Đổi tên biến
+scareImage.BackgroundColor3 = Color3.fromRGB(0,0,255)
+scareImage.BackgroundTransparency = 0
+scareImage.Size = UDim2.new(1,0,1,0)
+scareImage.Image = "rbxassetid://12466328200"
+scareImage.ImageTransparency = 0
+scareImage.Parent = scareGUI
 
-wait(1)
-GUI:Destroy() -- Hủy GUI sau 1 giây
+-- Chờ 1 giây để hiệu ứng GUI ban đầu
+task.wait(1)
+scareGUI:Destroy() -- Hủy GUI sau 1 giây
 
--- Kiểm tra xem người chơi có đang di chuyển không
-if Humanoid.MoveDirection ~= Vector3.new(0,0,0) then
+-- Biến để theo dõi trạng thái di chuyển và kết nối sự kiện
+local playerHasMoved = false
+local movementCheckConnection = nil -- Sẽ lưu trữ kết nối sự kiện PropertyChangedSignal
+
+-- Hàm để kích hoạt hiệu ứng khi người chơi di chuyển
+local function activateFearEffects()
+    if playerHasMoved then return end -- Đảm bảo chỉ kích hoạt một lần
+    playerHasMoved = true
+
+    -- Ngắt kết nối sự kiện kiểm tra di chuyển ngay lập tức
+    if movementCheckConnection then
+        movementCheckConnection:Disconnect()
+        movementCheckConnection = nil
+    end
+
+    print("Người chơi đã di chuyển! Kích hoạt hiệu ứng đáng sợ.")
     Humanoid:TakeDamage(20)
 
-    local blur = Instance.new("BlurEffect", Lighting)
+    -- Dừng âm thanh static
+    staticSound:Stop()
+
+    -- Tạo và tween hiệu ứng blur
+    local blur = Instance.new("BlurEffect")
     blur.Size = 20
-    
-    -- Kiểm tra sự tồn tại của SoundService.Main và EqualizerSoundEffect
-    local MainSoundGroup = SoundService:FindFirstChild("Main") -- Giả sử "Main" là một SoundGroup hoặc Sound
+    blur.Parent = Lighting
+    TweenService:Create(blur, TweenInfo.new(15), {Size = 0}):Play()
+    Debris:AddItem(blur, 15) -- Xóa blur sau khi tween xong
+
+    -- Cấu hình và tween EqualizerSoundEffect
+    local MainSoundGroup = SoundService:FindFirstChild("Main")
     if MainSoundGroup and MainSoundGroup:FindFirstChild("EqualizerSoundEffect") then
         local equalizer = MainSoundGroup.EqualizerSoundEffect
         equalizer.Enabled = true
@@ -60,30 +85,47 @@ if Humanoid.MoveDirection ~= Vector3.new(0,0,0) then
             MidGain = 0,
         }):Play()
     else
-        warn("Warning: 'Main' SoundGroup or 'EqualizerSoundEffect' not found under SoundService.")
+        warn("SoundService.Main hoặc EqualizerSoundEffect không tìm thấy. Hiệu ứng âm thanh bổ sung sẽ không hoạt động.")
     end
 
-    TweenService:Create(blur, TweenInfo.new(15), {Size = 0}):Play()
-    Debris:AddItem(blur, 15)
-
-    -- Phần này phải được xử lý bởi một Script trên Server để cập nhật GameStats
-    -- và gửi RemoteEvent đến Client khác (nếu cần) hoặc chính Client này.
-    -- Nếu đây là LocalScript, nó không thể trực tiếp thay đổi Value trong ReplicatedStorage một cách đáng tin cậy cho tất cả người chơi
-    -- mà không có sự đồng bộ từ Server.
-    -- Vì DeathHint.OnClientEvent là một RemoteEvent (server -> client), bạn không thể kích hoạt nó từ client như thế này.
-    
-    -- Giả sử bạn muốn thông báo hiển thị trên màn hình của người chơi này.
-    -- Bạn cần một RemoteEvent trên ReplicatedStorage mà SERVER sẽ gọi cho CLIENT.
-    -- Ví dụ:
-    -- ServerScript (nơi xử lý cái chết và gửi thông báo):
-    -- game.ReplicatedStorage.RemotesFolder.DeathHint:FireClient(LocalPlayer, {"You died to who you call ???.","Try your best to not move at all.","He can sense you with sound."},"Blue")
-    -- LocalScript (lắng nghe sự kiện này):
-    -- game.ReplicatedStorage.RemotesFolder.DeathHint.OnClientEvent:Connect(function(messages, color)
-    --     -- Hiển thị messages và color trên GUI của người chơi
-    -- end)
-
-    -- Nếu bạn muốn LocalScript này tự hiển thị gợi ý (không thông qua RemoteEvent):
-    -- Bạn cần tự tạo một TextLabel hoặc một loại GUI khác để hiển thị các thông báo này.
-    print("Player died to ??? and received a hint.") -- Chỉ để debug hoặc thông báo cục bộ
-    -- game.ReplicatedStorage.GameStats["Player_".. LocalPlayer.Name].Total.DeathCause.Value = "???" -- Dòng này chỉ nên chạy trên Server
+    -- Phần này cần xử lý trên Server để đảm bảo đồng bộ hóa
+    print("Bạn đã chết bởi '???'. Hãy thử không di chuyển. Hắn ta có thể cảm nhận bạn qua âm thanh.")
+    -- Ví dụ cách gửi thông báo đến người chơi qua RemoteEvent (nếu đã thiết lập trên server)
+    -- local deathHintRemote = ReplicatedStorage.RemotesFolder:FindFirstChild("DeathHint")
+    -- if deathHintRemote then
+    --     deathHintRemote:FireClient(LocalPlayer, {"You died to who you call ???.","Try your best to not move at all.","He can sense you with sound."},"Blue")
+    -- end
 end
+
+-- Bắt đầu kiểm tra chuyển động
+local checkDuration = 5 -- Thời gian chờ tối đa 5 giây
+local checkStartTime = os.time()
+
+-- Lắng nghe sự kiện MoveDirection thay đổi
+movementCheckConnection = Humanoid:GetPropertyChangedSignal("MoveDirection"):Connect(function()
+    if Humanoid.MoveDirection ~= Vector3.new(0,0,0) then
+        activateFearEffects() -- Kích hoạt hiệu ứng ngay khi phát hiện di chuyển
+    end
+end)
+
+-- Tạo một luồng riêng để chờ và kiểm tra sau 5 giây
+task.spawn(function()
+    local elapsed = 0
+    while elapsed < checkDuration do
+        if playerHasMoved then -- Nếu người chơi đã di chuyển, thoát vòng lặp
+            break
+        end
+        task.wait(0.1) -- Kiểm tra mỗi 0.1 giây
+        elapsed = os.time() - checkStartTime
+    end
+
+    if not playerHasMoved then
+        -- Người chơi không di chuyển trong suốt 5 giây
+        print("Người chơi không di chuyển trong 5 giây. Âm thanh static dừng và không có hiệu ứng đáng sợ khác.")
+        staticSound:Stop() -- Dừng âm thanh static
+        if movementCheckConnection then
+            movementCheckConnection:Disconnect() -- Ngắt kết nối sự kiện nếu chưa ngắt
+            movementCheckConnection = nil
+        end
+    end
+end)
