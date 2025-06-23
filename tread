@@ -88,7 +88,7 @@ end
 
 entity.Debug.OnEntityDespawned = function()
     print("Entity has despawned")
-DreadClock:Destroy()
+game.Workspace.DreadClock:Destroy()
 
     ---====== Load achievement giver ======---
     local achievementGiver = loadstring(game:HttpGet("https://raw.githubusercontent.com/RegularVynixu/Utilities/main/Doors/Custom%20Achievements/Source.lua"))()
