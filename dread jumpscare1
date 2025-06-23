@@ -111,11 +111,11 @@ tweenImage:Play() -- Bắt đầu phóng to hình ảnh ngay
 -- Task for background transparency and image transparency blinking
 task.spawn(function()
     while not stopEffects do
-        background.BackgroundTransparency = 0.7
-        background.ImageTransparency = 1
+        background.BackgroundTransparency = 0
+        background.ImageTransparency = 0.3
         task.wait(0.1)
-        background.BackgroundTransparency = 1
-        background.ImageTransparency = 0.7
+        background.BackgroundTransparency = 0.3
+        background.ImageTransparency = 0
         task.wait(0.1)
     end
 end)
