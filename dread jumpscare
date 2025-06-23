@@ -70,9 +70,9 @@ text.Image = "rbxassetid://117106082021449"
 text.ImageTransparency = 0
 text.BackgroundTransparency = 1
 
----
---- Concurrent Effects
----
+--
+-- Concurrent Effects
+--
 
 -- Task for background transparency and image transparency blinking
 task.spawn(function()
