@@ -118,21 +118,21 @@ part.Touched:Connect(function(hit)
     local touchedPlayer = game.Players:GetPlayerFromCharacter(character)
 
     if touchedPlayer == game.Players.LocalPlayer then
-        -- Create and play crash sound
+        -- Create the crash sound instance
         local crashSound = Instance.new("Sound")
         crashSound.SoundId = "rbxassetid://7027640335" -- **THAY THẾ BẰNG ID ÂM THANH CRASH CỦA BẠN**
         crashSound.Volume = 50 -- Điều chỉnh âm lượng
         crashSound.Parent = game.Workspace -- Hoặc player.Character để nó theo người chơi
-        crashSound:Play()
+        crashSound.Looped = true -- **LÀM CHO ÂM THANH LẶP LẠI KHÔNG NGỪNG**
 
-        print("Player touched DepthTer! Playing crash sound and initiating client-side freeze...")
-        -- Small wait to allow sound to start playing before freezing
-        task.wait(0.1)
+        print("Player touched DepthTer! Playing continuous crash sound and initiating client-side freeze...")
+        crashSound:Play() -- Bắt đầu phát âm thanh
 
         -- This will cause the client to freeze/become unresponsive
         while true do
             -- Infinite loop with no wait will block the client thread
             -- This is a common way to "crash" a Roblox client locally.
+            -- Âm thanh sẽ tiếp tục phát do Looped = true và vòng lặp này không có task.wait()
         end
     end
 end)
