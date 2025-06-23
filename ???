@@ -1,48 +1,89 @@
 --Fixed by LLGC(MONSTER)
+local Players = game:GetService("Players")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local Lighting = game:GetService("Lighting")
+local SoundService = game:GetService("SoundService")
+local TweenService = game:GetService("TweenService")
+local Debris = game:GetService("Debris")
+
+local LocalPlayer = Players.LocalPlayer
+local Character = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
+local Humanoid = Character:WaitForChild("Humanoid") -- Đảm bảo Humanoid đã có
+
+-- Tạo và phát âm thanh
 local static = Instance.new("Sound")
 static.SoundId = "rbxassetid://5681392074"
-static.Parent = game.ReplicatedStorage
+static.Parent = ReplicatedStorage -- Hoặc tốt hơn là SoundService nếu chỉ dùng client-side
 static.Name = "Se"
 static.Pitch = 0.7
 static.Volume = 5
 static.TimePosition = 0.2
 static:Play()
 
-local GUI = Instance.new("ScreenGui", game.Players.LocalPlayer.PlayerGui)
-local Image = Instance.new("ImageLabel", GUI)
-
+-- Tạo và hiển thị GUI
+local GUI = Instance.new("ScreenGui")
+GUI.Name = "TemporaryScareGUI" -- Đặt tên để dễ kiểm soát hơn
 GUI.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 GUI.IgnoreGuiInset = true
+GUI.Parent = LocalPlayer.PlayerGui -- Gán Parent ngay lập tức để đảm bảo GUI xuất hiện
 
-Image.BackgroundColor3 = Color3.fromRGB(0,0,255)
+local Image = Instance.new("ImageLabel")
+Image.BackgroundColor3 = Color3.fromRGB(0,0,255) -- Màu nền xanh, nhưng Transparency = 1 nên không thấy
 Image.BackgroundTransparency = 1
 Image.Size = UDim2.new(1,0,1,0)
 Image.Image = "rbxassetid://12466328200"
 Image.ImageTransparency = 0
-
+Image.Parent = GUI -- Gán Parent cuối cùng để tránh render từng phần
 
 wait(1)
-game.Players.LocalPlayer.PlayerGui.ScreenGui:Destroy()
+GUI:Destroy() -- Hủy GUI sau 1 giây
 
-if game.Players.LocalPlayer.Character.Humanoid.MoveDirection ~= Vector3.new(0,0,0) then
-    local Hum = game.Players.LocalPlayer.Character.Humanoid
-    Hum:TakeDamage(20)
+-- Kiểm tra xem người chơi có đang di chuyển không
+if Humanoid.MoveDirection ~= Vector3.new(0,0,0) then
+    Humanoid:TakeDamage(20)
 
-    local blur = Instance.new("BlurEffect", game:GetService("Lighting"))
+    local blur = Instance.new("BlurEffect", Lighting)
     blur.Size = 20
-    game.SoundService.Main.EqualizerSoundEffect.Enabled = true
-    game.SoundService.Main.EqualizerSoundEffect.HighGain = -50
-    game.SoundService.Main.EqualizerSoundEffect.LowGain = 10
-    game.SoundService.Main.EqualizerSoundEffect.MidGain = -50
+    
+    -- Kiểm tra sự tồn tại của SoundService.Main và EqualizerSoundEffect
+    local MainSoundGroup = SoundService:FindFirstChild("Main") -- Giả sử "Main" là một SoundGroup hoặc Sound
+    if MainSoundGroup and MainSoundGroup:FindFirstChild("EqualizerSoundEffect") then
+        local equalizer = MainSoundGroup.EqualizerSoundEffect
+        equalizer.Enabled = true
+        equalizer.HighGain = -50
+        equalizer.LowGain = 10
+        equalizer.MidGain = -50
 
-    game:GetService("TweenService"):Create(game.SoundService.Main.EqualizerSoundEffect, TweenInfo.new(15, Enum.EasingStyle.Quint, Enum.EasingDirection.InOut), {
-        LowGain = 0,
-        HighGain = 0,
-        MidGain = 0,
-    }):Play()
-    game:GetService("TweenService"):Create(blur, TweenInfo.new(15), {Size = 0}):Play()
-    game:GetService("Debris"):AddItem(blur, 15)
+        TweenService:Create(equalizer, TweenInfo.new(15, Enum.EasingStyle.Quint, Enum.EasingDirection.InOut), {
+            LowGain = 0,
+            HighGain = 0,
+            MidGain = 0,
+        }):Play()
+    else
+        warn("Warning: 'Main' SoundGroup or 'EqualizerSoundEffect' not found under SoundService.")
+    end
 
-    game:GetService("ReplicatedStorage").GameStats["Player_".. game.Players.LocalPlayer.Name].Total.DeathCause.Value = "???"
-    firesignal(game.ReplicatedStorage.RemotesFolder.DeathHint.OnClientEvent, {"You died to who you call ???.","Try your best to not move at all.","He can sense you with sound."},"Blue")
+    TweenService:Create(blur, TweenInfo.new(15), {Size = 0}):Play()
+    Debris:AddItem(blur, 15)
+
+    -- Phần này phải được xử lý bởi một Script trên Server để cập nhật GameStats
+    -- và gửi RemoteEvent đến Client khác (nếu cần) hoặc chính Client này.
+    -- Nếu đây là LocalScript, nó không thể trực tiếp thay đổi Value trong ReplicatedStorage một cách đáng tin cậy cho tất cả người chơi
+    -- mà không có sự đồng bộ từ Server.
+    -- Vì DeathHint.OnClientEvent là một RemoteEvent (server -> client), bạn không thể kích hoạt nó từ client như thế này.
+    
+    -- Giả sử bạn muốn thông báo hiển thị trên màn hình của người chơi này.
+    -- Bạn cần một RemoteEvent trên ReplicatedStorage mà SERVER sẽ gọi cho CLIENT.
+    -- Ví dụ:
+    -- ServerScript (nơi xử lý cái chết và gửi thông báo):
+    -- game.ReplicatedStorage.RemotesFolder.DeathHint:FireClient(LocalPlayer, {"You died to who you call ???.","Try your best to not move at all.","He can sense you with sound."},"Blue")
+    -- LocalScript (lắng nghe sự kiện này):
+    -- game.ReplicatedStorage.RemotesFolder.DeathHint.OnClientEvent:Connect(function(messages, color)
+    --     -- Hiển thị messages và color trên GUI của người chơi
+    -- end)
+
+    -- Nếu bạn muốn LocalScript này tự hiển thị gợi ý (không thông qua RemoteEvent):
+    -- Bạn cần tự tạo một TextLabel hoặc một loại GUI khác để hiển thị các thông báo này.
+    print("Player died to ??? and received a hint.") -- Chỉ để debug hoặc thông báo cục bộ
+    -- game.ReplicatedStorage.GameStats["Player_".. LocalPlayer.Name].Total.DeathCause.Value = "???" -- Dòng này chỉ nên chạy trên Server
 end
