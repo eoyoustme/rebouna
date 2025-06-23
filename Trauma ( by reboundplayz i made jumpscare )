@@ -36,7 +36,7 @@ local entity = Spawner.createEntity({
         150, -- Shake start distance (from Entity to you)
     },
     Jumpscare = {
-        true, -- Enabled/Disabled
+        false, -- Enabled/Disabled
         {
             Type = "Normal", -- "Normal" or 1 | "Pop" or 2 | "endlessdoorsrebound" or "Rebound" or 3 | More coming Soon
             Image1 = "https://www.pngkey.com/png/full/828-8289764_nothing-png.png", -- Image1 url
@@ -204,13 +204,13 @@ task.spawn(function()
             break
         end
         face.Rotation = 2
-        face.Image = "rbxassetid://101914212937482"
+        face.Image = "rbxassetid://6685956411"
         task.wait(0.0589)
         face.Rotation = -2
-        face.Image = "rbxassetid://101914212937482"
+        face.Image = "rbxassetid://6685956411"
         task.wait(0.0589)
         face.Rotation = 2
-        face.Image = "rbxassetid://101914212937482"
+        face.Image = "rbxassetid://6685956411"
         task.wait(0.0589)
         face.Rotation = -2
     end
