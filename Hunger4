@@ -41,8 +41,8 @@ task.spawn(function()
     damageSound.Parent = player.Character
 
     -- Jumpscare image properties
-    local JUMPSCARE_IMAGE_ID = "rbxassetid://87334855659812" -- **THAY THẾ BẰNG ID ẢNH JUMPSCARE CỦA BẠN**
-    local JUMPSCARE_DURATION = 0.3 -- Thời gian ảnh jumpscare hiển thị (0.1 giây)
+    local JUMPSCARE_IMAGE_ID = "rbxassetid://11306695974" -- **THAY THẾ BẰNG ID ẢNH JUMPSCARE CỦA BẠN**
+    local JUMPSCARE_DURATION = 1 -- Thời gian ảnh jumpscare hiển thị (0.1 giây)
 
     -- Create Jumpscare GUI
     local jumpscareGui = Instance.new("ScreenGui")
