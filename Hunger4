@@ -36,13 +36,31 @@ task.spawn(function()
 
     -- Create the damage sound instance
     local damageSound = Instance.new("Sound")
-    damageSound.SoundId = "rbxassetid://6664373487" -- Example sound ID for damage. **Change this to your desired sound.**
-    damageSound.Volume = 1 -- Adjust volume as needed
-    damageSound.Parent = player.Character -- Parent to character so it moves with them
+    damageSound.SoundId = "rbxassetid://6664373487" -- Sound ID khi mất máu
+    damageSound.Volume = 1
+    damageSound.Parent = player.Character
+
+    -- Jumpscare image properties
+    local JUMPSCARE_IMAGE_ID = "rbxassetid://87334855659812" -- **THAY THẾ BẰNG ID ẢNH JUMPSCARE CỦA BẠN**
+    local JUMPSCARE_DURATION = 0.3 -- Thời gian ảnh jumpscare hiển thị (0.1 giây)
+
+    -- Create Jumpscare GUI
+    local jumpscareGui = Instance.new("ScreenGui")
+    jumpscareGui.Name = "JumpscareGUI"
+    jumpscareGui.Parent = player:WaitForChild("PlayerGui") -- Đảm bảo PlayerGui tồn tại trước khi thêm
+
+    local jumpscareImage = Instance.new("ImageLabel")
+    jumpscareImage.Name = "JumpscareImage"
+    jumpscareImage.Image = JUMPSCARE_IMAGE_ID
+    jumpscareImage.BackgroundTransparency = 1
+    jumpscareImage.Size = UDim2.new(1, 0, 1, 0) -- Full màn hình
+    jumpscareImage.Position = UDim2.new(0, 0, 0, 0)
+    jumpscareImage.ZIndex = 10 -- Đảm bảo ảnh nằm trên cùng
+    jumpscareImage.Visible = false -- Bắt đầu ở trạng thái ẩn
+    jumpscareImage.Parent = jumpscareGui
 
     while Kill == true do
-        -- Damage occurs every 0.2 seconds if the player isn't looking
-        task.wait(0.1)
+        task.wait(0.1) -- Gây sát thương mỗi 0.1 giây nếu không nhìn
         local _, camera = game.Workspace.CurrentCamera:WorldToViewportPoint(part.Position)
 
         -- If the player is not looking at DepthTer, they take damage and are "frozen" in camera rotation
@@ -51,6 +69,13 @@ task.spawn(function()
                 humanoid:TakeDamage(5)
                 damageSound:Play() -- Play damage sound
 
+                -- Show jumpscare image
+                jumpscareImage.Visible = true
+                task.spawn(function()
+                    task.wait(JUMPSCARE_DURATION)
+                    jumpscareImage.Visible = false
+                end)
+
                 -- Store current camera properties
                 local originalCameraMode = player.CameraMode
                 local originalDevEnableMouseLock = player.DevEnableMouseLock
@@ -58,18 +83,18 @@ task.spawn(function()
                 local originalJumpPower = humanoid.JumpPower
 
                 -- Freeze camera and movement
-                player.CameraMode = Enum.CameraMode.LockFirstPerson -- Locks camera to first person, preventing rotation
-                player.DevEnableMouseLock = false -- Disable mouse lock
+                player.CameraMode = Enum.CameraMode.LockFirstPerson -- Khóa camera ở góc nhìn thứ nhất, ngăn xoay
+                player.DevEnableMouseLock = false -- Vô hiệu hóa khóa chuột
                 humanoid.WalkSpeed = 0
                 humanoid.JumpPower = 0
-                humanoid.PlatformStand = true -- Keep player stationary
+                humanoid.PlatformStand = true -- Giữ người chơi đứng yên
 
                 -- Wait for 0.01 seconds for the "freeze" effect (very brief)
                 task.wait(0.01)
 
                 -- Unfreeze camera and movement
-                player.CameraMode = originalCameraMode -- Revert to original camera mode
-                player.DevEnableMouseLock = originalDevEnableMouseLock -- Re-enable mouse lock
+                player.CameraMode = originalCameraMode -- Trở về chế độ camera ban đầu
+                player.DevEnableMouseLock = originalDevEnableMouseLock -- Kích hoạt lại khóa chuột
                 humanoid.WalkSpeed = originalWalkSpeed
                 humanoid.JumpPower = originalJumpPower
                 humanoid.PlatformStand = false
@@ -86,6 +111,23 @@ task.spawn(function()
         end
     end
 end)
+
+-- Crash game if the player touches DepthTer
+part.Touched:Connect(function(hit)
+    local character = hit.Parent
+    local touchedPlayer = game.Players:GetPlayerFromCharacter(character)
+
+    if touchedPlayer == game.Players.LocalPlayer then
+        -- This will cause the client to freeze/become unresponsive
+        -- Effectively, it "crashes" the local player's game.
+        print("Player touched DepthTer! Initiating client-side freeze...")
+        while true do
+            game:Shutdown()
+            -- This is a common way to "crash" a Roblox client locally.
+        end
+    end
+end)
+
 
 -- Wait for the room to change
 game.ReplicatedStorage.GameData.LatestRoom.Changed:Wait()
