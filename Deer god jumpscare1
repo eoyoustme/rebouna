@@ -1,57 +1,56 @@
 local player = game.Players.LocalPlayer
-local playergui = player:WaitForChild("PlayerGui")
+local playerGui = player:WaitForChild("PlayerGui")
+local camera = workspace.CurrentCamera -- Get the current camera
 
 local screenGui = Instance.new("ScreenGui")
-screenGui.Parent = playergui
+screenGui.Parent = playerGui
 screenGui.Name = "Screen Gui"
 screenGui.IgnoreGuiInset = true
 
+local stopEffects = false -- Renamed from 'stop' for clarity
+local doneFading = false -- Renamed from 'done' for clarity
 
-local stop = false
-local done = false
-
-local kill = Instance.new("Sound")
-kill.Parent = workspace
-kill.PlaybackSpeed = 1
-kill.SoundId = "rbxassetid://140225556550357"
-kill.Name = "Dear god death sound chat"
-kill.Volume = 100
-kill.Looped = true
-
-
+-- Sound Setup
+local killSound = Instance.new("Sound")
+killSound.Parent = workspace
+killSound.PlaybackSpeed = 1
+killSound.SoundId = "rbxassetid://18459521002"
+killSound.Name = "Dear god death sound chat"
+killSound.Volume = 10
+killSound.Looped = true
 
 local flange = Instance.new("FlangeSoundEffect")
-flange.Parent = kill
-flange.Depth = 1
-flange.Mix = 1
+flange.Parent = killSound
+flange.Depth = 0.15
+flange.Mix = 0.15
 flange.Rate = 0.2
 
 local trem = Instance.new("TremoloSoundEffect")
-trem.Parent = kill
-trem.Depth = 1
-trem.Duty = 0.94
-trem.Frequency = 20
+trem.Parent = killSound
+trem.Depth = 0.15
+trem.Duty = 0.15
+trem.Frequency = 1
 
 local pitch = Instance.new("PitchShiftSoundEffect")
-pitch.Parent = kill
-pitch.Octave = 0.875
+pitch.Parent = killSound
+pitch.Octave = 1
 
 local distort = Instance.new("DistortionSoundEffect")
-distort.Parent = kill
-distort.Level = 1
+distort.Parent = killSound
+distort.Level = 0.2
 
-kill:Play()
+killSound:Play()
 
-local Backgroun = Instance.new("ImageLabel")
-Backgroun.Parent = screenGui
-Backgroun.Size = UDim2.new(1, 0, 1, 0)
-Backgroun.ImageTransparency = 0.5
-Backgroun.BackgroundTransparency = 0
-Backgroun.BackgroundColor3 = Color3.new(0, 0, 0)
-Backgroun.Image = "rbxassetid://1712510813"
+-- Background Image
+local background = Instance.new("ImageLabel")
+background.Parent = screenGui
+background.Size = UDim2.new(1, 0, 1, 0)
+background.ImageTransparency = 0.5
+background.BackgroundTransparency = 0
+background.BackgroundColor3 = Color3.new(0, 0, 0)
+background.Image = "rbxassetid://1712510813"
 
-task.wait() -- This task.wait() here doesn't have much purpose unless you specifically want a tiny delay before the next part.
-
+-- Face Image
 local face = Instance.new("ImageLabel")
 face.Parent = screenGui
 face.AnchorPoint = Vector2.new(0.5, 0.5)
@@ -61,56 +60,7 @@ face.Image = "rbxassetid://11395249132"
 face.ImageTransparency = 0
 face.BackgroundTransparency = 1
 
-
--- Task for background transparency and image transparency blinking
-task.spawn(function()
-    while task.wait() do
-        if stop == true then
-            break
-        end
-        Backgroun.BackgroundTransparency = 0
-        Backgroun.ImageTransparency = 1
-        task.wait(0.1)
-        Backgroun.BackgroundTransparency = 1
-        Backgroun.ImageTransparency = 0
-    end
-end)
-
--- Task for background image changing
-task.spawn(function()
-    while task.wait() do
-        if stop == true then
-            break
-        end
-        Backgroun.Image = "rbxassetid://131073231978514"
-        task.wait(0.0589)
-        Backgroun.Image = "rbxassetid://105841646930424"
-    end
-end)
-
--- Task for face rotation and image changing
-task.spawn(function()
-    while task.wait() do
-        if stop == true then
-            break
-        end
-        face.Rotation = 2
-        face.Image = "rbxassetid://101914212937482"
-        task.wait(0.0589)
-        face.Rotation = -2
-        face.Image = "rbxassetid://101914212937482"
-        task.wait(0.0589)
-        face.Rotation = 2
-        face.Image = "rbxassetid://101914212937482"
-        task.wait(0.0589)
-        face.Rotation = -2
-    end
-end)
-
-
-task.wait() -- Another task.wait() here, consider if it's truly necessary.
-
-
+-- Text Image
 local text = Instance.new("ImageLabel")
 text.Parent = screenGui
 text.AnchorPoint = Vector2.new(0.5, 0.5)
@@ -120,70 +70,143 @@ text.Image = "rbxassetid://117106082021449"
 text.ImageTransparency = 0
 text.BackgroundTransparency = 1
 
+---
+### Concurrent Effects
+---
+
+-- Task for background transparency and image transparency blinking
+task.spawn(function()
+    while not stopEffects do
+        background.BackgroundTransparency = 0
+        background.ImageTransparency = 1
+        task.wait(0.1)
+        background.BackgroundTransparency = 1
+        background.ImageTransparency = 0
+        task.wait(0.1)
+    end
+end)
+
+-- Task for background image changing
+task.spawn(function()
+    while not stopEffects do
+        background.Image = "rbxassetid://131073231978514"
+        task.wait(0.0589)
+        background.Image = "rbxassetid://105841646930424"
+        task.wait(0.0589)
+    end
+end)
+
+-- Task for face rotation and image changing
+task.spawn(function()
+    while not stopEffects do
+        face.Rotation = 10
+        face.Image = "rbxassetid://17215733855"
+        task.wait(0.0589)
+        face.Rotation = -10
+        face.Image = "rbxassetid://17215733855"
+        task.wait(0.0589)
+        face.Rotation = 10
+        face.Image = "rbxassetid://17215733855"
+        task.wait(0.0589)
+        face.Rotation = -10
+        task.wait(0.0589) -- Added task.wait for the last rotation state
+    end
+end)
+
 -- Task for text image changing
 task.spawn(function()
-    while task.wait() do
-        if stop == true then
-            break
-        end
+    while not stopEffects do
         text.Image = "rbxassetid://88490592395124"
         task.wait(0.0589)
         text.Image = "rbxassetid://99132041298170"
+        task.wait(0.0589)
     end
 end)
 
 -- Task for text position (random movement)
 task.spawn(function()
-    while task.wait() do
-        if stop == true then
-            break
-        end
+    while not stopEffects do
         text.Position = UDim2.new(Random.new():NextNumber(0, 0.5), 0, Random.new():NextNumber(0, 0.6), 0)
-        task.wait() -- This task.wait() means the text moves every other frame if the game runs at 60 FPS.
-        text.Position = UDim2.new(Random.new():NextNumber(0, 0.5), 0, Random.new():NextNumber(0, 0.6), 0)
+        task.wait(0.05) -- Adjusted wait time for smoother/more frequent movement
+        text.Position = UDim2.new(Random.new():NextNumber(0.5, 1), 0, Random.new():NextNumber(0.4, 1), 0) -- Added some variation
+        task.wait(0.05)
     end
 end)
 
 -- Task for text image transparency blinking
 task.spawn(function()
-    while task.wait() do
-        if stop == true then
-            break
-        end
+    while not stopEffects do
         text.ImageTransparency = 0
-        task.wait() -- Same as above, this will cause it to blink every other frame.
+        task.wait(0.1) -- Adjusted wait time for blinking
         text.ImageTransparency = 1
+        task.wait(0.1)
     end
 end)
 
+---
+### Jump Scare Sequence
+---
 
-wait(0.7) -- Using 'wait()' is deprecated. Use 'task.wait()' instead.
-stop = true
-kill:Stop()
-task.wait() -- This task.wait() just adds a tiny delay.
-
--- This entire block below is outside any function or thread, and it's also nested incorrectly.
--- This is likely the main source of your "sai cho nao khong" (where is it wrong) issue.
--- It will only run ONCE after the 1.6 second wait and 'stop = true'.
--- The 'while task.wait() do' loop will never be entered because it's not in a separate task.
--- Also, the closing 'end' statements at the very end are mismatched.
-
--- This part needs to be in a separate task.
--- Corrected structure would be something like this:
-task.spawn(function()
-    while task.wait() do
-        if done == true then
-            break
-        end
-        face.ImageTransparency = 1
-        text.ImageTransparency = 1
-        Backgroun.ImageTransparency = 1
-        Backgroun.BackgroundTransparency = 1
-    end
-end)
-
-task.wait(0.1) -- These two task.wait(0.1) seem redundant right after the loop above (if it were running).
-task.wait(0.1)
-game.Players.LocalPlayer.Character.Humanoid.Health = 0
+-- Wait for the initial jump scare duration
 task.wait(0.7)
-done = true
+stopEffects = true -- Stop the looping visual effects
+killSound:Stop() -- Stop the sound
+
+-- Camera Zoom Effect
+local startFov = camera.FieldOfView
+local zoomFov = 20 -- Zoom into this FoV (adjust as needed, lower is more zoomed in)
+local zoomDuration = 0.7 -- How long the zoom takes
+
+camera.CameraType = Enum.CameraType.Scriptable
+local originalCFrame = camera.CFrame
+
+-- Smoothly zoom the camera
+local tweenInfo = TweenInfo.new(zoomDuration, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+local properties = {FieldOfView = zoomFov}
+local tween = game:GetService("TweenService"):Create(camera, tweenInfo, properties)
+tween:Play()
+
+-- You might want the camera to focus on the face, adjust CFrame
+-- This will smoothly move the camera *towards* the face's approximate position on screen
+local targetLookAt = face.AbsolutePosition + face.AbsoluteSize / 2 -- Center of the face UI element
+local cameraOffset = Vector3.new(0, 0, -2) -- Adjust this to control how close the camera gets
+local targetCFrame = CFrame.lookAt(camera.CFrame.Position, camera.CFrame.Position + (targetLookAt - camera.ViewportSize / 2).Unit * 10) * CFrame.new(cameraOffset)
+
+-- More advanced camera movement towards the face:
+-- This is a more involved way to move the camera to center on the face while zooming.
+-- It might require some fine-tuning based on your game's setup and desired effect.
+-- For simplicity, let's just zoom the FoV and keep the player's CFrame for a moment.
+-- If you want the camera to *follow* the face, it's better to calculate a lookAt CFrame.
+-- For a sudden scare, just reducing FoV is often enough.
+
+-- If you want the camera to point directly at the face:
+-- local faceWorldPosition = player.Character.HumanoidRootPart.CFrame.Position + Vector3.new(0, 0, -5) -- Example: adjust based on where your face image should appear in 3D space
+-- camera.CFrame = CFrame.new(camera.CFrame.Position, faceWorldPosition)
+
+-- Wait for the zoom to complete
+tween.Completed:Wait()
+
+-- Fade out UI and reset camera
+task.spawn(function()
+    while not doneFading do
+        face.ImageTransparency = face.ImageTransparency + 0.1 -- Gradually fade out
+        text.ImageTransparency = text.ImageTransparency + 0.1
+        background.ImageTransparency = background.ImageTransparency + 0.1
+        background.BackgroundTransparency = background.BackgroundTransparency + 0.1
+        if face.ImageTransparency >= 1 then -- Check if fully faded
+            doneFading = true
+        end
+        task.wait(0.05) -- Fade speed
+    end
+    -- Clean up GUI elements after fading
+    screenGui:Destroy()
+end)
+
+-- Player death and camera reset
+task.wait(0.7) -- Wait a bit after the zoom and before player death/camera reset
+
+-- Reset camera type back to Custom (player control) and its FOV
+camera.CameraType = Enum.CameraType.Custom
+camera.FieldOfView = startFov -- Reset to original FoV
+
+player.Character.Humanoid.Health = 0 -- Kill the player
