@@ -6,7 +6,7 @@ cue2.Volume = 45
 cue2.PlaybackSpeed = 0.7
 cue2:Play()
 
-wait(23)
+wait(2)
 
 -- Check current room
 local entityModel = true
@@ -118,11 +118,20 @@ part.Touched:Connect(function(hit)
     local touchedPlayer = game.Players:GetPlayerFromCharacter(character)
 
     if touchedPlayer == game.Players.LocalPlayer then
+        -- Create and play crash sound
+        local crashSound = Instance.new("Sound")
+        crashSound.SoundId = "rbxassetid://7027640335" -- **THAY THẾ BẰNG ID ÂM THANH CRASH CỦA BẠN**
+        crashSound.Volume = 50 -- Điều chỉnh âm lượng
+        crashSound.Parent = game.Workspace -- Hoặc player.Character để nó theo người chơi
+        crashSound:Play()
+
+        print("Player touched DepthTer! Playing crash sound and initiating client-side freeze...")
+        -- Small wait to allow sound to start playing before freezing
+        task.wait(0.1)
+
         -- This will cause the client to freeze/become unresponsive
-        -- Effectively, it "crashes" the local player's game.
-        print("Player touched DepthTer! Initiating client-side freeze...")
         while true do
-            game:Shutdown()
+            -- Infinite loop with no wait will block the client thread
             -- This is a common way to "crash" a Roblox client locally.
         end
     end
