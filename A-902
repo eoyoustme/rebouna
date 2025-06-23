@@ -1,0 +1,119 @@
+-- 📡 Phát tiếng rè cảnh báo
+local static = Instance.new("Sound")
+static.SoundId = "rbxassetid://92453621152905"
+static.Parent = game.ReplicatedStorage
+static.Name = "Se"
+static.Pitch = 1
+static.Volume = 10
+static.TimePosition = 0.2
+static:Play()
+
+local player = game.Players.LocalPlayer
+local char = player.Character or player.CharacterAdded:Wait()
+local humanoid = char:WaitForChild("Humanoid")
+
+-- 🖼️ Giao diện cảnh báo
+local GUI = Instance.new("ScreenGui")
+GUI.Name = "WarningGui"
+GUI.IgnoreGuiInset = true
+GUI.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+GUI.Parent = player:WaitForChild("PlayerGui")
+
+local image = Instance.new("ImageLabel")
+image.BackgroundTransparency = 1
+image.Size = UDim2.new(0, 300, 0, 300)
+image.Image = "rbxassetid://13254725678" -- Ảnh cảnh báo "STOP"
+image.Parent = GUI
+
+-- 🎲 Hiển thị ảnh tại vị trí ngẫu nhiên trong viewport
+local viewportSize = workspace.CurrentCamera.ViewportSize
+local randomX = math.random(0, viewportSize.X - image.Size.X.Offset) -- Điều chỉnh cho kích thước ảnh
+local randomY = math.random(0, viewportSize.Y - image.Size.Y.Offset) -- Điều chỉnh cho kích thước ảnh
+image.Position = UDim2.new(0, randomX, 0, randomY)
+
+-- 🕒 Sau 2 giây, chuyển ảnh vào giữa màn hình
+task.delay(2, function()
+	image:TweenPosition(UDim2.new(0.5, -150, 0.5, -150), Enum.EasingDirection.Out, Enum.EasingStyle.Quad, 0.5, true)
+
+	-- ⏳ Thời gian đứng yên yêu cầu
+	local standStillTime = 2.652
+	local moveDetected = false
+
+	-- 🕵️‍♂️ Theo dõi chuyển động SAU KHI ảnh đã vào giữa
+	for i = 1, standStillTime * 10 do
+		task.wait(0.1)
+		if humanoid.MoveDirection.Magnitude > 0 then
+			moveDetected = true
+			break
+		end
+	end
+
+	-- 💀 Nếu người chơi di chuyển → jumpscare
+	if moveDetected then
+		GUI:Destroy()
+
+		-- 🎃 Jumpscare GUI
+		local jumpscareGUI = Instance.new("ScreenGui")
+		jumpscareGUI.Name = "JumpscareGui"
+		jumpscareGUI.IgnoreGuiInset = true
+		jumpscareGUI.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+		jumpscareGUI.Parent = player:WaitForChild("PlayerGui")
+
+		local face = Instance.new("ImageLabel")
+		face.BackgroundTransparency = 1
+		face.Size = UDim2.new(1, 0, 1, 0)
+		face.Image = "rbxassetid://12436809127" -- Mặt nạ jumpscare
+		face.ImageTransparency = 0
+		face.Parent = jumpscareGUI
+
+		-- 📢 Âm thanh scream
+		local jumpSound = Instance.new("Sound")
+		jumpSound.SoundId = "rbxassetid://124085357123084"
+		jumpSound.Volume = 10
+		jumpSound.Parent = jumpscareGUI
+		jumpSound:Play()
+
+		-- 🩸 Gây sát thương sau 2 giây
+		task.wait(2)
+		humanoid:TakeDamage(40)
+
+		-- 📜 Death message
+		local stats = game.ReplicatedStorage:FindFirstChild("GameStats")
+		if stats then
+			local deathCause = stats:FindFirstChild("Player_" .. player.Name)
+			if deathCause then
+				deathCause.Total.DeathCause.Value = "Paralysis"
+			end
+		end
+
+		pcall(function()
+			firesignal(game.ReplicatedStorage.RemotesFolder.DeathHint.OnClientEvent,
+				{
+					"You died to who you call Paralysis.",
+					"Try your best to not move at all.",
+					"He can sense you with sound."
+				},
+				"Yellow"
+			)
+		end)
+
+		-- 🧹 Xoá GUI sau khi chết hoặc sau 3 giây nếu chưa chết
+		local function cleanUp()
+			if jumpscareGUI and jumpscareGUI.Parent then
+				jumpscareGUI:Destroy()
+			end
+		end
+
+		humanoid.Died:Connect(function()
+			task.wait(1)
+			cleanUp()
+		end)
+
+		task.delay(1, cleanUp)
+
+	else
+		-- ✅ Người chơi không di chuyển → Xoá GUI cảnh báo
+		task.wait(1)
+		if GUI then GUI:Destroy() end
+	end
+end)
