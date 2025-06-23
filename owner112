@@ -28,7 +28,7 @@ local entity = spawner.Create({
 	},
 	Movement = {
 		Speed = 400,
-		Delay = 17,
+		Delay = 16,
 		Reversed = false
 	},
 	Rebounding = {
@@ -208,13 +208,13 @@ task.spawn(function()
         face.Rotation = 10
         face.Image = "rbxassetid://87334855659812"
         task.wait(0.0589)
-        face.Rotation = -10
+        face.Rotation = 10
         face.Image = "rbxassetid://87334855659812"
         task.wait(0.0589)
         face.Rotation = 10
         face.Image = "rbxassetid://87334855659812"
         task.wait(0.0589)
-        face.Rotation = -10
+        face.Rotation = 10
     end
 end)
 
@@ -294,8 +294,8 @@ task.spawn(function()
 end)
 
 task.wait(0.1) -- These two task.wait(0.1) seem redundant right after the loop above (if it were running).
-task.wait(0.1)
 game:Shutdown()
+task.wait(0.1)
 task.wait(0.7)
 done = true
 	else
