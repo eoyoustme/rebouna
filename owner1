@@ -28,7 +28,7 @@ local entity = spawner.Create({
 	},
 	Movement = {
 		Speed = 400,
-		Delay = 9,
+		Delay = 17,
 		Reversed = false
 	},
 	Rebounding = {
@@ -65,7 +65,7 @@ local cue2 = Instance.new("Sound")
     cue2.Name = "Spawn"
     cue2.SoundId = "rbxassetid://9125712561"
     cue2.Volume = 4.5
-    cue2.PlaybackSpeed = 1
+    cue2.PlaybackSpeed = 0.7
     cue2:Play()
 end)
 
