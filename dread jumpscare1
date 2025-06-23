@@ -1,0 +1,225 @@
+local player = game.Players.LocalPlayer
+local playerGui = player:WaitForChild("PlayerGui")
+
+-- Đảm bảo Character đã tải trước khi tiếp tục
+local character = player.Character or player.CharacterAdded:Wait()
+-- Đảm bảo Humanoid đã tải
+local humanoid = character:WaitForChild("Humanoid")
+local camera = workspace.CurrentCamera -- Lấy camera hiện tại
+
+local screenGui = Instance.new("ScreenGui")
+screenGui.Parent = playerGui
+screenGui.Name = "Screen Gui"
+screenGui.IgnoreGuiInset = true
+
+local stopEffects = false
+local doneFading = false
+
+-- Sound Setup
+local killSound = Instance.new("Sound")
+killSound.Parent = workspace
+killSound.PlaybackSpeed = 1
+killSound.SoundId = "rbxassetid://18459521002"
+killSound.Name = "Dear god death sound chat"
+killSound.Volume = 10
+killSound.Looped = true
+
+local flange = Instance.new("FlangeSoundEffect")
+flange.Parent = killSound
+flange.Depth = 0.15
+flange.Mix = 0.15
+flange.Rate = 0.2
+
+local trem = Instance.new("TremoloSoundEffect")
+trem.Parent = killSound
+trem.Depth = 0.15
+trem.Duty = 0.15
+trem.Frequency = 1
+
+local pitch = Instance.new("PitchShiftSoundEffect")
+pitch.Parent = killSound
+pitch.Octave = 1
+
+local distort = Instance.new("DistortionSoundEffect")
+distort.Parent = killSound
+distort.Level = 0.2
+
+killSound:Play()
+
+-- Background Image
+local background = Instance.new("ImageLabel")
+background.Parent = screenGui
+background.Size = UDim2.new(1, 0, 1, 0)
+background.ImageTransparency = 0.5
+background.BackgroundTransparency = 0
+background.BackgroundColor3 = Color3.new(0, 0, 0)
+background.Image = "rbxassetid://1712510813"
+
+-- Face Image
+local face = Instance.new("ImageLabel")
+face.Parent = screenGui
+face.AnchorPoint = Vector2.new(0.5, 0.5)
+face.Position = UDim2.new(0.5, 0, 0.589, 0)
+face.Size = UDim2.new(0, 300, 0, 300)
+face.Image = "rbxassetid://11395249132"
+face.ImageTransparency = 0
+face.BackgroundTransparency = 1
+
+-- Text Image
+local text = Instance.new("ImageLabel")
+text.Parent = screenGui
+text.AnchorPoint = Vector2.new(0.5, 0.5)
+text.Position = UDim2.new(0.5, 0, 0.5, 0)
+text.Size = UDim2.new(0, 150, 0, 150)
+text.Image = "rbxassetid://117106082021449"
+text.ImageTransparency = 0
+text.BackgroundTransparency = 1
+
+---
+--- Concurrent Effects
+---
+
+-- Task for background transparency and image transparency blinking
+task.spawn(function()
+    while not stopEffects do
+        background.BackgroundTransparency = 0
+        background.ImageTransparency = 1
+        task.wait(0.1)
+        background.BackgroundTransparency = 1
+        background.ImageTransparency = 0
+        task.wait(0.1)
+    end
+end)
+
+-- Task for background image changing
+task.spawn(function()
+    while not stopEffects do
+        background.Image = "rbxassetid://131073231978514"
+        task.wait(0.0589)
+        background.Image = "rbxassetid://105841646930424"
+        task.wait(0.0589)
+    end
+end)
+
+-- Task for face rotation and image changing
+task.spawn(function()
+    while not stopEffects do
+        face.Rotation = 10
+        face.Image = "rbxassetid://17215733855"
+        task.wait(0.0589)
+        face.Rotation = -10
+        face.Image = "rbxassetid://17215733855"
+        task.wait(0.0589)
+        face.Rotation = 10
+        face.Image = "rbxassetid://17215733855"
+        task.wait(0.0589)
+        face.Rotation = -10
+        task.wait(0.0589)
+    end
+end)
+
+-- Task for text image changing
+task.spawn(function()
+    while not stopEffects do
+        text.Image = "rbxassetid://88490592395124"
+        task.wait(0.0589)
+        text.Image = "rbxassetid://99132041298170"
+        task.wait(0.0589)
+    end
+end)
+
+-- Task for text position (random movement)
+task.spawn(function()
+    while not stopEffects do
+        text.Position = UDim2.new(Random.new():NextNumber(0, 0.5), 0, Random.new():NextNumber(0, 0.6), 0)
+        task.wait(0.05)
+        text.Position = UDim2.new(Random.new():NextNumber(0.5, 1), 0, Random.new():NextNumber(0.4, 1), 0)
+        task.wait(0.05)
+    end
+end)
+
+-- Task for text image transparency blinking
+task.spawn(function()
+    while not stopEffects do
+        text.ImageTransparency = 0
+        task.wait(0.1)
+        text.ImageTransparency = 1
+        task.wait(0.1)
+    end
+end)
+
+---
+--- Jump Scare Sequence
+---
+
+task.wait(0.7) -- Chờ thời gian jump scare ban đầu
+stopEffects = true -- Dừng các hiệu ứng lặp
+killSound:Stop() -- Dừng âm thanh
+
+-- Camera FOV Zoom
+local startFov = camera.FieldOfView
+local zoomFov = 20
+local zoomDuration = 0.7
+
+camera.CameraType = Enum.CameraType.Scriptable
+local originalCFrame = camera.CFrame -- Lưu CFrame ban đầu của camera (để reset nếu cần)
+
+-- Tạo Tween cho FOV của camera
+local tweenInfoFov = TweenInfo.new(zoomDuration, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+local propertiesFov = {FieldOfView = zoomFov}
+local tweenFov = game:GetService("TweenService"):Create(camera, tweenInfoFov, propertiesFov)
+tweenFov:Play()
+
+-- Đồng thời, Tween để phóng to và di chuyển hình ảnh jump scare
+local targetImageSize = UDim2.new(0, 700, 0, 700)
+local targetImagePosition = UDim2.new(0.5, 0, 0.5, 0)
+
+local tweenInfoImage = TweenInfo.new(zoomDuration, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+local propertiesImage = {
+    Size = targetImageSize,
+    Position = targetImagePosition
+}
+local tweenImage = game:GetService("TweenService"):Create(face, tweenInfoImage, propertiesImage)
+tweenImage:Play()
+
+-- Chờ cho cả hai tween hoàn tất
+tweenFov.Completed:Wait()
+
+-- Fade out UI
+task.spawn(function()
+    while not doneFading do
+        -- Đảm bảo các GUI vẫn tồn tại trước khi thay đổi thuộc tính
+        if face and text and background then
+            face.ImageTransparency = math.min(face.ImageTransparency + 0.1, 1) -- Đảm bảo không vượt quá 1
+            text.ImageTransparency = math.min(text.ImageTransparency + 0.1, 1)
+            background.ImageTransparency = math.min(background.ImageTransparency + 0.1, 1)
+            background.BackgroundTransparency = math.min(background.BackgroundTransparency + 0.1, 1)
+
+            if face.ImageTransparency >= 1 then
+                doneFading = true
+            end
+        else
+            -- Nếu một trong các GUI đã bị hủy, dừng vòng lặp fade
+            doneFading = true
+        end
+        task.wait(0.05)
+    end
+    -- Clean up GUI elements after fading
+    if screenGui then -- Đảm bảo screenGui vẫn tồn tại trước khi hủy
+        screenGui:Destroy()
+    end
+end)
+
+-- Player death and camera reset
+task.wait(0.7) -- Chờ một chút sau khi zoom và trước khi người chơi chết/reset camera
+
+-- Reset camera type back to Custom (player control) and its FOV
+if camera then -- Đảm bảo camera vẫn tồn tại
+    camera.CameraType = Enum.CameraType.Custom
+    camera.FieldOfView = startFov -- Reset về FoV ban đầu
+end
+
+-- Kill the player (đảm bảo humanoid tồn tại)
+if humanoid then
+    humanoid.Health = 0
+end
