@@ -1,0 +1,35 @@
+local modelName = "Sussyroom"
+local assetID = "rbxassetid://11887366327"
+
+local currentRoom = workspace.CurrentRooms[game.ReplicatedStorage.GameData.LatestRoom.Value]
+
+-- Tạo model mới
+local newModel = Instance.new("Model")
+newModel.Name = modelName
+newModel.Parent = currentRoom
+
+-- Lấy object từ assetID
+local obj = game:GetObjects(assetID)[1]
+
+-- Tính trung tâm phòng bằng cách lấy bounding box của currentRoom
+local cframe, size = currentRoom:GetBoundingBox()
+local centerPos = cframe.Position
+
+-- Đặt object cách mặt đất 5 stud
+local targetPos = Vector3.new(centerPos.X + 10, centerPos.Y + 12, centerPos.Z)
+
+obj:PivotTo(CFrame.new(targetPos))
+
+-- Đặt parent và khóa vị trí
+obj.Parent = newModel
+
+if obj.PrimaryPart then
+    obj.PrimaryPart.Anchored = true
+else
+    -- Nếu không có PrimaryPart, cố gắng khóa tất cả các part con
+    for _, part in pairs(obj:GetDescendants()) do
+        if part:IsA("BasePart") then
+            part.Anchored = true
+        end
+    end
+end
