@@ -6,7 +6,7 @@ cue2.Volume = 45
 cue2.PlaybackSpeed = 1
 cue2:Play()
 
-wait(17)
+wait(1)
 
 -- Check current room
 local entityModel = true
@@ -37,7 +37,7 @@ task.spawn(function()
     -- Create the damage sound instance
     local damageSound = Instance.new("Sound")
     damageSound.SoundId = "rbxassetid://6664373487" -- Sound ID khi mất máu
-    damageSound.Volume = 1
+    damageSound.Volume = 20
     damageSound.Parent = player.Character
 
     -- Jumpscare image properties
