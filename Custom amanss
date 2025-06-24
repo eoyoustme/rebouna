@@ -1,35 +1,76 @@
 local modelName = "Sussyroom"
 local assetID = "rbxassetid://11626479968"
 
+local function placeModelOnSurface(model, position, offsetY)
+    local cframe, size = model:GetBoundingBox()
+    local newY = position.Y + offsetY + size.Y / 2
+    local newCFrame = CFrame.new(position.X, newY, position.Z)
+    model:PivotTo(newCFrame)
+end
+
 local currentRoom = workspace.CurrentRooms[game.ReplicatedStorage.GameData.LatestRoom.Value]
 
--- Tạo model mới
-local newModel = Instance.new("Model")
-newModel.Name = modelName
-newModel.Parent = currentRoom
-
--- Lấy object từ assetID
-local obj = game:GetObjects(assetID)[1]
-
--- Tính trung tâm phòng bằng cách lấy bounding box của currentRoom
-local cframe, size = currentRoom:GetBoundingBox()
-local centerPos = cframe.Position
-
--- Đặt object cách mặt đất 5 stud
-local targetPos = Vector3.new(centerPos.X + 10, centerPos.Y + 12, centerPos.Z)
-
-obj:PivotTo(CFrame.new(targetPos))
-
--- Đặt parent và khóa vị trí
-obj.Parent = newModel
-
-if obj.PrimaryPart then
-    obj.PrimaryPart.Anchored = true
-else
-    -- Nếu không có PrimaryPart, cố gắng khóa tất cả các part con
-    for _, part in pairs(obj:GetDescendants()) do
-        if part:IsA("BasePart") then
-            part.Anchored = true
+local function hasSussyroom(wing)
+    for _, child in pairs(wing:GetChildren()) do
+        if child.Name == modelName then
+            return true
         end
     end
+    return false
+end
+
+local candidateWings = {}
+
+for _, wing in pairs(currentRoom:GetChildren()) do
+    if wing:IsA("Model") then
+        local doorCount = 0
+        for _, part in pairs(wing:GetDescendants()) do
+            if part:IsA("BasePart") and string.find(part.Name, "Door") then
+                doorCount = doorCount + 1
+            end
+        end
+
+        if doorCount >= 2 and not hasSussyroom(wing) then
+            table.insert(candidateWings, wing)
+        end
+    end
+end
+
+for _, wing in pairs(candidateWings) do
+    local oldModel = wing:FindFirstChild(modelName)
+    if oldModel then
+        oldModel:Destroy()
+    end
+
+    -- Xóa hết các đối tượng khác trong wing
+    for _, child in pairs(wing:GetChildren()) do
+        if child.Name ~= modelName then
+            child:Destroy()
+        end
+    end
+
+    local newModel = Instance.new("Model")
+    newModel.Name = modelName
+    newModel.Parent = wing
+
+    local obj = game:GetObjects(assetID)[1]
+
+    local cframe, size = wing:GetBoundingBox()
+    local centerPos = cframe.Position
+
+    placeModelOnSurface(obj, Vector3.new(centerPos.X + 10, centerPos.Y - 16, centerPos.Z), 12)
+
+    obj.Parent = newModel
+
+    if obj.PrimaryPart then
+        obj.PrimaryPart.Anchored = true
+    else
+        for _, part in pairs(obj:GetDescendants()) do
+            if part:IsA("BasePart") then
+                part.Anchored = true
+            end
+        end
+    end
+
+    print("Spawn Sussyroom tại cánh phòng: "..wing.Name)
 end
