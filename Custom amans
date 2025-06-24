@@ -16,7 +16,7 @@ local cframe, size = currentRoom:GetBoundingBox()
 local centerPos = cframe.Position
 
 -- Đặt object cách mặt đất 5 stud
-local targetPos = Vector3.new(centerPos.X, centerPos.Y + 15, centerPos.Z)
+local targetPos = Vector3.new(centerPos.X, centerPos.Y + 12, centerPos.Z)
 
 obj:PivotTo(CFrame.new(targetPos))
 
