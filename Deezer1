@@ -39,8 +39,8 @@ local GITHUB_SOUND_LINK = "https://github.com/Darker-TheDarkestGuy/DOORS/raw/ref
 
 local INITIAL_WALKSPEED = 16 -- Tốc độ đi bộ ban đầu của người chơi
 local SLOWED_WALKSPEED = 12 -- Tốc độ đi bộ khi bị làm chậm
-local TIME_TO_SLOWDOWN = 3.4 -- THAY ĐỔI: Thời gian không nhìn để bị làm chậm và đổi mô hình (giây)
-local TIME_TO_DESPAWN_WHEN_LOOKING = 4 -- MỚI: Thời gian nhìn liên tục để thực thể biến mất (giây)
+local TIME_TO_SLOWDOWN = 100 -- THAY ĐỔI: Thời gian không nhìn để bị làm chậm và đổi mô hình (giây)
+local TIME_TO_DESPAWN_WHEN_LOOKING = 40 -- MỚI: Thời gian nhìn liên tục để thực thể biến mất (giây)
 local SPAWN_RADIUS = 1 -- THAY ĐỔI: Khoảng cách tối đa từ người chơi để xuất hiện ngẫu nhiên (gần hơn)
 
 -- ===============================
