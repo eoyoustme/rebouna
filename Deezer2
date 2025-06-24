@@ -23,12 +23,7 @@ local function CustomGitSound(soundlink) -- Chỉ cần soundlink, vì volume đ
     -- Đây là phần phụ thuộc vào Executor.
     pcall(function() -- Sử dụng pcall để bắt lỗi nếu HttpGet không tồn tại hoặc không hoạt động
         sound.SoundId = soundlink -- Một số Executor cho phép đặt URL trực tiếp
-        -- Hoặc một số Executor yêu cầu một định dạng đặc biệt sau khi HttpGet
-        -- Ví dụ: sound.SoundId = "rbxassetdata://" .. game:HttpGet(soundlink)
-        -- Hoặc bạn có thể cần một hàm đặc biệt của Executor, ví dụ:
-        -- sound.SoundId = workspace:GetSoundFromUrl(soundlink)
     end)
-
 
     if sound.SoundId == "" or sound.SoundId == nil then
         warn("Lỗi: Không thể gán SoundId từ đường link GitHub. Executor có thể không hỗ trợ HttpGet cho SoundId hoặc URL không hợp lệ.")
@@ -46,7 +41,6 @@ local function CustomGitSound(soundlink) -- Chỉ cần soundlink, vì volume đ
         return
     end
 
-
     -- Xóa âm thanh sau khi kết thúc để tránh rò rỉ bộ nhớ
     task.spawn(function()
         sound.Ended:Wait()
@@ -62,7 +56,8 @@ local INITIAL_WALKSPEED = 16 -- Tốc độ đi bộ ban đầu của người c
 local SLOWED_WALKSPEED = 12 -- Tốc độ đi bộ khi bị làm chậm
 local TIME_TO_SLOWDOWN = 3.4 -- Thời gian không nhìn để bị làm chậm và đổi mô hình (giây)
 local TIME_TO_DESPAWN_WHEN_LOOKING = 4 -- Thời gian nhìn liên tục để thực thể biến mất (giây)
-local SPAWN_RADIUS = 10 -- Khoảng cách tối đa từ người chơi để xuất hiện ngẫu nhiên (gần hơn)
+-- Không còn SPAWN_RADIUS nữa vì vị trí là cố định sau lưng
+local SPAWN_DISTANCE_BEHIND_PLAYER = 15 -- MỚI: Khoảng cách từ người chơi (phía sau) để xuất hiện
 local SPAWN_IMMUNITY_DURATION = 5 -- Thời gian miễn nhiễm sau khi spawn (giây)
 
 -- ===============================
@@ -149,9 +144,15 @@ local function spawnEntity()
         return
     end
 
-    -- Vị trí ngẫu nhiên xung quanh người chơi
-    local randomOffset = Vector3.new(math.random(-SPAWN_RADIUS, SPAWN_RADIUS), 0, math.random(-SPAWN_RADIUS, SPAWN_RADIUS))
-    primaryPart.CFrame = character.HumanoidRootPart.CFrame + randomOffset + Vector3.new(0, 5, 0) -- Hơi cao hơn sàn
+    -- THAY ĐỔI: Vị trí sau lưng người chơi
+    -- Lấy CFrame của HumanoidRootPart của người chơi
+    local playerCFrame = character.HumanoidRootPart.CFrame
+    -- Tính toán vị trí phía sau người chơi
+    -- 'playerCFrame.LookVector' là vector hướng của người chơi (hướng họ đang nhìn)
+    -- Nhân với -1 để có vector ngược lại (phía sau)
+    -- Nhân với SPAWN_DISTANCE_BEHIND_PLAYER để có khoảng cách mong muốn
+    -- Cộng thêm Vector3.new(0, 5, 0) để đặt nó cao hơn mặt đất một chút
+    primaryPart.CFrame = playerCFrame + (playerCFrame.LookVector * -SPAWN_DISTANCE_BEHIND_PLAYER) + Vector3.new(0, 5, 0)
 
     -- Đảm bảo các phần của mô hình không chặn người chơi
     for _, part in pairs(depthsTer:GetDescendants()) do
@@ -219,7 +220,7 @@ task.spawn(function()
             -- Nếu đang trong thời gian miễn nhiễm, chúng ta không làm gì cả với logic nhìn/không nhìn
             -- Nhưng vẫn kiểm tra người chơi còn sống để có thể dọn dẹp nếu người chơi chết.
             if playerHumanoid and playerHumanoid.Health <= 0 then
-                print("Người chơi chết trong thời gian miễn nhiễm. Đang dọn dẹp.")
+                print("Người chơi chết trong thời gian miễn nhiễm. Đang dọn dọn.")
                 despawnEntity()
                 break -- Thoát vòng lặp chính khi người chơi chết
             end
@@ -235,7 +236,6 @@ task.spawn(function()
                 -- Người chơi KHÔNG nhìn vào thực thể
                 timeNotLooking = timeNotLooking + 0.1 -- Tăng thời gian không nhìn
                 timeLooking = 0 -- Reset thời gian nhìn khi không nhìn
-                --print("Không nhìn. timeNotLooking: " .. string.format("%.1f", timeNotLooking) .. "s")
 
                 if timeNotLooking >= TIME_TO_SLOWDOWN then
                     -- Làm chậm người chơi nếu chưa bị làm chậm
@@ -254,7 +254,6 @@ task.spawn(function()
                 -- Người chơi ĐANG nhìn vào thực thể
                 timeLooking = timeLooking + 0.1 -- Tăng thời gian nhìn
                 timeNotLooking = 0 -- Reset thời gian không nhìn
-                --print("Đang nhìn. timeLooking: " .. string.format("%.1f", timeLooking) .. "s")
 
                 -- Nếu nhìn đủ 4 giây, thực thể biến mất
                 if timeLooking >= TIME_TO_DESPAWN_WHEN_LOOKING then
