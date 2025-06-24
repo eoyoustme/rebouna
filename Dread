@@ -105,195 +105,223 @@ end)
 entity:SetCallback("OnDamagePlayer", function(newHealth)
 	if newHealth == 0 then
 		print("Entity has killed the player - Starting Jumpscare")
+local player = game.Players.LocalPlayer
+local playerGui = player:WaitForChild("PlayerGui")
 
-		local player = game.Players.LocalPlayer
-		local playerGui = player:WaitForChild("PlayerGui")
+local character = player.Character or player.CharacterAdded:Wait()
+local humanoid = character:WaitForChild("Humanoid")
+local camera = workspace.CurrentCamera
 
-		local character = player.Character or player.CharacterAdded:Wait()
-		local humanoid = character:WaitForChild("Humanoid")
-		local camera = workspace.CurrentCamera
+local screenGui = Instance.new("ScreenGui")
+screenGui.Parent = playerGui
+screenGui.Name = "Screen Gui"
+screenGui.IgnoreGuiInset = true
 
-		local screenGui = Instance.new("ScreenGui")
-		screenGui.Name = "JumpscareScreen"
-		screenGui.IgnoreGuiInset = true
-		screenGui.ResetOnSpawn = false -- Giữ GUI khi respawn
-		screenGui.Parent = playerGui
+local stopEffects = false
+local doneFading = false
 
-		local stopEffects = false
-		local doneFading = false
+-- Sound Setup
+local killSound = Instance.new("Sound")
+killSound.Parent = workspace
+killSound.PlaybackSpeed = 1
+killSound.SoundId = "rbxassetid://18459521002"
+killSound.Name = "Dear god death sound chat"
+killSound.Volume = 10
+killSound.Looped = true
 
-		-- Sound Setup
-		local killSound = Instance.new("Sound")
-		killSound.Name = "JumpscareKillSound"
-		killSound.PlaybackSpeed = 1
-		killSound.SoundId = "rbxassetid://18459521002" -- Đảm bảo ID hợp lệ
-		killSound.Volume = 10
-		killSound.Looped = true
-		killSound.Parent = screenGui
+local flange = Instance.new("FlangeSoundEffect")
+flange.Parent = killSound
+flange.Depth = 0.15
+flange.Mix = 0.15
+flange.Rate = 0.2
 
-		local flange = Instance.new("FlangeSoundEffect")
-		flange.Parent = killSound
-		flange.Depth = 0.15
-		flange.Mix = 0.15
-		flange.Rate = 0.2
+local trem = Instance.new("TremoloSoundEffect")
+trem.Parent = killSound
+trem.Depth = 0.15
+trem.Duty = 0.15
+trem.Frequency = 1
 
-		local trem = Instance.new("TremoloSoundEffect")
-		trem.Parent = killSound
-		trem.Depth = 0.15
-		trem.Duty = 0.15
-		trem.Frequency = 1
+local pitch = Instance.new("PitchShiftSoundEffect")
+pitch.Parent = killSound
+pitch.Octave = 1
 
-		local pitch = Instance.new("PitchShiftSoundEffect")
-		pitch.Parent = killSound
-		pitch.Octave = 1
+local distort = Instance.new("DistortionSoundEffect")
+distort.Parent = killSound
+distort.Level = 0.2
 
-		local distort = Instance.new("DistortionSoundEffect")
-		distort.Parent = killSound
-		distort.Level = 0.2
 
-		-- Background Image
-		local background = Instance.new("ImageLabel")
-		background.Parent = screenGui
-		background.Size = UDim2.new(1, 0, 1, 0)
-		background.ImageTransparency = 0.5
-		background.BackgroundTransparency = 0
-		background.BackgroundColor3 = Color3.new(0, 0, 0)
-		background.Image = "rbxassetid://1712510813" -- Đảm bảo ID hợp lệ
-		background.ZIndex = 1
+-- Background Image
+local background = Instance.new("ImageLabel")
+background.Parent = screenGui
+background.Size = UDim2.new(1, 0, 1, 0)
+background.ImageTransparency = 0.5
+background.BackgroundTransparency = 0
+background.BackgroundColor3 = Color3.new(0, 0, 0)
+background.Image = "rbxassetid://1712510813"
 
-		-- Face Image
-		local face = Instance.new("ImageLabel")
-		face.Parent = screenGui
-		face.AnchorPoint = Vector2.new(0.5, 0.5)
-		face.Position = UDim2.new(0.5, 0, 0.589, 0)
-		face.Size = UDim2.new(0, 300, 0, 300)
-		face.Image = "rbxassetid://11395249132" -- Đảm bảo ID hợp lệ
-		face.ImageTransparency = 0
-		face.BackgroundTransparency = 1
-		face.ZIndex = 2
+-- Face Image
+local face = Instance.new("ImageLabel")
+face.Parent = screenGui
+face.AnchorPoint = Vector2.new(0.5, 0.5)
+face.Position = UDim2.new(0.5, 0, 0.589, 0)
+face.Size = UDim2.new(0, 300, 0, 300)
+face.Image = "rbxassetid://11395249132"
+face.ImageTransparency = 0
+face.BackgroundTransparency = 1
 
-		-- Text Image
-		local text = Instance.new("ImageLabel")
-		text.Parent = screenGui
-		text.AnchorPoint = Vector2.new(0.5, 0.5)
-		text.Position = UDim2.new(0.5, 0, 0.5, 0)
-		text.Size = UDim2.new(0, 150, 0, 150)
-		text.Image = "rbxassetid://117106082021449" -- Đảm bảo ID hợp lệ
-		text.ImageTransparency = 0
-		text.BackgroundTransparency = 1
-		text.ZIndex = 3
+-- Text Image
+local text = Instance.new("ImageLabel")
+text.Parent = screenGui
+text.AnchorPoint = Vector2.new(0.5, 0.5)
+text.Position = UDim2.new(0.5, 0, 0.5, 0)
+text.Size = UDim2.new(0, 150, 0, 150)
+text.Image = "rbxassetid://117106082021449"
+text.ImageTransparency = 0
+text.BackgroundTransparency = 1
 
-		-- Bắt đầu hiệu ứng âm thanh và zoom camera
-		killSound:Play()
+---
+--- Khởi động hiệu ứng và Zoom đồng thời
+---
 
-		local startFov = camera.FieldOfView
-		local zoomFov = 60
-		local zoomDuration = 0.7
+-- Bắt đầu âm thanh ngay lập tức
+killSound:Play()
 
-		camera.CameraType = Enum.CameraType.Scriptable
+-- Camera FOV Zoom Setup
+local startFov = camera.FieldOfView
+local zoomFov = 60 -- Độ FOV khi zoom (thấp hơn = zoom nhiều hơn)
+local zoomDuration = 0.7 -- Thời gian để zoom hoàn tất
 
-		local tweenInfoFov = TweenInfo.new(zoomDuration, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
-		local tweenFov = game:GetService("TweenService"):Create(camera, tweenInfoFov, {FieldOfView = zoomFov})
-		tweenFov:Play()
+camera.CameraType = Enum.CameraType.Scriptable -- Chuyển camera sang chế độ scriptable
 
-		local targetImageSize = UDim2.new(0, 1200, 0, 1200)
-		local targetImagePosition = UDim2.new(0.5, 0, 0.5, 0)
+-- Tween cho FOV của camera
+local tweenInfoFov = TweenInfo.new(zoomDuration, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+local propertiesFov = {FieldOfView = zoomFov}
+local tweenFov = game:GetService("TweenService"):Create(camera, tweenInfoFov, propertiesFov)
+tweenFov:Play() -- Bắt đầu zoom FOV ngay
 
-		local tweenInfoImage = TweenInfo.new(zoomDuration, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
-		local tweenImage = game:GetService("TweenService"):Create(face, tweenInfoImage, {Size = targetImageSize, Position = targetImagePosition})
-		tweenImage:Play()
+-- Tween để phóng to và di chuyển hình ảnh jump scare
+local targetImageSize = UDim2.new(0, 1200, 0, 1200) -- Kích thước cuối cùng của mặt
+local targetImagePosition = UDim2.new(0.5, 0, 0.5, 0) -- Đảm bảo nó ở giữa màn hình
 
-		task.wait(0.1) -- Đợi asset load
+local tweenInfoImage = TweenInfo.new(zoomDuration, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+local propertiesImage = {
+    Size = targetImageSize,
+    Position = targetImagePosition
+}
+local tweenImage = game:GetService("TweenService"):Create(face, tweenInfoImage, propertiesImage)
+tweenImage:Play() -- Bắt đầu phóng to hình ảnh ngay
 
-		-- Hiệu ứng lặp song song
-		task.spawn(function()
-			while not stopEffects and background and background.Parent do
-				background.BackgroundTransparency = 0
-				background.ImageTransparency = 0.3
-				task.wait(0.1)
-				background.BackgroundTransparency = 0.3
-				background.ImageTransparency = 0
-				task.wait(0.1)
-			end
-		end)
+---
+--- Concurrent Effects (tiếp tục chạy song song)
+---
 
-		task.spawn(function()
-			while not stopEffects and background and background.Parent do
-				background.Image = "rbxassetid://131073231978514" -- Đảm bảo ID hợp lệ
-				task.wait(0.0589)
-				background.Image = "rbxassetid://105841646930424" -- Đảm bảo ID hợp lệ
-				task.wait(0.0589)
-			end
-		end)
+-- Task for background transparency and image transparency blinking
+task.spawn(function()
+    while not stopEffects do
+        background.BackgroundTransparency = 0
+        background.ImageTransparency = 0.3
+        task.wait(0.1)
+        background.BackgroundTransparency = 0.3
+        background.ImageTransparency = 0
+        task.wait(0.1)
+    end
+end)
 
-		task.spawn(function()
-			while not stopEffects and face and face.Parent do
-				face.Rotation = 10
-				face.Image = "rbxassetid://17215733855"
-				task.wait(0.0589)
-				face.Rotation = -10
-				face.Image = "rbxassetid://17215733855"
-				task.wait(0.0589)
-			end
-		end)
+-- Task for background image changing
+task.spawn(function()
+    while not stopEffects do
+        background.Image = "rbxassetid://131073231978514"
+        task.wait(0.0589)
+        background.Image = "rbxassetid://105841646930424"
+        task.wait(0.0589)
+    end
+end)
 
-		task.spawn(function()
-			while not stopEffects and text and text.Parent do
-				text.Image = "rbxassetid://88490592395124"
-				task.wait(0.0589)
-				text.Image = "rbxassetid://99132041298170"
-				task.wait(0.0589)
-			end
-		end)
+-- Task for face rotation and image changing
+task.spawn(function()
+    while not stopEffects do
+        face.Rotation = 10
+        face.Image = "rbxassetid://17215733855"
+        task.wait(0.0589)
+        face.Rotation = -10
+        face.Image = "rbxassetid://17215733855"
+        task.wait(0.0589)
+        face.Rotation = 10
+        face.Image = "rbxassetid://17215733855"
+        task.wait(0.0589)
+        face.Rotation = -10
+        task.wait(0.0589)
+    end
+end)
 
-		task.spawn(function()
-			while not stopEffects and text and text.Parent do
-				text.Position = UDim2.new(math.random(), 0, math.random(), 0)
-				task.wait(0.05)
-				text.Position = UDim2.new(math.random(), 0, math.random(), 0)
-				task.wait(0.05)
-			end
-		end)
+-- Task for text image changing
+task.spawn(function()
+    while not stopEffects do
+        text.Image = "rbxassetid://88490592395124"
+        task.wait(0.0589)
+        text.Image = "rbxassetid://99132041298170"
+        task.wait(0.0589)
+    end
+end)
 
-		task.spawn(function()
-			while not stopEffects and text and text.Parent do
-				text.ImageTransparency = 0
-				task.wait(0.1)
-				text.ImageTransparency = 1
-				task.wait(0.1)
-			end
-		end)
+-- Task for text position (random movement)
+task.spawn(function()
+    while not stopEffects do
+        text.Position = UDim2.new(Random.new():NextNumber(0, 0.5), 0, Random.new():NextNumber(0, 0.6), 0)
+        task.wait(0.05)
+        text.Position = UDim2.new(Random.new():NextNumber(0.5, 1), 0, Random.new():NextNumber(0.4, 1), 0)
+        task.wait(0.05)
+    end
+end)
 
-		-- Kết thúc hiệu ứng chính
-		task.wait(zoomDuration)
-		stopEffects = true
-		if killSound then killSound:Stop() end
+-- Task for text image transparency blinking
+task.spawn(function()
+    while not stopEffects do
+        text.ImageTransparency = 0
+        task.wait(0.1)
+        text.ImageTransparency = 1
+        task.wait(0.1)
+    end
+end)
 
-		-- Fade out UI
-		task.spawn(function()
-			while not doneFading and screenGui and face and text and background do
-				face.ImageTransparency = math.min(face.ImageTransparency + 0.1, 1)
-				text.ImageTransparency = math.min(text.ImageTransparency + 0.1, 1)
-				background.ImageTransparency = math.min(background.ImageTransparency + 0.1, 1)
-				background.BackgroundTransparency = math.min(background.BackgroundTransparency + 0.1, 1)
-				if face.ImageTransparency >= 1 then
-					doneFading = true
-				end
-				task.wait(0.05)
-			end
-			if screenGui then
-				screenGui:Destroy()
-			end
-		end)
+---
+--- Kết thúc Jumpscare và Dọn dẹp
+---
 
-		task.wait(0.4)
+-- Chờ cho hiệu ứng chính (bao gồm zoom) hoàn tất
+task.wait(zoomDuration) -- Sử dụng zoomDuration để chờ đủ thời gian zoom
 
-		-- Reset camera
-		if camera then
-			camera.CameraType = Enum.CameraType.Custom
-			camera.FieldOfView = startFov
-		end
+stopEffects = true -- Dừng các hiệu ứng lặp
+killSound:Stop() -- Dừng âm thanh
 
+-- Fade out UI
+task.spawn(function()
+    while not doneFading do
+        if face and text and background then
+            face.ImageTransparency = math.min(face.ImageTransparency + 0.1, 1)
+            text.ImageTransparency = math.min(text.ImageTransparency + 0.1, 1)
+            background.ImageTransparency = math.min(background.ImageTransparency + 0.1, 1)
+            background.BackgroundTransparency = math.min(background.BackgroundTransparency + 0.1, 1)
+
+            if face.ImageTransparency >= 1 then
+                doneFading = true
+            end
+        else
+            doneFading = true
+        end
+        task.wait(0.05)
+    end
+    if screenGui then
+        screenGui:Destroy()
+    end
+end)
+
+task.wait(0.4) -- Chờ một chút sau khi fade out trước khi reset camera và kill player
+
+-- Reset camera type back to Custom (player control) and its FOV
+if camera then
+    camera.CameraType = Enum.CameraType.Custom
+    camera.FieldOfView = startFov -- Reset về FoV ban đầu
 	else
 		print("Entity has damaged the player (but not killed)")
 	end
