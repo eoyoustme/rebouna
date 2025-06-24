@@ -1,0 +1,158 @@
+-- ===============================
+-- Cấu hình
+-- ===============================
+local ENTITY_MODEL_ID = "rbxassetid://12174018892" -- Model "Hush"
+local SOUND_ASSET_ID = "rbxassetid://6351509719" -- Âm thanh spawn
+
+local INITIAL_WALKSPEED = 16
+local SPAWN_DISTANCE_BEHIND_PLAYER = 5
+local TIME_TO_DEATH_IF_NOT_LOOKING = 3
+local TIME_TO_DESPAWN_WHEN_LOOKING = 3
+
+-- ===============================
+-- Biến toàn cục
+-- ===============================
+local depthsTer = nil
+local playerHumanoid = nil
+local timeNotLooking = 0
+local timeLooking = 0
+local Kill = false
+
+-- ===============================
+-- Phát âm thanh khi spawn
+-- ===============================
+local function PlaySpawnSound()
+    local sound = Instance.new("Sound", workspace)
+    sound.SoundId = SOUND_ASSET_ID
+    sound.Volume = 6
+    sound:Play()
+    sound.Ended:Connect(function()
+        sound:Destroy()
+    end)
+end
+
+-- ===============================
+-- Spawn thực thể Hush
+-- ===============================
+local function spawnEntity()
+    print("[SpawnEntity] Đang tải mô hình Hush...")
+
+    local player = game.Players.LocalPlayer
+    if not player or not player.Character then return end
+
+    local hrp = player.Character:FindFirstChild("HumanoidRootPart")
+    playerHumanoid = player.Character:FindFirstChildOfClass("Humanoid")
+    if not hrp or not playerHumanoid then return end
+
+    -- Tải mô hình Hush từ Asset ID
+    local success, model = pcall(function()
+        return game:GetObjects(ENTITY_MODEL_ID)[1]
+    end)
+    if not success or not model then
+        warn("[SpawnEntity] Không thể tải mô hình Hush:", model)
+        return
+    end
+
+    depthsTer = model
+    depthsTer.Parent = workspace
+    depthsTer.Name = "HushEntity"
+
+    local part = depthsTer:FindFirstChild("RushNew")
+    if not part or not part:IsA("BasePart") then
+        warn("[SpawnEntity] Không tìm thấy Part 'RushNew' trong mô hình Hush.")
+        depthsTer:Destroy()
+        depthsTer = nil
+        return
+    end
+
+    -- Đặt vị trí phía sau người chơi, cao lên
+    local spawnPos = hrp.CFrame - hrp.CFrame.LookVector * SPAWN_DISTANCE_BEHIND_PLAYER + Vector3.new(0, 5, 0)
+    part.CFrame = spawnPos
+
+    -- Giữ tất cả Part đứng yên
+    for _, p in ipairs(depthsTer:GetDescendants()) do
+        if p:IsA("BasePart") then
+            p.Anchored = true
+            p.CanCollide = false
+        end
+    end
+
+    Kill = true
+    timeNotLooking = 0
+    timeLooking = 0
+
+    PlaySpawnSound()
+    print("[SpawnEntity] Hush đã spawn phía sau người chơi.")
+end
+
+-- ===============================
+-- Despawn thực thể
+-- ===============================
+local function despawnEntity()
+    print("[DespawnEntity] Hush biến mất.")
+    if depthsTer then
+        depthsTer:Destroy()
+        depthsTer = nil
+    end
+    Kill = false
+    timeNotLooking = 0
+    timeLooking = 0
+end
+
+-- ===============================
+-- Vòng kiểm tra nhìn
+-- ===============================
+task.spawn(function()
+    local player = game.Players.LocalPlayer
+    if not player or not player.Character then return end
+
+    playerHumanoid = player.Character:FindFirstChildOfClass("Humanoid")
+    if playerHumanoid then
+        playerHumanoid.WalkSpeed = INITIAL_WALKSPEED
+    end
+
+    while true do
+        task.wait(0.1)
+
+        if Kill and depthsTer and playerHumanoid and playerHumanoid.Health > 0 then
+            local part = depthsTer:FindFirstChild("RushNew")
+            if not part then
+                despawnEntity()
+                break
+            end
+
+            local _, onScreen = workspace.CurrentCamera:WorldToViewportPoint(part.Position)
+
+            if not onScreen then
+                timeNotLooking += 0.1
+                timeLooking = 0
+
+                if timeNotLooking >= TIME_TO_DEATH_IF_NOT_LOOKING then
+                    print("[Hush] Người chơi không nhìn trong 3s → Chết")
+                    playerHumanoid.Health = 0
+                    despawnEntity()
+                    break
+                end
+            else
+                timeLooking += 0.1
+                timeNotLooking = 0
+
+                if timeLooking >= TIME_TO_DESPAWN_WHEN_LOOKING then
+                    print("[Hush] Người chơi nhìn đủ 3s → Hush biến mất")
+                    despawnEntity()
+                    task.wait(2)
+                    spawnEntity()
+                end
+            end
+        elseif playerHumanoid and playerHumanoid.Health <= 0 then
+            despawnEntity()
+            break
+        end
+    end
+end)
+
+-- ===============================
+-- Khởi tạo lần đầu
+-- ===============================
+task.wait(1)
+spawnEntity()
