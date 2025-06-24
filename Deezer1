@@ -1,16 +1,32 @@
--- == Cấu hình ==
+-- ===============================
+-- Cấu hình Chung
+-- ===============================
 local ENTITY_MODEL_IDS = {
-    "rbxassetid://12174018892" -- Thay ID khác nếu cần
+    "rbxassetid://129094269310068" -- Thay ID model phù hợp
 }
-local SOUND_ASSET_ID = "rbxassetid://8028069841"
+
+local SOUND_ASSET_ID = "rbxassetid://6351509719" -- ID âm thanh spawn
 
 local INITIAL_WALKSPEED = 16
-local SPAWN_DISTANCE_BEHIND_PLAYER = 3
+local SPAWN_DISTANCE_BEHIND_PLAYER = 5
 
--- == Biến toàn cục ==
-local depthsTer, playerHumanoid, currentEntityModelID = nil, nil, nil
+local TIME_TO_DEATH_IF_NOT_LOOKING = 3 -- 3 giây không nhìn → chết
+local TIME_TO_DESPAWN_WHEN_LOOKING = 3 -- 3 giây nhìn → biến mất
 
--- == Hàm phát âm thanh ==
+-- ===============================
+-- Biến toàn cục
+-- ===============================
+local depthsTer = nil
+local playerHumanoid = nil
+local currentEntityModelID = nil
+
+local timeNotLooking = 0
+local timeLooking = 0
+local Kill = false
+
+-- ===============================
+-- Hàm phát âm thanh spawn
+-- ===============================
 local function PlaySpawnSound()
     local sound = Instance.new("Sound", workspace)
     sound.Name = "SpawnSound"
@@ -18,49 +34,43 @@ local function PlaySpawnSound()
     sound.SoundId = SOUND_ASSET_ID
     sound:Play()
     sound.Ended:Connect(function() sound:Destroy() end)
-    print("[Debug] Sound played.")
 end
 
--- == Hàm spawn thực thể ==
+-- ===============================
+-- Hàm spawn thực thể
+-- ===============================
 local function spawnEntity()
-    print("[Debug] spawnEntity() called.")
+    print("[SpawnEntity] Called")
     local player = game.Players.LocalPlayer
-    if not player or not player.Character then print("[Debug] No player or character") return end
+    if not player or not player.Character then return end
 
     local hrp = player.Character:FindFirstChild("HumanoidRootPart")
     playerHumanoid = player.Character:FindFirstChildOfClass("Humanoid")
-    if not hrp or not playerHumanoid then print("[Debug] Missing HRP or Humanoid") return end
+    if not hrp or not playerHumanoid then return end
 
-    local modelID = ENTITY_MODEL_IDS[math.random(1,#ENTITY_MODEL_IDS)]
+    local modelID = ENTITY_MODEL_IDS[math.random(1, #ENTITY_MODEL_IDS)]
     currentEntityModelID = modelID
-    print("[Debug] Trying modelID:", modelID)
 
     local success, model = pcall(function()
         return game:GetObjects(modelID)[1]
     end)
-    if not success then
-        print("[Debug] game:GetObjects pcall error:", model)
+    if not success or not model then
+        warn("[SpawnEntity] Lỗi tải model:", model)
         return
-    elseif not model then
-        print("[Debug] game:GetObjects returned nil model")
-        return
-    else
-        print("[Debug] game:GetObjects success")
     end
 
     depthsTer = model
     depthsTer.Parent = workspace
-    print("[Debug] Parent set to workspace")
 
     local primary = depthsTer:FindFirstChildWhichIsA("BasePart")
     if not primary then
-        print("[Debug] No BasePart found in model")
+        warn("[SpawnEntity] Không tìm thấy BasePart trong model")
         depthsTer:Destroy()
+        depthsTer = nil
         return
     end
 
-    primary.CFrame = hrp.CFrame + (-hrp.CFrame.LookVector * SPAWN_DISTANCE_BEHIND_PLAYER) + Vector3.new(0,5,0)
-    print("[Debug] Model positioned behind player:", primary.CFrame)
+    primary.CFrame = hrp.CFrame - (hrp.CFrame.LookVector * SPAWN_DISTANCE_BEHIND_PLAYER) + Vector3.new(0, 5, 0)
 
     for _, part in pairs(depthsTer:GetDescendants()) do
         if part:IsA("BasePart") then
@@ -69,9 +79,77 @@ local function spawnEntity()
         end
     end
 
+    Kill = true
+    timeNotLooking = 0
+    timeLooking = 0
+
     PlaySpawnSound()
-    print("[Debug] spawnEntity() completed.")
+    print("[SpawnEntity] Thực thể đã spawn phía sau người chơi.")
 end
 
--- == Gọi spawn ngay sau load script ==
+-- ===============================
+-- Hàm despawn thực thể
+-- ===============================
+local function despawnEntity()
+    print("[DespawnEntity] Called")
+    if depthsTer then
+        depthsTer:Destroy()
+        depthsTer = nil
+    end
+    Kill = false
+    timeNotLooking = 0
+    timeLooking = 0
+    currentEntityModelID = nil
+end
+
+-- ===============================
+-- Vòng lặp kiểm tra nhìn/thời gian chết và despawn
+-- ===============================
+task.spawn(function()
+    local player = game.Players.LocalPlayer
+    if not player or not player.Character then return end
+
+    playerHumanoid = player.Character:FindFirstChildOfClass("Humanoid")
+    if playerHumanoid then
+        playerHumanoid.WalkSpeed = INITIAL_WALKSPEED
+    end
+
+    while true do
+        task.wait(0.1)
+
+        if Kill and depthsTer and playerHumanoid and playerHumanoid.Health > 0 then
+            local _, cameraVisible = workspace.CurrentCamera:WorldToViewportPoint(depthsTer.PrimaryPart.Position)
+
+            if not cameraVisible then
+                timeNotLooking = timeNotLooking + 0.1
+                timeLooking = 0
+
+                if timeNotLooking >= TIME_TO_DEATH_IF_NOT_LOOKING then
+                    print("[Logic] Không nhìn đủ 3 giây → Người chơi chết!")
+                    playerHumanoid.Health = 0
+                    despawnEntity()
+                    break
+                end
+            else
+                timeLooking = timeLooking + 0.1
+                timeNotLooking = 0
+
+                if timeLooking >= TIME_TO_DESPAWN_WHEN_LOOKING then
+                    print("[Logic] Nhìn đủ 3 giây → Thực thể biến mất.")
+                    despawnEntity()
+                    task.wait(2)
+                    spawnEntity()
+                end
+            end
+        elseif playerHumanoid and playerHumanoid.Health <= 0 then
+            despawnEntity()
+            break
+        end
+    end
+end)
+
+-- ===============================
+-- Khởi tạo thực thể ban đầu
+-- ===============================
+task.wait(1)
 spawnEntity()
