@@ -1,43 +1,100 @@
--- Thông tin object
-local modelName = "Kardin"
-local assetID = "rbxassetid://11887366327"
+local modelName = "Sussyroom"
+local assetID = "rbxassetid://11626479968"
 
--- Lấy phòng hiện tại từ hệ thống Doors
-local roomIndex = game.ReplicatedStorage.GameData.LatestRoom.Value
-local currentRoom = workspace.CurrentRooms[roomIndex]
+-- Hàm này đặt ĐÁY của mô hình ở vị trí Y được chỉ định.
+-- Nó cũng có thể nhận các offset X và Z tùy chọn so với vị trí được cung cấp.
+local function placeModelOnFloor(model, floorPosition, offsetX, offsetZ)
+    local cframe, size = model:GetBoundingBox()
+    -- Tính toán vị trí Y mới: đáy của mô hình = floorPosition.Y
+    -- Do đó, tâm của mô hình phải ở floorPosition.Y + (chiều_cao_mô_hình / 2)
+    local newY = floorPosition.Y + (size.Y / 2)
 
--- Tạo model mới trong phòng
-local kardModel = Instance.new("Model")
-kardModel.Name = modelName
-kardModel.Parent = currentRoom
+    -- Áp dụng các offset ngang nếu được cung cấp
+    local finalX = floorPosition.X + (offsetX or 0) -- Sử dụng 0 nếu offsetX là nil
+    local finalZ = floorPosition.Z + (offsetZ or 0) -- Sử dụng 0 nếu offsetZ là nil
 
--- Lấy object từ asset ID
-local kardObject = game:GetObjects(assetID)[1]
-
--- Tìm Part gốc (center part) của căn phòng
-local roomOriginPart = currentRoom:FindFirstChild(currentRoom.Name)
-if not roomOriginPart then
-    warn("Không tìm thấy part gốc của phòng!")
-    return
+    local newCFrame = CFrame.new(finalX, newY, finalZ)
+    model:PivotTo(newCFrame)
 end
 
--- Dịch object lên cao một chút từ tâm phòng
-local offset = Vector3.new(10, 5, 0) -- 5 stud phía trên sàn
-local finalCFrame = roomOriginPart.CFrame * CFrame.new(offset)
+local currentRoom = workspace.CurrentRooms[game.ReplicatedStorage.GameData.LatestRoom.Value]
 
--- Đặt object vào đúng vị trí tính theo hướng phòng
-kardObject:PivotTo(finalCFrame)
-
--- Đặt object làm con của model
-kardObject.Parent = kardModel
-
--- Anchor tất cả các part bên trong object
-if kardObject.PrimaryPart then
-    kardObject.PrimaryPart.Anchored = true
-else
-    for _, part in ipairs(kardObject:GetDescendants()) do
-        if part:IsA("BasePart") then
-            part.Anchored = true
+local function hasSussyroom(wing)
+    for _, child in pairs(wing:GetChildren()) do
+        if child.Name == modelName then
+            return true
         end
     end
+    return false
+end
+
+local candidateWings = {}
+
+for _, wing in pairs(currentRoom:GetChildren()) do
+    if wing:IsA("Model") then
+        local doorCount = 0
+        for _, part in pairs(wing:GetDescendants()) do
+            if part:IsA("BasePart") and string.find(part.Name, "Door") then
+                doorCount = doorCount + 1
+            end
+        end
+
+        if doorCount >= 2 and not hasSussyroom(wing) then
+            table.insert(candidateWings, wing)
+        end
+    end
+end
+
+for _, wing in pairs(candidateWings) do
+    local oldModel = wing:FindFirstChild(modelName)
+    if oldModel then
+        oldModel:Destroy()
+    end
+
+    -- Xóa hết các đối tượng khác trong wing
+    for _, child in pairs(wing:GetChildren()) do
+        if child.Name ~= modelName then
+            child:Destroy()
+        end
+    end
+
+    local newModel = Instance.new("Model")
+    newModel.Name = modelName
+    newModel.Parent = wing
+
+    local obj = game:GetObjects(assetID)[1]
+
+    local wingCFrame, wingSize = wing:GetBoundingBox()
+    local wingCenterPos = wingCFrame.Position
+
+    -- Tính toán tọa độ Y của sàn cánh phòng
+    -- Giả định rằng pivot của cánh phòng nằm ở tâm của nó,
+    -- hoặc bounding box của nó đại diện chính xác cho chiều cao của nó.
+    local wingFloorY = wingCenterPos.Y - (wingSize.Y / 2)
+
+    -- --- ĐIỀU CHỈNH CÁC OFFSET NÀY ĐỂ ĐẶT VỊ TRÍ NGANG ---
+    -- Đây là các giá trị bạn sẽ thay đổi để di chuyển mô hình theo chiều rộng và chiều dài của phòng
+    local offsetX = 0  -- Điều chỉnh vị trí X tương đối so với wingCenterPos.X
+    local offsetZ = 0  -- Điều chỉnh vị trí Z tương đối so với wingCenterPos.Z
+
+    -- Ví dụ:
+    -- offsetX = wingSize.X / 4  -- Đặt nó cách 1/4 chiều dài của cánh phòng theo trục X
+    -- offsetZ = -wingSize.Z / 4 -- Đặt nó cách 1/4 chiều sâu của cánh phòng theo trục Z (âm để đi lùi)
+
+    -- Đặt mô hình Sussyroom bằng cách sử dụng Y sàn đã tính toán và các offset ngang
+    placeModelOnFloor(obj, Vector3.new(wingCenterPos.X, wingFloorY, wingCenterPos.Z), offsetX, offsetZ)
+
+    obj.Parent = newModel
+
+    if obj.PrimaryPart then
+        obj.PrimaryPart.Anchored = true
+    else
+        for _, part in pairs(obj:GetDescendants()) do
+            if part:IsA("BasePart") then
+                part.Anchored = true
+            end
+        end
+    end
+
+    print("Spawn Sussyroom tại cánh phòng: "..wing.Name)
 end
