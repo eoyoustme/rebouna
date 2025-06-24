@@ -41,7 +41,7 @@ local INITIAL_WALKSPEED = 16 -- Tốc độ đi bộ ban đầu của người c
 local SLOWED_WALKSPEED = 12 -- Tốc độ đi bộ khi bị làm chậm
 local TIME_TO_SLOWDOWN = 3.4 -- THAY ĐỔI: Thời gian không nhìn để bị làm chậm và đổi mô hình (giây)
 local TIME_TO_DESPAWN_WHEN_LOOKING = 4 -- MỚI: Thời gian nhìn liên tục để thực thể biến mất (giây)
-local SPAWN_RADIUS = 5 -- THAY ĐỔI: Khoảng cách tối đa từ người chơi để xuất hiện ngẫu nhiên (gần hơn)
+local SPAWN_RADIUS = 1 -- THAY ĐỔI: Khoảng cách tối đa từ người chơi để xuất hiện ngẫu nhiên (gần hơn)
 
 -- ===============================
 -- Các Biến Toàn Cục (Global Variables)
@@ -50,8 +50,8 @@ local Kill = false -- Điều khiển vòng lặp kiểm tra thực thể
 local depthsTer = nil -- Đối tượng thực thể Obsession hiện tại
 local playerHumanoid = nil -- Humanoid của người chơi
 local isPlayerSlowed = false -- Trạng thái người chơi có đang bị làm chậm không
-local timeNotLooking = 3 -- Thời gian người chơi không nhìn vào thực thể
-local timeLooking = 3 -- MỚI: Thời gian người chơi nhìn vào thực thể
+local timeNotLooking = 30 -- Thời gian người chơi không nhìn vào thực thể
+local timeLooking = 30 -- MỚI: Thời gian người chơi nhìn vào thực thể
 local currentEntityModelID = nil -- ID mô hình hiện tại của thực thể Obsession
 
 -- ===============================
