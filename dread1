@@ -1,0 +1,183 @@
+-- Tạo mô hình đồng hồ
+local room = workspace.CurrentRooms[game.ReplicatedStorage.GameData.LatestRoom.Value]
+local dreadClock = Instance.new("Model", room)
+dreadClock.Name = "DreadClock"
+
+local eyes = game:GetObjects("rbxassetid://137635380358627")[1]
+local num = 0
+
+if room:FindFirstChild("PathfindNodes") then
+	num = math.floor(#room.PathfindNodes:GetChildren() / 2)
+end
+
+eyes:PivotTo((num == 0 and room[room.Name] or room.PathfindNodes[num]).CFrame + Vector3.new(0, 5, 0))
+eyes.Parent = dreadClock
+eyes.PrimaryPart.Anchored = true
+
+-- Phát âm thanh từ GitHub (nếu cần downloader)
+function GitAud(soundlink, filename)
+    if not isfile(filename..".mp3") then
+        writefile(filename..".mp3", game:HttpGet(soundlink))
+    end
+    return (getcustomasset or getsynasset)(filename..".mp3")
+end
+
+function CustomGitSound(soundlink, vol, filename, duration)
+    local sound = Instance.new("Sound", workspace)
+    sound.SoundId = GitAud(soundlink, filename)
+    sound.Volume = vol
+    sound.Looped = true
+    sound:Play()
+    task.wait(duration)
+    sound:Destroy()
+end
+
+CustomGitSound("https://github.com/Kotyara19k-Doorsspawner/Random-files/raw/main/ClockSounds.mp3", 1, "DreadClock", 10)
+
+-- Tạo entity
+local Spawner = loadstring(game:HttpGet("https://raw.githubusercontent.com/RegularVynixu/Utilities/main/Doors/Entity%20Spawner/V1/Source.lua"))()
+
+local entity = Spawner.createEntity({
+    CustomName = "Dread",
+    Model = "rbxassetid://12329981842",
+    Speed = 120,
+    MoveDelay = 1,
+    HeightOffset = 0,
+    CanKill = true,
+    KillRange = 10,
+    SpawnInFront = false,
+    ShatterLights = false,
+    FlickerLights = {Enabled = false, Duration = 1},
+    Cycles = {Min = 1, Max = 1, Delay = 0},
+    CamShake = {Enabled = true, Values = {1.5, 20, 0.1, 1}, Range = 100},
+    ResistCrucifix = false,
+    BreakCrucifix = true,
+    DeathMessage = {"You died to Dread", "Wait...", "How You?..", "Ok..", "...", "Just Hide When The Clock Sound Stops.."},
+    IsCuriousLight = false
+})
+
+-- Jumpscare function
+function PlayDreadJumpscare()
+	local player = game.Players.LocalPlayer
+	local playerGui = player:WaitForChild("PlayerGui")
+	local camera = workspace.CurrentCamera
+
+	local screenGui = Instance.new("ScreenGui", playerGui)
+	screenGui.IgnoreGuiInset = true
+
+	local background = Instance.new("ImageLabel", screenGui)
+	background.Size = UDim2.new(1, 0, 1, 0)
+	background.Image = "rbxassetid://1712510813"
+	background.BackgroundColor3 = Color3.new(0, 0, 0)
+	background.BackgroundTransparency = 0
+	background.ImageTransparency = 0.5
+
+	local face = Instance.new("ImageLabel", screenGui)
+	face.Size = UDim2.new(0, 300, 0, 300)
+	face.Position = UDim2.new(0.5, 0, 0.589, 0)
+	face.AnchorPoint = Vector2.new(0.5, 0.5)
+	face.Image = "rbxassetid://11395249132"
+	face.BackgroundTransparency = 1
+
+	local text = Instance.new("ImageLabel", screenGui)
+	text.Size = UDim2.new(0, 150, 0, 150)
+	text.Position = UDim2.new(0.5, 0, 0.5, 0)
+	text.AnchorPoint = Vector2.new(0.5, 0.5)
+	text.Image = "rbxassetid://117106082021449"
+	text.BackgroundTransparency = 1
+
+	local killSound = Instance.new("Sound", workspace)
+	killSound.SoundId = "rbxassetid://18459521002"
+	killSound.Volume = 10
+	killSound.Looped = true
+	killSound:Play()
+
+	Instance.new("FlangeSoundEffect", killSound).Depth = 0.15
+	Instance.new("TremoloSoundEffect", killSound).Depth = 0.15
+	Instance.new("PitchShiftSoundEffect", killSound).Octave = 1
+	Instance.new("DistortionSoundEffect", killSound).Level = 0.2
+
+	local startFov = camera.FieldOfView
+	camera.CameraType = Enum.CameraType.Scriptable
+	game:GetService("TweenService"):Create(camera, TweenInfo.new(0.7), {FieldOfView = 60}):Play()
+	game:GetService("TweenService"):Create(face, TweenInfo.new(0.7), {
+		Size = UDim2.new(0, 1200, 0, 1200),
+		Position = UDim2.new(0.5, 0, 0.5, 0)
+	}):Play()
+
+	local stopEffects = false
+
+	-- Effects
+	task.spawn(function()
+		while not stopEffects do
+			background.Image = "rbxassetid://131073231978514"
+			task.wait(0.0589)
+			background.Image = "rbxassetid://105841646930424"
+			task.wait(0.0589)
+		end
+	end)
+
+	task.spawn(function()
+		while not stopEffects do
+			face.Rotation = 10
+			task.wait(0.0589)
+			face.Rotation = -10
+			task.wait(0.0589)
+		end
+	end)
+
+	task.spawn(function()
+		while not stopEffects do
+			text.ImageTransparency = 0
+			task.wait(0.1)
+			text.ImageTransparency = 1
+			task.wait(0.1)
+		end
+	end)
+
+	task.wait(1.5)
+	stopEffects = true
+	killSound:Stop()
+
+	screenGui:Destroy()
+	camera.CameraType = Enum.CameraType.Custom
+	camera.FieldOfView = startFov
+end
+
+-- Callbacks
+entity.Debug.OnEntitySpawned = function()
+	print("Dread spawned")
+	game.ReplicatedStorage.GameData.StopTime.Value = true
+end
+
+entity.Debug.OnEntityDespawned = function()
+	print("Dread despawned")
+	if workspace:FindFirstChild("Grandfather_Clock") then
+		workspace.Grandfather_Clock:Destroy()
+	end
+	PlayDreadJumpscare()
+	game.ReplicatedStorage.GameData.StopTime.Value = false
+
+	local achievementGiver = loadstring(game:HttpGet("https://raw.githubusercontent.com/RegularVynixu/Utilities/main/Doors/Custom%20Achievements/Source.lua"))()
+	achievementGiver({
+		Title = "Dead Of Night",
+		Desc = "Tick tock goes the clock...",
+		Reason = "Encounter Dread",
+		Image = "rbxassetid://36426864382"
+	})
+end
+
+entity.Debug.OnEntityStartMoving = function()
+	print("Dread moving")
+end
+
+entity.Debug.OnEntityEnteredRoom = function(room)
+	print("Dread entered room:", room)
+end
+
+entity.Debug.OnDeath = function()
+	print("Player killed by Dread")
+end
+
+-- Run entity
+Spawner.runEntity(entity)
