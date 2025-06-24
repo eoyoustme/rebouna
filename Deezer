@@ -2,10 +2,10 @@
 -- Cấu hình Chung (General Configuration)
 -- ===============================
 local ENTITY_MODEL_IDS = {
-    -- THAY THẾ CÁC ID NÀY BẰNG ID MÔ HÌNH THỰC TẾ CỦA BẠN TỪ ROBLOX STUDIO
-    "rbxassetid://101498124045552", -- Ví dụ: Mô hình DepthsTer gốc
-    "rbxassetid://129094269310068", -- Đổi ID này
-    "rbxassetid://129094269310068"  -- Đổi ID này
+    -- ID MÔ HÌNH THỰC TẾ BẠN ĐÃ CUNG CẤP
+    "rbxassetid://101498124045552",
+    "rbxassetid://129094269310068",
+    "rbxassetid://129094269310068"
 }
 
 -- CẢNH BÁO CỰC KỲ QUAN TRỌNG:
@@ -23,15 +23,8 @@ local function CustomGitSound(soundlink, vol, filename)
     sound.Parent = workspace
     sound.Volume = 6 -- Bạn muốn Volume cố định là 6
     sound.PlaybackSpeed = 1
-    sound.Name = "Spawn" -- Bạn muốn tên là "DoorBreak"
+    sound.Name = "Spawn" -- Bạn muốn tên là "Spawn" (đã thay đổi từ "DoorBreak" theo yêu cầu mới nhất)
     sound:Play()
-
-    -- Để tránh lỗi khi SoundId không hợp lệ, có thể thêm kiểm tra (nhưng vẫn không giải quyết vấn đề cốt lõi)
-    -- if sound.IsLoaded then
-    --     sound:Play()
-    -- else
-    --     warn("Không thể tải âm thanh từ:", soundlink, " - SoundId có thể không hợp lệ.")
-    -- end
 
     -- Xóa âm thanh sau khi kết thúc để tránh rò rỉ bộ nhớ
     task.spawn(function()
@@ -46,8 +39,9 @@ local GITHUB_SOUND_LINK = "https://github.com/Darker-TheDarkestGuy/DOORS/raw/ref
 
 local INITIAL_WALKSPEED = 16 -- Tốc độ đi bộ ban đầu của người chơi
 local SLOWED_WALKSPEED = 12 -- Tốc độ đi bộ khi bị làm chậm
-local TIME_TO_SLOWDOWN = 3 -- Thời gian không nhìn để bị làm chậm và đổi mô hình (giây)
-local SPAWN_RADIUS = 20 -- Khoảng cách tối đa từ người chơi cho vị trí xuất hiện ngẫu nhiên
+local TIME_TO_SLOWDOWN = 3.4 -- THAY ĐỔI: Thời gian không nhìn để bị làm chậm và đổi mô hình (giây)
+local TIME_TO_DESPAWN_WHEN_LOOKING = 4 -- MỚI: Thời gian nhìn liên tục để thực thể biến mất (giây)
+local SPAWN_RADIUS = 5 -- THAY ĐỔI: Khoảng cách tối đa từ người chơi để xuất hiện ngẫu nhiên (gần hơn)
 
 -- ===============================
 -- Các Biến Toàn Cục (Global Variables)
@@ -56,7 +50,8 @@ local Kill = false -- Điều khiển vòng lặp kiểm tra thực thể
 local depthsTer = nil -- Đối tượng thực thể Obsession hiện tại
 local playerHumanoid = nil -- Humanoid của người chơi
 local isPlayerSlowed = false -- Trạng thái người chơi có đang bị làm chậm không
-local timeNotLooking = 0 -- Thời gian người chơi không nhìn vào thực thể
+local timeNotLooking = 3 -- Thời gian người chơi không nhìn vào thực thể
+local timeLooking = 3 -- MỚI: Thời gian người chơi nhìn vào thực thể
 local currentEntityModelID = nil -- ID mô hình hiện tại của thực thể Obsession
 
 -- ===============================
@@ -131,12 +126,13 @@ local function spawnEntity()
 
     Kill = true -- Kích hoạt vòng lặp kiểm tra
     timeNotLooking = 0 -- Reset thời gian không nhìn
+    timeLooking = 0 -- MỚI: Reset thời gian nhìn
     isPlayerSlowed = false -- Reset trạng thái làm chậm
     playerHumanoid.WalkSpeed = INITIAL_WALKSPEED -- Khôi phục tốc độ ban đầu
 
     print("Thực thể Obsession được tạo với ID mô hình:", currentEntityModelID)
     -- Gọi hàm CustomGitSound mà bạn muốn sử dụng
-    CustomGitSound(GITHUB_SOUND_LINK, 1, "DoorBreak") -- Tham số 1 cho vol sẽ bị ghi đè bởi vol=6 trong hàm
+    CustomGitSound(GITHUB_SOUND_LINK, 1, "Spawn")
 end
 
 -- Hàm để loại bỏ thực thể Obsession
@@ -147,6 +143,7 @@ local function despawnEntity()
     end
     Kill = false
     timeNotLooking = 0
+    timeLooking = 0 -- MỚI: Reset thời gian nhìn khi biến mất
     if isPlayerSlowed and playerHumanoid then -- Chỉ khôi phục nếu thực sự bị làm chậm
         playerHumanoid.WalkSpeed = INITIAL_WALKSPEED
         isPlayerSlowed = false
@@ -179,6 +176,7 @@ task.spawn(function()
             if not cameraVisible then
                 -- Người chơi KHÔNG nhìn vào thực thể
                 timeNotLooking = timeNotLooking + 0.1 -- Tăng thời gian không nhìn
+                timeLooking = 0 -- MỚI: Reset thời gian nhìn khi không nhìn
 
                 if timeNotLooking >= TIME_TO_SLOWDOWN then
                     -- Làm chậm người chơi nếu chưa bị làm chậm
@@ -188,26 +186,42 @@ task.spawn(function()
                         print("Người chơi bị làm chậm!")
                     end
 
-                    -- Thay đổi ID mô hình sau khi làm chậm và mỗi chu kỳ TIME_TO_SLOWDOWN
-                    if math.abs(timeNotLooking % TIME_TO_SLOWDOWN) < 0.1 then
-                         print("Không nhìn đủ lâu, thay đổi mô hình thực thể và vị trí!")
-                         despawnEntity()
-                         task.wait(0.5) -- Đợi một chút trước khi tạo mô hình mới
-                         spawnEntity()
-                    end
+                    -- THAY ĐỔI: Thực thể biến mất sau khi làm chậm nếu không nhìn đủ lâu
+                    -- Điều kiện `math.abs(timeNotLooking % TIME_TO_SLOWDOWN) < 0.1` được giữ nguyên
+                    -- để kích hoạt chỉ một lần khi vượt ngưỡng hoặc cứ mỗi ngưỡng.
+                    -- Với yêu cầu mới "và nó sẽ biến mất", chúng ta chỉ cần nó biến mất sau 3.4 giây
+                    -- không nhìn, không cần đổi model liên tục nữa.
+                    -- Nếu bạn muốn nó vẫn đổi model trước khi biến mất, cần thêm logic.
+                    print("Không nhìn đủ lâu (" .. timeNotLooking .. "s), thực thể biến mất!")
+                    despawnEntity()
+                    task.wait(2) -- Đợi một chút trước khi tạo mô hình mới
+                    spawnEntity()
                 end
             else
                 -- Người chơi ĐANG nhìn vào thực thể
+                timeLooking = timeLooking + 0.1 -- MỚI: Tăng thời gian nhìn
                 timeNotLooking = 0 -- Reset thời gian không nhìn
-                if isPlayerSlowed then
-                    playerHumanoid.WalkSpeed = INITIAL_WALKSPEED
-                    isPlayerSlowed = false
-                    print("Tốc độ người chơi được khôi phục!")
+
+                -- MỚI: Nếu nhìn đủ 4 giây, thực thể biến mất
+                if timeLooking >= TIME_TO_DESPAWN_WHEN_LOOKING then
+                    if isPlayerSlowed then
+                        playerHumanoid.WalkSpeed = INITIAL_WALKSPEED
+                        isPlayerSlowed = false
+                        print("Tốc độ người chơi được khôi phục!")
+                    end
+                    print("Người chơi nhìn đủ lâu (" .. timeLooking .. "s), thực thể biến mất!")
+                    despawnEntity()
+                    task.wait(2) -- Thêm độ trễ ngắn trước khi tạo lại
+                    spawnEntity() -- Tạo lại ngay lập tức
+                else
+                    -- Nếu đang nhìn nhưng chưa đủ 4 giây
+                    if isPlayerSlowed then
+                        playerHumanoid.WalkSpeed = INITIAL_WALKSPEED
+                        isPlayerSlowed = false
+                        print("Tốc độ người chơi được khôi phục!")
+                    end
+                    -- Không làm gì khác, tiếp tục đợi người chơi nhìn đủ thời gian
                 end
-                print("Người chơi đang nhìn vào thực thể. Đang loại bỏ...")
-                despawnEntity()
-                task.wait(2) -- Thêm độ trễ ngắn trước khi tạo lại
-                spawnEntity() -- Tạo lại ngay lập tức
             end
 
             -- Kiểm tra nếu người chơi chết
