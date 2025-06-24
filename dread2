@@ -39,7 +39,7 @@ function CustomGitSound(soundlink, vol, filename, duration)
 end
 
 -- Chạy sound đồng hồ 10 giây
-CustomGitSound("https://github.com/Kotyara19k-Doorsspawner/Random-files/raw/main/ClockSounds.mp3", 1, "DreadClock", 10)
+CustomGitSound("https://github.com/Kotyara19k-Doorsspawner/Random-files/raw/main/ClockSounds.mp3", 1, "DreadClock", 35)
 
 -- Load spawner
 local Spawner = loadstring(game:HttpGet("https://raw.githubusercontent.com/RegularVynixu/Utilities/main/Doors/Entity%20Spawner/V1/Source.lua"))()
@@ -249,11 +249,11 @@ end
 local entity = Spawner.createEntity({
     CustomName = "Dread",
     Model = "rbxassetid://12329981842",
-    Speed = 120,
-    MoveDelay = 1,
+    Speed = 99999999,
+    MoveDelay = 24,
     HeightOffset = 0,
     CanKill = true,
-    KillRange = 10,
+    KillRange = 10000000000,
     SpawnInFront = false,
     ShatterLights = false,
     FlickerLights = {
