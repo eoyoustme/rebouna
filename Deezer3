@@ -268,15 +268,3 @@ game.ReplicatedStorage.GameData.LatestRoom.Changed:Connect(function()
     -- Bạn có thể thêm logic ở đây để quyết định xem có nên tạo lại thực thể trong phòng mới không
     -- dựa trên số phòng
 end)
-
--- ===============================
--- Thành Tích (Achievements)
--- ===============================
-local achievementGiver = loadstring(game:HttpGet("https://raw.githubusercontent.com/RegularVynixu/Utilities/main/Doors/Custom%20Achievements/Source.lua"))()
-
-achievementGiver({
-    Title = "Nhìn tôi đi, quangcat!",
-    Desc = "Cơ hội cuối cùng để không nhìn tôi",
-    Reason = "Gặp Obsession",
-    Image = "rbxassetid://97059893535136"
-})
