@@ -1,0 +1,313 @@
+local omg = Instance.new("Model")
+omg.Parent = workspace.CurrentRooms[game.ReplicatedStorage.GameData.LatestRoom.Value]
+omg.Name = "DreadClock"
+
+local currentLoadedRoom = workspace.CurrentRooms[game.ReplicatedStorage.GameData.LatestRoom.Value]
+local eyes = game:GetObjects("rbxassetid://137635380358627")[1]
+
+local num = 0
+if currentLoadedRoom:FindFirstChild("PathfindNodes") then
+    num = math.floor(#currentLoadedRoom.PathfindNodes:GetChildren() / 2)
+end
+
+eyes:PivotTo((
+    num == 0 and currentLoadedRoom[currentLoadedRoom.Name] or currentLoadedRoom.PathfindNodes[num]
+).CFrame + Vector3.new(0, 5, 0))
+
+eyes.Parent = workspace.CurrentRooms[game.ReplicatedStorage.GameData.LatestRoom.Value].DreadClock
+eyes.PrimaryPart.Anchored = true
+
+function GitAud(soundlink, filename)
+    local url = soundlink
+    local FileName = filename
+    if not isfile(FileName .. ".mp3") then
+        writefile(FileName .. ".mp3", game:HttpGet(url))
+    end
+    return (getcustomasset or getsynasset)(FileName .. ".mp3")
+end
+
+function CustomGitSound(soundlink, vol, filename, duration)
+    local DreadSound = Instance.new("Sound")
+    DreadSound.SoundId = GitAud(soundlink, filename)
+    DreadSound.Parent = workspace
+    DreadSound.Volume = vol
+    DreadSound.Looped = true
+    DreadSound:Play()
+
+    wait(duration)
+    DreadSound:Destroy()
+end
+
+-- Chạy sound đồng hồ 10 giây
+CustomGitSound("https://github.com/Kotyara19k-Doorsspawner/Random-files/raw/main/ClockSounds.mp3", 1, "DreadClock", 10)
+
+-- Load spawner
+local Spawner = loadstring(game:HttpGet("https://raw.githubusercontent.com/RegularVynixu/Utilities/main/Doors/Entity%20Spawner/V1/Source.lua"))()
+
+-- Hàm chạy jumpscare bạn gửi (đặt tên PlayDreadJumpscare)
+local function PlayDreadJumpscare()
+    local player = game.Players.LocalPlayer
+    local playerGui = player:WaitForChild("PlayerGui")
+
+    local character = player.Character or player.CharacterAdded:Wait()
+    local humanoid = character:WaitForChild("Humanoid")
+    local camera = workspace.CurrentCamera
+
+    local screenGui = Instance.new("ScreenGui")
+    screenGui.Parent = playerGui
+    screenGui.Name = "Screen Gui"
+    screenGui.IgnoreGuiInset = true
+
+    local stopEffects = false
+    local doneFading = false
+
+    -- Sound Setup
+    local killSound = Instance.new("Sound")
+    killSound.Parent = workspace
+    killSound.PlaybackSpeed = 1
+    killSound.SoundId = "rbxassetid://18459521002"
+    killSound.Name = "Dear god death sound chat"
+    killSound.Volume = 10
+    killSound.Looped = true
+
+    local flange = Instance.new("FlangeSoundEffect")
+    flange.Parent = killSound
+    flange.Depth = 0.15
+    flange.Mix = 0.15
+    flange.Rate = 0.2
+
+    local trem = Instance.new("TremoloSoundEffect")
+    trem.Parent = killSound
+    trem.Depth = 0.15
+    trem.Duty = 0.15
+    trem.Frequency = 1
+
+    local pitch = Instance.new("PitchShiftSoundEffect")
+    pitch.Parent = killSound
+    pitch.Octave = 1
+
+    local distort = Instance.new("DistortionSoundEffect")
+    distort.Parent = killSound
+    distort.Level = 0.2
+
+    -- Background Image
+    local background = Instance.new("ImageLabel")
+    background.Parent = screenGui
+    background.Size = UDim2.new(1, 0, 1, 0)
+    background.ImageTransparency = 0.5
+    background.BackgroundTransparency = 0
+    background.BackgroundColor3 = Color3.new(0, 0, 0)
+    background.Image = "rbxassetid://1712510813"
+
+    -- Face Image
+    local face = Instance.new("ImageLabel")
+    face.Parent = screenGui
+    face.AnchorPoint = Vector2.new(0.5, 0.5)
+    face.Position = UDim2.new(0.5, 0, 0.589, 0)
+    face.Size = UDim2.new(0, 300, 0, 300)
+    face.Image = "rbxassetid://11395249132"
+    face.ImageTransparency = 0
+    face.BackgroundTransparency = 1
+
+    -- Text Image
+    local text = Instance.new("ImageLabel")
+    text.Parent = screenGui
+    text.AnchorPoint = Vector2.new(0.5, 0.5)
+    text.Position = UDim2.new(0.5, 0, 0.5, 0)
+    text.Size = UDim2.new(0, 150, 0, 150)
+    text.Image = "rbxassetid://117106082021449"
+    text.ImageTransparency = 0
+    text.BackgroundTransparency = 1
+
+    -- Bắt đầu âm thanh
+    killSound:Play()
+
+    local startFov = camera.FieldOfView
+    local zoomFov = 60
+    local zoomDuration = 0.7
+
+    camera.CameraType = Enum.CameraType.Scriptable
+
+    -- Tween cho FOV
+    local tweenInfoFov = TweenInfo.new(zoomDuration, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+    local propertiesFov = { FieldOfView = zoomFov }
+    local tweenFov = game:GetService("TweenService"):Create(camera, tweenInfoFov, propertiesFov)
+    tweenFov:Play()
+
+    -- Tween phóng to mặt
+    local targetImageSize = UDim2.new(0, 1200, 0, 1200)
+    local targetImagePosition = UDim2.new(0.5, 0, 0.5, 0)
+
+    local tweenInfoImage = TweenInfo.new(zoomDuration, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+    local propertiesImage = {
+        Size = targetImageSize,
+        Position = targetImagePosition
+    }
+    local tweenImage = game:GetService("TweenService"):Create(face, tweenInfoImage, propertiesImage)
+    tweenImage:Play()
+
+    -- Các hiệu ứng song song
+    task.spawn(function()
+        while not stopEffects do
+            background.BackgroundTransparency = 0
+            background.ImageTransparency = 0.3
+            task.wait(0.1)
+            background.BackgroundTransparency = 0.3
+            background.ImageTransparency = 0
+            task.wait(0.1)
+        end
+    end)
+
+    task.spawn(function()
+        while not stopEffects do
+            background.Image = "rbxassetid://131073231978514"
+            task.wait(0.0589)
+            background.Image = "rbxassetid://105841646930424"
+            task.wait(0.0589)
+        end
+    end)
+
+    task.spawn(function()
+        while not stopEffects do
+            face.Rotation = 10
+            face.Image = "rbxassetid://17215733855"
+            task.wait(0.0589)
+            face.Rotation = -10
+            face.Image = "rbxassetid://17215733855"
+            task.wait(0.0589)
+            face.Rotation = 10
+            face.Image = "rbxassetid://17215733855"
+            task.wait(0.0589)
+            face.Rotation = -10
+            task.wait(0.0589)
+        end
+    end)
+
+    task.spawn(function()
+        while not stopEffects do
+            text.Image = "rbxassetid://88490592395124"
+            task.wait(0.0589)
+            text.Image = "rbxassetid://99132041298170"
+            task.wait(0.0589)
+        end
+    end)
+
+    task.spawn(function()
+        while not stopEffects do
+            text.Position = UDim2.new(math.random(), 0, math.random(), 0)
+            task.wait(0.05)
+            text.Position = UDim2.new(math.random(), 0, math.random(), 0)
+            task.wait(0.05)
+        end
+    end)
+
+    task.spawn(function()
+        while not stopEffects do
+            text.ImageTransparency = 0
+            task.wait(0.1)
+            text.ImageTransparency = 1
+            task.wait(0.1)
+        end
+    end)
+
+    task.wait(zoomDuration)
+
+    stopEffects = true
+    killSound:Stop()
+
+    -- Fade out UI
+    task.spawn(function()
+        while not doneFading do
+            if face and text and background then
+                face.ImageTransparency = math.min(face.ImageTransparency + 0.1, 1)
+                text.ImageTransparency = math.min(text.ImageTransparency + 0.1, 1)
+                background.ImageTransparency = math.min(background.ImageTransparency + 0.1, 1)
+                background.BackgroundTransparency = math.min(background.BackgroundTransparency + 0.1, 1)
+
+                if face.ImageTransparency >= 1 then
+                    doneFading = true
+                end
+            else
+                doneFading = true
+            end
+            task.wait(0.05)
+        end
+        if screenGui then
+            screenGui:Destroy()
+        end
+    end)
+
+    task.wait(0.4)
+
+    if camera then
+        camera.CameraType = Enum.CameraType.Custom
+        camera.FieldOfView = startFov
+    end
+end
+
+-- Tạo entity Dread
+local entity = Spawner.createEntity({
+    CustomName = "Dread",
+    Model = "rbxassetid://12329981842",
+    Speed = 120,
+    MoveDelay = 1,
+    HeightOffset = 0,
+    CanKill = true,
+    KillRange = 10,
+    SpawnInFront = false,
+    ShatterLights = false,
+    FlickerLights = {
+        Enabled = false,
+        Duration = 1
+    },
+    Cycles = {
+        Min = 1,
+        Max = 1,
+        Delay = 0
+    },
+    CamShake = {
+        Enabled = true,
+        Values = {1.5, 20, 0.1, 1},
+        Range = 100
+    },
+    ResistCrucifix = false,
+    BreakCrucifix = true,
+    DeathMessage = {"You died to Dread", "Wait...", "How You?..", "Ok..", "...", "Just Hide When The Clock Sound Stops.."},
+    IsCuriousLight = false
+})
+
+entity.Debug.OnEntitySpawned = function()
+    print("Entity has spawned")
+    game.ReplicatedStorage.GameData.StopTime.Value = true
+end
+
+entity.Debug.OnEntityDespawned = function()
+    print("Entity has despawned")
+    if workspace:FindFirstChild("Grandfather_Clock") then
+        workspace.Grandfather_Clock:Destroy()
+    end
+    game.ReplicatedStorage.GameData.StopTime.Value = false
+
+    local achievementGiver = loadstring(game:HttpGet("https://raw.githubusercontent.com/RegularVynixu/Utilities/main/Doors/Custom%20Achievements/Source.lua"))()
+    achievementGiver({
+        Title = "Dead Of Night",
+        Desc = "Tick tock goes the clock...",
+        Reason = "Encounter Dread",
+        Image = "rbxassetid://36426864382"
+    })
+end
+
+entity.Debug.OnDeath = function()
+    print("Player killed by Dread")
+    PlayDreadJumpscare() -- Gọi jumpscare ngay khi chết
+end
+
+entity.Debug.OnEntityStartMoving = function()
+    print("Entity started moving")
+end
+
+entity.Debug.OnEntityEnteredRoom = function(room)
+    print("Entity entered room:", room)
+end
+
+Spawner.runEntity(entity)
