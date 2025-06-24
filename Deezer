@@ -1,111 +1,66 @@
--- ===============================
--- Cấu hình chung
--- ===============================
-
+-- == Cấu hình ==
 local ENTITY_MODEL_IDS = {
-    "rbxassetid://101498124045552" -- Bạn có thể thêm ID khác
+    "rbxassetid://12174018892" -- Thay ID khác nếu cần
 }
-
-local SOUND_ASSET_ID = "rbxassetid://8028069841" -- Âm thanh khi spawn
+local SOUND_ASSET_ID = "rbxassetid://8028069841"
 
 local INITIAL_WALKSPEED = 16
-local SLOWED_WALKSPEED = 12
-local TIME_TO_SLOWDOWN = 3.4
-local TIME_TO_DESPAWN_WHEN_LOOKING = 4
-local SPAWN_DISTANCE_BEHIND_PLAYER = 15
-local SPAWN_IMMUNITY_DURATION = 5
+local SPAWN_DISTANCE_BEHIND_PLAYER = 3
 
--- ===============================
--- Biến toàn cục
--- ===============================
+-- == Biến toàn cục ==
+local depthsTer, playerHumanoid, currentEntityModelID = nil, nil, nil
 
-local Kill = false
-local depthsTer = nil
-local playerHumanoid = nil
-local isPlayerSlowed = false
-local timeNotLooking = 0
-local timeLooking = 0
-local currentEntityModelID = nil
-local isSpawningImmune = false
-
--- ===============================
--- Hàm hỗ trợ
--- ===============================
-
-local function getRandomModelID()
-    return ENTITY_MODEL_IDS[math.random(1, #ENTITY_MODEL_IDS)]
-end
-
+-- == Hàm phát âm thanh ==
 local function PlaySpawnSound()
     local sound = Instance.new("Sound", workspace)
     sound.Name = "SpawnSound"
     sound.Volume = 6
     sound.SoundId = SOUND_ASSET_ID
     sound:Play()
-    sound.Ended:Connect(function()
-        sound:Destroy()
-    end)
+    sound.Ended:Connect(function() sound:Destroy() end)
+    print("[Debug] Sound played.")
 end
 
-local function despawnEntity()
-    if depthsTer then
-        depthsTer:Destroy()
-        depthsTer = nil
-    end
-    Kill = false
-    timeNotLooking = 0
-    timeLooking = 0
-    isSpawningImmune = false
-    if isPlayerSlowed and playerHumanoid then
-        playerHumanoid.WalkSpeed = INITIAL_WALKSPEED
-        isPlayerSlowed = false
-    end
-    currentEntityModelID = nil
-end
-
+-- == Hàm spawn thực thể ==
 local function spawnEntity()
-    print("Đang gọi spawnEntity()")
-
-    if depthsTer then
-        despawnEntity()
-    end
-
+    print("[Debug] spawnEntity() called.")
     local player = game.Players.LocalPlayer
-    if not player or not player.Character then return end
+    if not player or not player.Character then print("[Debug] No player or character") return end
 
-    local char = player.Character
-    local hrp = char:FindFirstChild("HumanoidRootPart")
-    playerHumanoid = char:FindFirstChildOfClass("Humanoid")
-    if not hrp or not playerHumanoid then return end
+    local hrp = player.Character:FindFirstChild("HumanoidRootPart")
+    playerHumanoid = player.Character:FindFirstChildOfClass("Humanoid")
+    if not hrp or not playerHumanoid then print("[Debug] Missing HRP or Humanoid") return end
 
-    local modelID = getRandomModelID()
-    if currentEntityModelID and #ENTITY_MODEL_IDS > 1 then
-        while modelID == currentEntityModelID do
-            modelID = getRandomModelID()
-        end
-    end
+    local modelID = ENTITY_MODEL_IDS[math.random(1,#ENTITY_MODEL_IDS)]
     currentEntityModelID = modelID
+    print("[Debug] Trying modelID:", modelID)
 
     local success, model = pcall(function()
         return game:GetObjects(modelID)[1]
     end)
-
-    if not success or not model then
-        warn("Không thể tải mô hình từ ID:", modelID)
+    if not success then
+        print("[Debug] game:GetObjects pcall error:", model)
         return
+    elseif not model then
+        print("[Debug] game:GetObjects returned nil model")
+        return
+    else
+        print("[Debug] game:GetObjects success")
     end
 
     depthsTer = model
     depthsTer.Parent = workspace
+    print("[Debug] Parent set to workspace")
 
     local primary = depthsTer:FindFirstChildWhichIsA("BasePart")
     if not primary then
-        warn("Model không có BasePart")
-        despawnEntity()
+        print("[Debug] No BasePart found in model")
+        depthsTer:Destroy()
         return
     end
 
-    primary.CFrame = hrp.CFrame + (-hrp.CFrame.LookVector * SPAWN_DISTANCE_BEHIND_PLAYER) + Vector3.new(0, 5, 0)
+    primary.CFrame = hrp.CFrame + (-hrp.CFrame.LookVector * SPAWN_DISTANCE_BEHIND_PLAYER) + Vector3.new(0,5,0)
+    print("[Debug] Model positioned behind player:", primary.CFrame)
 
     for _, part in pairs(depthsTer:GetDescendants()) do
         if part:IsA("BasePart") then
@@ -114,108 +69,9 @@ local function spawnEntity()
         end
     end
 
-    Kill = true
-    timeNotLooking = 0
-    timeLooking = 0
-    isPlayerSlowed = false
-    playerHumanoid.WalkSpeed = INITIAL_WALKSPEED
-
-    isSpawningImmune = true
-    task.delay(SPAWN_IMMUNITY_DURATION, function()
-        isSpawningImmune = false
-    end)
-
     PlaySpawnSound()
+    print("[Debug] spawnEntity() completed.")
 end
 
--- ===============================
--- Vòng lặp chính
--- ===============================
-
-task.spawn(function()
-    local player = game.Players.LocalPlayer
-    if player and player.Character then
-        playerHumanoid = player.Character:FindFirstChildOfClass("Humanoid")
-        if playerHumanoid then
-            playerHumanoid.WalkSpeed = INITIAL_WALKSPEED
-        end
-    end
-
-    while true do
-        task.wait(0.1)
-
-        if isSpawningImmune then
-            if playerHumanoid and playerHumanoid.Health <= 0 then
-                despawnEntity()
-                break
-            end
-            continue
-        end
-
-        if Kill and depthsTer and playerHumanoid and playerHumanoid.Health > 0 then
-            local _, visible = workspace.CurrentCamera:WorldToViewportPoint(depthsTer.PrimaryPart.Position)
-
-            if not visible then
-                timeNotLooking += 0.1
-                timeLooking = 0
-
-                if timeNotLooking >= TIME_TO_SLOWDOWN then
-                    if not isPlayerSlowed then
-                        playerHumanoid.WalkSpeed = SLOWED_WALKSPEED
-                        isPlayerSlowed = true
-                        print("Người chơi bị làm chậm")
-                    end
-
-                    print("Không nhìn đủ lâu -> Despawn")
-                    despawnEntity()
-                    task.wait(2)
-                    spawnEntity()
-                end
-            else
-                timeLooking += 0.1
-                timeNotLooking = 0
-
-                if timeLooking >= TIME_TO_DESPAWN_WHEN_LOOKING then
-                    if isPlayerSlowed then
-                        playerHumanoid.WalkSpeed = INITIAL_WALKSPEED
-                        isPlayerSlowed = false
-                    end
-                    print("Nhìn đủ lâu -> Despawn")
-                    despawnEntity()
-                    task.wait(2)
-                    spawnEntity()
-                end
-            end
-
-            if playerHumanoid.Health <= 0 then
-                despawnEntity()
-                break
-            end
-        elseif playerHumanoid and playerHumanoid.Health <= 0 then
-            despawnEntity()
-            break
-        end
-    end
-end)
-
--- ===============================
--- Khởi tạo
--- ===============================
-
-local entityModelAllowed = true
-local latestRoom = game.ReplicatedStorage.GameData.LatestRoom.Value
-
-if game.Workspace:FindFirstChild("SeekMovingNewClone") or
-    latestRoom == 50 or latestRoom == 100 or
-    (latestRoom >= 90 and latestRoom <= 100) then
-    entityModelAllowed = false
-end
-
-if entityModelAllowed then
-    task.wait(1)
-    spawnEntity()
-end
-
-game.ReplicatedStorage.GameData.LatestRoom.Changed:Connect(function()
-    despawnEntity()
-end)
+-- == Gọi spawn ngay sau load script ==
+spawnEntity()
