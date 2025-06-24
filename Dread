@@ -6,7 +6,7 @@ local entity = spawner.Create({
 	Entity = {
 		Name = "Dread",
 		Asset = "rbxassetid://12329981842",
-		HeightOffset = 0
+		HeightOffset = -3
 	},
 	Lights = {
 		Flicker = {
@@ -60,7 +60,7 @@ entity:SetCallback("OnSpawned", function()
 	local cue2 = Instance.new("Sound")
 	cue2.Parent = workspace
 	cue2.Name = "Spawn"
-	cue2.SoundId = "rbxassetid://9125712561"
+	cue2.SoundId = "rbxassetid://91"
 	cue2.Volume = 4.5
 	cue2.PlaybackSpeed = 0.7
 	cue2:Play()
