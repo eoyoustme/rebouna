@@ -19,11 +19,11 @@ local function CustomGitSound(soundlink, vol, filename)
     local sound = Instance.new("Sound")
     -- Dòng này sẽ là vấn đề lớn nhất vì GitAud không định nghĩa và SoundId yêu cầu rbxassetid
     -- Tôi sẽ giữ nguyên theo yêu cầu của bạn, nhưng hãy lưu ý nó sẽ không hoạt động.
-    sound.SoundId = GitAud(soundlink, filename) -- LỖI Ở ĐÂY NẾU GitAud KHÔNG TỒN TẠI HOẶC KHÔNG CHUYỂN ĐỔI ĐƯỢC ID
+    sound.SoundId = GitAud(soundlink, filename) -- LỖI Ở ĐÂY NẾU GitAud KHÔNG TỒN TẠI HOẶC KHÔNG CHUYỂN ĐỔI ĐƯỢNG ID
     sound.Parent = workspace
     sound.Volume = 6 -- Bạn muốn Volume cố định là 6
     sound.PlaybackSpeed = 1
-    sound.Name = "Spawn" -- Bạn muốn tên là "Spawn" (đã thay đổi từ "DoorBreak" theo yêu cầu mới nhất)
+    sound.Name = "Spawn"
     sound:Play()
 
     -- Xóa âm thanh sau khi kết thúc để tránh rò rỉ bộ nhớ
@@ -39,9 +39,10 @@ local GITHUB_SOUND_LINK = "https://github.com/Darker-TheDarkestGuy/DOORS/raw/ref
 
 local INITIAL_WALKSPEED = 16 -- Tốc độ đi bộ ban đầu của người chơi
 local SLOWED_WALKSPEED = 12 -- Tốc độ đi bộ khi bị làm chậm
-local TIME_TO_SLOWDOWN = 100 -- THAY ĐỔI: Thời gian không nhìn để bị làm chậm và đổi mô hình (giây)
-local TIME_TO_DESPAWN_WHEN_LOOKING = 40 -- MỚI: Thời gian nhìn liên tục để thực thể biến mất (giây)
-local SPAWN_RADIUS = 1 -- THAY ĐỔI: Khoảng cách tối đa từ người chơi để xuất hiện ngẫu nhiên (gần hơn)
+local TIME_TO_SLOWDOWN = 3.4 -- Thời gian không nhìn để bị làm chậm và đổi mô hình (giây)
+local TIME_TO_DESPAWN_WHEN_LOOKING = 4 -- Thời gian nhìn liên tục để thực thể biến mất (giây)
+local SPAWN_RADIUS = 10 -- Khoảng cách tối đa từ người chơi để xuất hiện ngẫu nhiên (gần hơn)
+local SPAWN_IMMUNITY_DURATION = 1.5 -- Thời gian miễn nhiễm sau khi spawn (giây)
 
 -- ===============================
 -- Các Biến Toàn Cục (Global Variables)
@@ -50,9 +51,10 @@ local Kill = false -- Điều khiển vòng lặp kiểm tra thực thể
 local depthsTer = nil -- Đối tượng thực thể Obsession hiện tại
 local playerHumanoid = nil -- Humanoid của người chơi
 local isPlayerSlowed = false -- Trạng thái người chơi có đang bị làm chậm không
-local timeNotLooking = 30 -- Thời gian người chơi không nhìn vào thực thể
-local timeLooking = 30 -- MỚI: Thời gian người chơi nhìn vào thực thể
+local timeNotLooking = 0 -- Thời gian người chơi không nhìn vào thực thể
+local timeLooking = 0 -- Thời gian người chơi nhìn vào thực thể
 local currentEntityModelID = nil -- ID mô hình hiện tại của thực thể Obsession
+local isSpawningImmune = false -- Biến để kiểm soát thời gian miễn nhiễm sau khi spawn
 
 -- ===============================
 -- Hàm Hỗ Trợ (Helper Functions)
@@ -126,9 +128,16 @@ local function spawnEntity()
 
     Kill = true -- Kích hoạt vòng lặp kiểm tra
     timeNotLooking = 0 -- Reset thời gian không nhìn
-    timeLooking = 0 -- MỚI: Reset thời gian nhìn
+    timeLooking = 0 -- Reset thời gian nhìn
     isPlayerSlowed = false -- Reset trạng thái làm chậm
     playerHumanoid.WalkSpeed = INITIAL_WALKSPEED -- Khôi phục tốc độ ban đầu
+
+    -- Kích hoạt miễn nhiễm khi spawn
+    isSpawningImmune = true
+    task.delay(SPAWN_IMMUNITY_DURATION, function()
+        isSpawningImmune = false -- Sau thời gian miễn nhiễm, tắt trạng thái
+        print("Thời gian miễn nhiễm kết thúc. Logic Obsession hoạt động bình thường.")
+    end)
 
     print("Thực thể Obsession được tạo với ID mô hình:", currentEntityModelID)
     -- Gọi hàm CustomGitSound mà bạn muốn sử dụng
@@ -143,7 +152,8 @@ local function despawnEntity()
     end
     Kill = false
     timeNotLooking = 0
-    timeLooking = 0 -- MỚI: Reset thời gian nhìn khi biến mất
+    timeLooking = 0
+    isSpawningImmune = false -- Đảm bảo tắt miễn nhiễm khi biến mất
     if isPlayerSlowed and playerHumanoid then -- Chỉ khôi phục nếu thực sự bị làm chậm
         playerHumanoid.WalkSpeed = INITIAL_WALKSPEED
         isPlayerSlowed = false
@@ -168,75 +178,64 @@ task.spawn(function()
     while true do
         task.wait(0.1) -- Kiểm tra mỗi 0.1 giây để phản hồi tốt
 
-        -- Đảm bảo các biến cần thiết tồn tại và người chơi còn sống
-        if Kill and depthsTer and playerHumanoid and playerHumanoid.Health > 0 then
-            -- Kiểm tra xem người chơi có đang nhìn vào thực thể không
-            local _, cameraVisible = game.Workspace.CurrentCamera:WorldToViewportPoint(depthsTer.PrimaryPart.Position)
+        -- CHỈ XỬ LÝ LOGIC CHÍNH NẾU KHÔNG TRONG THỜI GIAN MIỄN NHIỄM
+        if not isSpawningImmune then
+            -- Đảm bảo các biến cần thiết tồn tại và người chơi còn sống
+            if Kill and depthsTer and playerHumanoid and playerHumanoid.Health > 0 then
+                -- Kiểm tra xem người chơi có đang nhìn vào thực thể không
+                local _, cameraVisible = game.Workspace.CurrentCamera:WorldToViewportPoint(depthsTer.PrimaryPart.Position)
 
-            if not cameraVisible then
-                -- Người chơi KHÔNG nhìn vào thực thể
-                timeNotLooking = timeNotLooking + 0.1 -- Tăng thời gian không nhìn
-                timeLooking = 0 -- MỚI: Reset thời gian nhìn khi không nhìn
+                if not cameraVisible then
+                    -- Người chơi KHÔNG nhìn vào thực thể
+                    timeNotLooking = timeNotLooking + 0.1 -- Tăng thời gian không nhìn
+                    timeLooking = 0 -- Reset thời gian nhìn khi không nhìn
 
-                if timeNotLooking >= TIME_TO_SLOWDOWN then
-                    -- Làm chậm người chơi nếu chưa bị làm chậm
-                    if not isPlayerSlowed then
-                        playerHumanoid.WalkSpeed = SLOWED_WALKSPEED
-                        isPlayerSlowed = true
-                        print("Người chơi bị làm chậm!")
+                    if timeNotLooking >= TIME_TO_SLOWDOWN then
+                        -- Làm chậm người chơi nếu chưa bị làm chậm
+                        if not isPlayerSlowed then
+                            playerHumanoid.WalkSpeed = SLOWED_WALKSPEED
+                            isPlayerSlowed = true
+                            print("Người chơi bị làm chậm!")
+                        end
+
+                        print("Không nhìn đủ lâu (" .. string.format("%.1f", timeNotLooking) .. "s), thực thể biến mất!")
+                        despawnEntity()
+                        task.wait(2) -- Đợi một chút trước khi tạo mô hình mới
+                        spawnEntity()
                     end
-
-                    -- THAY ĐỔI: Thực thể biến mất sau khi làm chậm nếu không nhìn đủ lâu
-                    -- Điều kiện `math.abs(timeNotLooking % TIME_TO_SLOWDOWN) < 0.1` được giữ nguyên
-                    -- để kích hoạt chỉ một lần khi vượt ngưỡng hoặc cứ mỗi ngưỡng.
-                    -- Với yêu cầu mới "và nó sẽ biến mất", chúng ta chỉ cần nó biến mất sau 3.4 giây
-                    -- không nhìn, không cần đổi model liên tục nữa.
-                    -- Nếu bạn muốn nó vẫn đổi model trước khi biến mất, cần thêm logic.
-                    print("Không nhìn đủ lâu (" .. timeNotLooking .. "s), thực thể biến mất!")
-                    despawnEntity()
-                    task.wait(2) -- Đợi một chút trước khi tạo mô hình mới
-                    spawnEntity()
-                end
-            else
-                -- Người chơi ĐANG nhìn vào thực thể
-                timeLooking = timeLooking + 0.1 -- MỚI: Tăng thời gian nhìn
-                timeNotLooking = 0 -- Reset thời gian không nhìn
-
-                -- MỚI: Nếu nhìn đủ 4 giây, thực thể biến mất
-                if timeLooking >= TIME_TO_DESPAWN_WHEN_LOOKING then
-                    if isPlayerSlowed then
-                        playerHumanoid.WalkSpeed = INITIAL_WALKSPEED
-                        isPlayerSlowed = false
-                        print("Tốc độ người chơi được khôi phục!")
-                    end
-                    print("Người chơi nhìn đủ lâu (" .. timeLooking .. "s), thực thể biến mất!")
-                    despawnEntity()
-                    task.wait(2) -- Thêm độ trễ ngắn trước khi tạo lại
-                    spawnEntity() -- Tạo lại ngay lập tức
                 else
-                    -- Nếu đang nhìn nhưng chưa đủ 4 giây
-                    if isPlayerSlowed then
-                        playerHumanoid.WalkSpeed = INITIAL_WALKSPEED
-                        isPlayerSlowed = false
-                        print("Tốc độ người chơi được khôi phục!")
-                    end
-                    -- Không làm gì khác, tiếp tục đợi người chơi nhìn đủ thời gian
-                end
-            end
+                    -- Người chơi ĐANG nhìn vào thực thể
+                    timeLooking = timeLooking + 0.1 -- Tăng thời gian nhìn
+                    timeNotLooking = 0 -- Reset thời gian không nhìn
 
-            -- Kiểm tra nếu người chơi chết
-            if playerHumanoid.Health <= 0 then
-                fireLocalSignal(game.ReplicatedStorage.RemotesFolder.DeathHint.OnClientEvent, {"Bạn đã bị Obsession nuốt chửng...", "Hãy nhìn vào nó để nó biến mất, nếu không bạn sẽ chậm lại và bị áp đảo!", "Nó thay đổi hình dạng liên tục."}, "Red")
-                task.wait(0.01)
-                if game:GetService("ReplicatedStorage").GameStats["Player_" .. player.Name] then
-                    game:GetService("ReplicatedStorage").GameStats["Player_" .. player.Name].Total.DeathCause.Value = "Obsession"
+                    -- Nếu nhìn đủ 4 giây, thực thể biến mất
+                    if timeLooking >= TIME_TO_DESPAWN_WHEN_LOOKING then
+                        if isPlayerSlowed then
+                            playerHumanoid.WalkSpeed = INITIAL_WALKSPEED
+                            isPlayerSlowed = false
+                            print("Tốc độ người chơi được khôi phục!")
+                        end
+                        print("Người chơi nhìn đủ lâu (" .. string.format("%.1f", timeLooking) .. "s), thực thể biến mất!")
+                        despawnEntity()
+                        task.wait(2) -- Thêm độ trễ ngắn trước khi tạo lại
+                        spawnEntity() -- Tạo lại ngay lập tức
+                    end
                 end
-                despawnEntity()
-                break -- Thoát vòng lặp chính khi người chơi chết
+
+                -- Kiểm tra nếu người chơi chết
+                if playerHumanoid.Health <= 0 then
+                    fireLocalSignal(game.ReplicatedStorage.RemotesFolder.DeathHint.OnClientEvent, {"Bạn đã bị Obsession nuốt chửng...", "Hãy nhìn vào nó để nó biến mất, nếu không bạn sẽ chậm lại và bị áp đảo!", "Nó thay đổi hình dạng liên tục."}, "Red")
+                    task.wait(0.01)
+                    if game:GetService("ReplicatedStorage").GameStats["Player_" .. player.Name] then
+                        game:GetService("ReplicatedStorage").GameStats["Player_" .. player.Name].Total.DeathCause.Value = "Obsession"
+                    end
+                    despawnEntity()
+                    break -- Thoát vòng lặp chính khi người chơi chết
+                end
+            elseif playerHumanoid and playerHumanoid.Health <= 0 then
+                despawnEntity() -- Dọn dẹp nếu người chơi chết vì nguyên nhân khác
+                break -- Thoát vòng lặp chính
             end
-        elseif playerHumanoid and playerHumanoid.Health <= 0 then
-            despawnEntity() -- Dọn dẹp nếu người chơi chết vì nguyên nhân khác
-            break -- Thoát vòng lặp chính
         end
     end
 end)
@@ -268,3 +267,15 @@ game.ReplicatedStorage.GameData.LatestRoom.Changed:Connect(function()
     -- Bạn có thể thêm logic ở đây để quyết định xem có nên tạo lại thực thể trong phòng mới không
     -- dựa trên số phòng
 end)
+
+-- ===============================
+-- Thành Tích (Achievements)
+-- ===============================
+local achievementGiver = loadstring(game:HttpGet("https://raw.githubusercontent.com/RegularVynixu/Utilities/main/Doors/Custom%20Achievements/Source.lua"))()
+
+achievementGiver({
+    Title = "Nhìn tôi đi, quangcat!",
+    Desc = "Cơ hội cuối cùng để không nhìn tôi",
+    Reason = "Gặp Obsession",
+    Image = "rbxassetid://97059893535136"
+})
