@@ -1,5 +1,5 @@
 spawn(function() --remade trash frostbite
-while task.wait(35) do
+while task.wait(3) do
 if workspace:FindFirstChild("SeekMovingNewClone") 
         or workspace.CurrentRooms:FindFirstChild("50") 
         or workspace.CurrentRooms:FindFirstChild("100") then
