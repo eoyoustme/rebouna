@@ -11,18 +11,18 @@ newModel.Parent = currentRoom
 -- Lấy object từ assetID
 local obj = game:GetObjects(assetID)[1]
 
--- Tính vị trí đặt object
-local num = 0
-if currentRoom:FindFirstChild("PathfindNodes") then
-    num = math.floor(#currentRoom.PathfindNodes:GetChildren() / 2)
-end
+-- Tính trung tâm phòng bằng cách lấy bounding box của currentRoom
+local cframe, size = currentRoom:GetBoundingBox()
+local centerPos = cframe.Position
 
--- Đặt object tại vị trí giữa pathfindnodes hoặc vị trí phòng + 5 lên trục Y
-local targetCFrame = (num == 0 and currentRoom[currentRoom.Name] or currentRoom.PathfindNodes[num]).CFrame * CFrame.new(0, 5, 0)
-obj:PivotTo(targetCFrame)
+-- Đặt object cách mặt đất 5 stud
+local targetPos = Vector3.new(centerPos.X, centerPos.Y + 5, centerPos.Z)
+
+obj:PivotTo(CFrame.new(targetPos))
 
 -- Đặt parent và khóa vị trí
 obj.Parent = newModel
+
 if obj.PrimaryPart then
     obj.PrimaryPart.Anchored = true
 else
