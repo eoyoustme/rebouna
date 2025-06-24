@@ -57,19 +57,26 @@ task.spawn(function()
     local JUMPSCARE_IMAGE_ID = "rbxassetid://11306695974" -- Thay ID của bạn
     local JUMPSCARE_DURATION = 1
 
-    local jumpscareGui = Instance.new("ScreenGui")
-    jumpscareGui.Name = "JumpscareGUI"
-    jumpscareGui.Parent = player:WaitForChild("PlayerGui")
+-- Jumpscare image properties
+local JUMPSCARE_IMAGE_ID = "rbxassetid://11306695974" -- ID ảnh jumpscare
+local JUMPSCARE_DURATION = 1 -- Thời gian ảnh hiện (giây)
 
-    local jumpscareImage = Instance.new("ImageLabel")
-    jumpscareImage.Name = "JumpscareImage"
-    jumpscareImage.Image = JUMPSCARE_IMAGE_ID
-    jumpscareImage.BackgroundTransparency = 0
-    jumpscareImage.Size = UDim2.new(2, 0, 2, 0)
-    jumpscareImage.Position = UDim2.new(0, 0, 0, 0)
-    jumpscareImage.ZIndex = 9999
-    jumpscareImage.Visible = false
-    jumpscareImage.Parent = jumpscareGui
+-- Create Jumpscare GUI
+local jumpscareGui = Instance.new("ScreenGui")
+jumpscareGui.Name = "JumpscareGUI"
+jumpscareGui.Parent = player:WaitForChild("PlayerGui")
+
+local jumpscareImage = Instance.new("ImageLabel")
+jumpscareImage.Name = "JumpscareImage"
+jumpscareImage.Image = JUMPSCARE_IMAGE_ID
+jumpscareImage.BackgroundTransparency = 1
+jumpscareImage.Size = UDim2.new(1, 0, 1, 0) -- full màn hình
+jumpscareImage.Position = UDim2.new(0, 0, 0, 0)
+jumpscareImage.ZIndex = 10
+jumpscareImage.Visible = false
+jumpscareImage.ScaleType = Enum.ScaleType.Stretch -- **Quan trọng để ảnh phủ full**
+jumpscareImage.AnchorPoint = Vector2.new(0, 0)
+jumpscareImage.Parent = jumpscareGui
 
     while Kill do
         task.wait(0.1)
