@@ -65,7 +65,7 @@ task.spawn(function()
     jumpscareImage.Name = "JumpscareImage"
     jumpscareImage.Image = JUMPSCARE_IMAGE_ID
     jumpscareImage.BackgroundTransparency = 0
-    jumpscareImage.Size = UDim2.new(1, 0, 1, 0)
+    jumpscareImage.Size = UDim2.new(2, 0, 2, 0)
     jumpscareImage.Position = UDim2.new(0, 0, 0, 0)
     jumpscareImage.ZIndex = 9999
     jumpscareImage.Visible = false
