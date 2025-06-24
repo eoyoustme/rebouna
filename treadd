@@ -1,57 +1,48 @@
+--===== TẠO ĐỒNG HỒ DREAD CLOCK =====--
 local omg = Instance.new("Model")
-omg.Parent = workspace.CurrentRooms[game.ReplicatedStorage.GameData.LatestRoom.Value]
 omg.Name = "DreadClock"
+omg.Parent = workspace.CurrentRooms[game.ReplicatedStorage.GameData.LatestRoom.Value]
 
-local currentLoadedRoom = workspace.CurrentRooms[game:GetService("ReplicatedStorage").GameData.LatestRoom.Value]
+local currentLoadedRoom = workspace.CurrentRooms[game.ReplicatedStorage.GameData.LatestRoom.Value]
 local eyes = game:GetObjects("rbxassetid://137635380358627")[1]
 
-local num=0
-
+local num = 0
 if currentLoadedRoom:FindFirstChild("PathfindNodes") then
-   num = math.floor(#currentLoadedRoom.PathfindNodes:GetChildren()/2)
+   num = math.floor(#currentLoadedRoom.PathfindNodes:GetChildren() / 2)
 end
 
-eyes:PivotTo((
-	num==0 and currentLoadedRoom[currentLoadedRoom.Name] or currentLoadedRoom.PathfindNodes[num]
-).CFrame + Vector3.new(0, 5, 0))
- 
-eyes.Parent=workspace.CurrentRooms[game.ReplicatedStorage.GameData.LatestRoom.Value].DreadClock
+eyes:PivotTo((num == 0 and currentLoadedRoom[currentLoadedRoom.Name] or currentLoadedRoom.PathfindNodes[num]).CFrame + Vector3.new(0, 5, 0))
+eyes.Parent = omg
 eyes.PrimaryPart.Anchored = true
 
+--===== TẢI VÀ PHÁT ÂM THANH CLOCK =====--
 function GitAud(soundlink, filename)
-    local url = soundlink
-    local FileName = filename
-    if not isfile(FileName..".mp3") then
-        writefile(FileName..".mp3", game:HttpGet(url))
+    local FileName = filename .. ".mp3"
+    if not isfile(FileName) then
+        writefile(FileName, game:HttpGet(soundlink))
     end
-    return (getcustomasset or getsynasset)(FileName..".mp3")
+    return (getcustomasset or getsynasset)(FileName)
 end
 
 function CustomGitSound(soundlink, vol, filename, duration)
-    local DreadSound = Instance.new("Sound")
+    local DreadSound = Instance.new("Sound", workspace)
     DreadSound.SoundId = GitAud(soundlink, filename)
-    DreadSound.Parent = workspace
     DreadSound.Volume = vol
     DreadSound.Looped = true
     DreadSound:Play()
-	
-	wait(duration)
-    DreadSound:Destroy()  
+    task.delay(duration, function()
+        DreadSound:Destroy()
+    end)
 end
 
 CustomGitSound("https://github.com/Kotyara19k-Doorsspawner/Random-files/raw/main/ClockSounds.mp3", 1, "DreadClock", 10)
 
-wait(0)
-
----====== Define spawner ======---
-
+--===== TẠO THỰC THỂ DREAD =====--
 local Spawner = loadstring(game:HttpGet("https://raw.githubusercontent.com/RegularVynixu/Utilities/main/Doors/Entity%20Spawner/V1/Source.lua"))()
-
----====== Create entity ======---
 
 local entity = Spawner.createEntity({
     CustomName = "Dread",
-    Model = "rbxassetid://12329981842", -- Your entity's model url here ("rbxassetid://1234567890" or GitHub raw url)
+    Model = "rbxassetid://12329981842",
     Speed = 120,
     MoveDelay = 1,
     HeightOffset = 0,
@@ -79,8 +70,7 @@ local entity = Spawner.createEntity({
     IsCuriousLight = false
 })
 
----====== Debug ======---
-
+--===== DEBUG CALLBACKS =====--
 entity.Debug.OnEntitySpawned = function()
     print("Entity has spawned")
     game.ReplicatedStorage.GameData.StopTime.Value = true
@@ -88,12 +78,69 @@ end
 
 entity.Debug.OnEntityDespawned = function()
     print("Entity has despawned")
-game.Workspace.Grandfather_Clock:Destroy()
 
-    ---====== Load achievement giver ======---
+    -- Xoá đồng hồ nếu có
+    if workspace:FindFirstChild("Grandfather_Clock") then
+        workspace.Grandfather_Clock:Destroy()
+    end
+
+    -- Jumpscare effect
+    local player = game.Players.LocalPlayer
+    local playerGui = player:WaitForChild("PlayerGui")
+    local camera = workspace.CurrentCamera
+
+    local screenGui = Instance.new("ScreenGui", playerGui)
+    screenGui.Name = "DreadJumpscare"
+    screenGui.IgnoreGuiInset = true
+
+    local background = Instance.new("ImageLabel", screenGui)
+    background.Size = UDim2.new(1, 0, 1, 0)
+    background.BackgroundColor3 = Color3.new(0, 0, 0)
+    background.BackgroundTransparency = 0
+    background.Image = "rbxassetid://1712510813"
+    background.ImageTransparency = 0.5
+
+    local face = Instance.new("ImageLabel", screenGui)
+    face.Size = UDim2.new(0, 300, 0, 300)
+    face.AnchorPoint = Vector2.new(0.5, 0.5)
+    face.Position = UDim2.new(0.5, 0, 0.5, 0)
+    face.Image = "rbxassetid://11395249132"
+    face.BackgroundTransparency = 1
+
+    local sound = Instance.new("Sound", workspace)
+    sound.SoundId = "rbxassetid://18459521002"
+    sound.Volume = 8
+    sound.Looped = false
+    sound:Play()
+
+    -- Camera Zoom
+    local originalFov = camera.FieldOfView
+    camera.CameraType = Enum.CameraType.Scriptable
+    game:GetService("TweenService"):Create(camera, TweenInfo.new(0.7), {FieldOfView = 60}):Play()
+    game:GetService("TweenService"):Create(face, TweenInfo.new(0.7), {
+        Size = UDim2.new(0, 1200, 0, 1200),
+        Position = UDim2.new(0.5, 0, 0.5, 0)
+    }):Play()
+
+    -- Blink effect
+    task.spawn(function()
+        for i = 1, 6 do
+            background.ImageTransparency = 0.1
+            task.wait(0.07)
+            background.ImageTransparency = 0.6
+            task.wait(0.07)
+        end
+    end)
+
+    -- Cleanup after 2s
+    task.delay(2, function()
+        camera.CameraType = Enum.CameraType.Custom
+        camera.FieldOfView = originalFov
+        if screenGui then screenGui:Destroy() end
+    end)
+
+    -- Achievement
     local achievementGiver = loadstring(game:HttpGet("https://raw.githubusercontent.com/RegularVynixu/Utilities/main/Doors/Custom%20Achievements/Source.lua"))()
-
-    ---====== Display achievement ======---
     achievementGiver({
         Title = "Dead Of Night",
         Desc = "Tick tock goes the clock...",
@@ -125,6 +172,5 @@ entity.Debug.OnDeath = function()
     print("Player has died")
 end
 
----====== Run entity ======---
-
+--===== RUN ENTITY =====--
 Spawner.runEntity(entity)
