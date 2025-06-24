@@ -1,33 +1,41 @@
-local modelName = "Sussyroom"
+-- Thông tin object
+local modelName = "Kardin"
 local assetID = "rbxassetid://11887366327"
 
-local currentRoom = workspace.CurrentRooms[game.ReplicatedStorage.GameData.LatestRoom.Value]
+-- Lấy phòng hiện tại từ hệ thống Doors
+local roomIndex = game.ReplicatedStorage.GameData.LatestRoom.Value
+local currentRoom = workspace.CurrentRooms[roomIndex]
 
--- Tạo model mới
-local newModel = Instance.new("Model")
-newModel.Name = modelName
-newModel.Parent = currentRoom
+-- Tạo model mới trong phòng
+local kardModel = Instance.new("Model")
+kardModel.Name = modelName
+kardModel.Parent = currentRoom
 
--- Lấy object từ assetID
-local obj = game:GetObjects(assetID)[1]
+-- Lấy object từ asset ID
+local kardObject = game:GetObjects(assetID)[1]
 
--- Tính trung tâm phòng bằng cách lấy bounding box của currentRoom
-local cframe, size = currentRoom:GetBoundingBox()
-local centerPos = cframe.Position
+-- Tìm Part gốc (center part) của căn phòng
+local roomOriginPart = currentRoom:FindFirstChild(currentRoom.Name)
+if not roomOriginPart then
+    warn("Không tìm thấy part gốc của phòng!")
+    return
+end
 
--- Đặt object cách mặt đất 5 stud
-local targetPos = Vector3.new(centerPos.X + 10, centerPos.Y + 12, centerPos.Z)
+-- Dịch object lên cao một chút từ tâm phòng
+local offset = Vector3.new(10, 5, 0) -- 5 stud phía trên sàn
+local finalCFrame = roomOriginPart.CFrame * CFrame.new(offset)
 
-obj:PivotTo(CFrame.new(targetPos))
+-- Đặt object vào đúng vị trí tính theo hướng phòng
+kardObject:PivotTo(finalCFrame)
 
--- Đặt parent và khóa vị trí
-obj.Parent = newModel
+-- Đặt object làm con của model
+kardObject.Parent = kardModel
 
-if obj.PrimaryPart then
-    obj.PrimaryPart.Anchored = true
+-- Anchor tất cả các part bên trong object
+if kardObject.PrimaryPart then
+    kardObject.PrimaryPart.Anchored = true
 else
-    -- Nếu không có PrimaryPart, cố gắng khóa tất cả các part con
-    for _, part in pairs(obj:GetDescendants()) do
+    for _, part in ipairs(kardObject:GetDescendants()) do
         if part:IsA("BasePart") then
             part.Anchored = true
         end
