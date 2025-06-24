@@ -1,0 +1,272 @@
+-- ===============================
+-- Cấu hình Chung
+-- ===============================
+local ENTITY_MODEL_IDS = {
+    "rbxassetid://101498124045552",
+    "rbxassetid://129094269310068"
+}
+
+local GITHUB_SOUND_LINK = "https://github.com/Darker-TheDarkestGuy/DOORS/raw/refs/heads/main/XRecorder_Edited_20250622_01.mp3?raw=true"
+
+local INITIAL_WALKSPEED = 16
+local SLOWED_WALKSPEED = 12
+local TIME_TO_SLOWDOWN = 3.4
+local TIME_TO_DESPAWN_WHEN_LOOKING = 4
+local SPAWN_DISTANCE_BEHIND_PLAYER = 15
+local SPAWN_IMMUNITY_DURATION = 5
+
+local Kill = false
+local depthsTer = nil
+local playerHumanoid = nil
+local isPlayerSlowed = false
+local timeNotLooking = 0
+local timeLooking = 0
+local currentEntityModelID = nil
+local isSpawningImmune = false
+
+-- ===============================
+-- Hàm hỗ trợ
+-- ===============================
+
+local function getRandomModelID()
+    local filtered = {}
+    for _, id in ipairs(ENTITY_MODEL_IDS) do
+        if typeof(id) == "string" and id:match("^rbxassetid://%d+$") then
+            table.insert(filtered, id)
+        end
+    end
+    if #filtered == 0 then
+        warn("Không có ID mô hình hợp lệ!")
+        return nil
+    end
+    local randomIndex = math.random(1, #filtered)
+    return filtered[randomIndex]
+end
+
+local function CustomGitSound(soundlink)
+    if not soundlink or not soundlink:match("^https?://") then
+        warn("Đường dẫn âm thanh không hợp lệ.")
+        return
+    end
+
+    local sound = Instance.new("Sound")
+    sound.Parent = workspace
+    sound.Volume = 6
+    sound.PlaybackSpeed = 1
+    sound.Name = "SpawnSound"
+
+    local success = pcall(function()
+        sound.SoundId = soundlink
+    end)
+
+    if not success or sound.SoundId == "" then
+        warn("Không thể gán SoundId từ URL.")
+        sound:Destroy()
+        return
+    end
+
+    sound.Loaded:Wait()
+    if sound.IsLoaded then
+        sound:Play()
+    else
+        warn("Âm thanh không tải được.")
+        sound:Destroy()
+        return
+    end
+
+    task.spawn(function()
+        sound.Ended:Wait()
+        sound:Destroy()
+    end)
+end
+
+local function playSpawnSoundFromGitHub()
+    print("Phát âm thanh từ GitHub: " .. GITHUB_SOUND_LINK)
+    CustomGitSound(GITHUB_SOUND_LINK)
+end
+
+local function fireLocalSignal(event, ...)
+    if event and typeof(event) == "RBXScriptSignal" then
+        event:Fire(...)
+    elseif event and event.Fire then
+        warn("Event có thể không hỗ trợ :Fire():", event)
+    else
+        warn("Sự kiện không hợp lệ:", event)
+    end
+end
+
+-- ===============================
+-- Logic spawn thực thể
+-- ===============================
+
+local function spawnEntity()
+    print("Đang tạo Obsession...")
+
+    if depthsTer then
+        depthsTer:Destroy()
+        depthsTer = nil
+    end
+
+    local character = game.Players.LocalPlayer.Character
+    if not character or not character:FindFirstChild("HumanoidRootPart") then
+        warn("Không tìm thấy nhân vật hoặc HumanoidRootPart.")
+        return
+    end
+
+    playerHumanoid = character:FindFirstChildWhichIsA("Humanoid")
+    if not playerHumanoid then
+        warn("Không tìm thấy Humanoid.")
+        return
+    end
+
+    local newModelID = getRandomModelID()
+    if not newModelID then return end
+    if currentEntityModelID and #ENTITY_MODEL_IDS > 1 then
+        while newModelID == currentEntityModelID do
+            newModelID = getRandomModelID()
+        end
+    end
+    currentEntityModelID = newModelID
+
+    local success, model = pcall(function()
+        return game:GetObjects(currentEntityModelID)[1]
+    end)
+
+    if not success or not model then
+        warn("Không thể tải mô hình từ ID: " .. tostring(currentEntityModelID))
+        return
+    end
+
+    depthsTer = model
+    depthsTer.Parent = workspace
+
+    local primaryPart = depthsTer:FindFirstChildWhichIsA("BasePart") or depthsTer:FindFirstChildWhichIsA("Part")
+    if not primaryPart then
+        warn("Không có phần chính trong mô hình.")
+        depthsTer:Destroy()
+        depthsTer = nil
+        return
+    end
+
+    local playerCFrame = character.HumanoidRootPart.CFrame
+    primaryPart.CFrame = playerCFrame + (playerCFrame.LookVector * -SPAWN_DISTANCE_BEHIND_PLAYER) + Vector3.new(0, 5, 0)
+
+    for _, part in pairs(depthsTer:GetDescendants()) do
+        if part:IsA("BasePart") then
+            part.Anchored = false
+            part.CanCollide = false
+        end
+    end
+
+    Kill = true
+    timeNotLooking = 0
+    timeLooking = 0
+    isPlayerSlowed = false
+    playerHumanoid.WalkSpeed = INITIAL_WALKSPEED
+    isSpawningImmune = true
+
+    print("Thời gian miễn nhiễm spawn (" .. SPAWN_IMMUNITY_DURATION .. "s)")
+    task.delay(SPAWN_IMMUNITY_DURATION, function()
+        isSpawningImmune = false
+        print("Hết miễn nhiễm.")
+    end)
+
+    playSpawnSoundFromGitHub()
+end
+
+local function despawnEntity()
+    print("Đang xóa Obsession...")
+    if depthsTer then
+        depthsTer:Destroy()
+        depthsTer = nil
+    end
+    Kill = false
+    timeNotLooking = 0
+    timeLooking = 0
+    isSpawningImmune = false
+    if isPlayerSlowed and playerHumanoid then
+        playerHumanoid.WalkSpeed = INITIAL_WALKSPEED
+        isPlayerSlowed = false
+    end
+    currentEntityModelID = nil
+end
+
+-- ===============================
+-- Vòng lặp xử lý chính
+-- ===============================
+task.spawn(function()
+    local player = game.Players.LocalPlayer
+
+    player.CharacterAdded:Connect(function(char)
+        task.wait(1)
+        playerHumanoid = char:FindFirstChildWhichIsA("Humanoid")
+        if playerHumanoid then
+            playerHumanoid.WalkSpeed = INITIAL_WALKSPEED
+        end
+    end)
+
+    while true do
+        task.wait(0.1)
+
+        if isSpawningImmune then
+            if playerHumanoid and playerHumanoid.Health <= 0 then
+                despawnEntity()
+                break
+            end
+            continue
+        end
+
+        if Kill and depthsTer and playerHumanoid and playerHumanoid.Health > 0 then
+            local cam = workspace.CurrentCamera
+            local entityDir = (depthsTer.PrimaryPart.Position - cam.CFrame.Position).Unit
+            local dot = entityDir:Dot(cam.CFrame.LookVector)
+
+            if dot < 0.5 then
+                timeNotLooking += 0.1
+                timeLooking = 0
+
+                if timeNotLooking >= TIME_TO_SLOWDOWN then
+                    if not isPlayerSlowed then
+                        playerHumanoid.WalkSpeed = SLOWED_WALKSPEED
+                        isPlayerSlowed = true
+                    end
+                    despawnEntity()
+                    task.wait(2)
+                    spawnEntity()
+                end
+            else
+                timeLooking += 0.1
+                timeNotLooking = 0
+
+                if timeLooking >= TIME_TO_DESPAWN_WHEN_LOOKING then
+                    if isPlayerSlowed then
+                        playerHumanoid.WalkSpeed = INITIAL_WALKSPEED
+                        isPlayerSlowed = false
+                    end
+                    despawnEntity()
+                    task.wait(2)
+                    spawnEntity()
+                end
+            end
+
+            if playerHumanoid.Health <= 0 then
+                fireLocalSignal(game.ReplicatedStorage.RemotesFolder.DeathHint.OnClientEvent, {"Bạn đã bị Obsession nuốt chửng...", "Hãy nhìn vào nó để nó biến mất.", "Nó thay đổi hình dạng liên tục."}, "Red")
+                task.wait(0.01)
+                local stats = game:GetService("ReplicatedStorage").GameStats["Player_" .. player.Name]
+                if stats then
+                    stats.Total.DeathCause.Value = "Obsession"
+                end
+                despawnEntity()
+                break
+            end
+        elseif playerHumanoid and playerHumanoid.Health <= 0 then
+            despawnEntity()
+            break
+        end
+    end
+end)
+
+-- ===============================
+-- Khởi tạo thực thể ban đầu
+-- ===============================
+local latest
