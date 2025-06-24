@@ -2,7 +2,7 @@
 -- Cấu hình Chung
 -- ===============================
 local ENTITY_MODEL_IDS = {
-    "rbxassetid://129094269310068" -- Thay ID model phù hợp
+    "rbxassetid://12174018892" -- Thay ID model phù hợp
 }
 
 local SOUND_ASSET_ID = "rbxassetid://6351509719" -- ID âm thanh spawn
@@ -28,10 +28,11 @@ local Kill = false
 -- Hàm phát âm thanh spawn
 -- ===============================
 local function PlaySpawnSound()
-    local sound = Instance.new("Sound", workspace)
+    local sound = Instance.new("Sound")
     sound.Name = "SpawnSound"
     sound.Volume = 6
     sound.SoundId = SOUND_ASSET_ID
+    sound.Parent = workspace
     sound:Play()
     sound.Ended:Connect(function() sound:Destroy() end)
 end
@@ -42,11 +43,17 @@ end
 local function spawnEntity()
     print("[SpawnEntity] Called")
     local player = game.Players.LocalPlayer
-    if not player or not player.Character then return end
+    if not player or not player.Character then
+        print("[SpawnEntity] Không tìm thấy player hoặc character!")
+        return
+    end
 
     local hrp = player.Character:FindFirstChild("HumanoidRootPart")
     playerHumanoid = player.Character:FindFirstChildOfClass("Humanoid")
-    if not hrp or not playerHumanoid then return end
+    if not hrp or not playerHumanoid then
+        print("[SpawnEntity] Không tìm thấy HumanoidRootPart hoặc Humanoid!")
+        return
+    end
 
     local modelID = ENTITY_MODEL_IDS[math.random(1, #ENTITY_MODEL_IDS)]
     currentEntityModelID = modelID
@@ -55,23 +62,34 @@ local function spawnEntity()
         return game:GetObjects(modelID)[1]
     end)
     if not success or not model then
-        warn("[SpawnEntity] Lỗi tải model:", model)
+        warn("[SpawnEntity] Lỗi tải model hoặc model không tồn tại")
         return
     end
 
     depthsTer = model
     depthsTer.Parent = workspace
 
-    local primary = depthsTer:FindFirstChildWhichIsA("BasePart")
-    if not primary then
-        warn("[SpawnEntity] Không tìm thấy BasePart trong model")
-        depthsTer:Destroy()
-        depthsTer = nil
-        return
+    -- Đặt PrimaryPart nếu chưa có
+    if not depthsTer.PrimaryPart then
+        -- Tìm BasePart đầu tiên làm PrimaryPart
+        local primaryPart = depthsTer:FindFirstChildWhichIsA("BasePart")
+        if primaryPart then
+            depthsTer.PrimaryPart = primaryPart
+        else
+            warn("[SpawnEntity] Không tìm thấy BasePart để đặt làm PrimaryPart!")
+            depthsTer:Destroy()
+            depthsTer = nil
+            return
+        end
     end
 
-    primary.CFrame = hrp.CFrame - (hrp.CFrame.LookVector * SPAWN_DISTANCE_BEHIND_PLAYER) + Vector3.new(0, 5, 0)
+    -- Spawn vị trí phía sau player và sát mặt đất (giả sử Y=5)
+    local spawnPos = hrp.CFrame - (hrp.CFrame.LookVector * SPAWN_DISTANCE_BEHIND_PLAYER)
+    spawnPos = CFrame.new(spawnPos.X, hrp.Position.Y, spawnPos.Z) -- giữ Y ngang bằng người chơi
 
+    depthsTer:SetPrimaryPartCFrame(spawnPos)
+
+    -- Set lại các part trong model
     for _, part in pairs(depthsTer:GetDescendants()) do
         if part:IsA("BasePart") then
             part.Anchored = false
@@ -107,7 +125,10 @@ end
 -- ===============================
 task.spawn(function()
     local player = game.Players.LocalPlayer
-    if not player or not player.Character then return end
+    if not player or not player.Character then
+        print("[MainLoop] Không tìm thấy player hoặc character!")
+        return
+    end
 
     playerHumanoid = player.Character:FindFirstChildOfClass("Humanoid")
     if playerHumanoid then
@@ -118,19 +139,14 @@ task.spawn(function()
         task.wait(0.1)
 
         if Kill and depthsTer and playerHumanoid and playerHumanoid.Health > 0 then
-            local _, cameraVisible = workspace.CurrentCamera:WorldToViewportPoint(depthsTer.PrimaryPart.Position)
+            -- Kiểm tra xem thực thể có trong camera không
+            local camera = workspace.CurrentCamera
+            local depthPos = depthsTer.PrimaryPart.Position
+            local screenPoint, onScreen = camera:WorldToViewportPoint(depthPos)
 
-            if not cameraVisible then
-                timeNotLooking = timeNotLooking + 0.1
-                timeLooking = 0
-
-                if timeNotLooking >= TIME_TO_DEATH_IF_NOT_LOOKING then
-                    print("[Logic] Không nhìn đủ 3 giây → Người chơi chết!")
-                    playerHumanoid.Health = 0
-                    despawnEntity()
-                    break
-                end
-            else
+            -- onScreen = nằm trong view và depthPos.Z > 0 (phía trước camera)
+            if onScreen and screenPoint.Z > 0 then
+                -- Đang nhìn thực thể
                 timeLooking = timeLooking + 0.1
                 timeNotLooking = 0
 
@@ -139,6 +155,17 @@ task.spawn(function()
                     despawnEntity()
                     task.wait(2)
                     spawnEntity()
+                end
+            else
+                -- Không nhìn thực thể
+                timeNotLooking = timeNotLooking + 0.1
+                timeLooking = 0
+
+                if timeNotLooking >= TIME_TO_DEATH_IF_NOT_LOOKING then
+                    print("[Logic] Không nhìn đủ 3 giây → Người chơi chết!")
+                    playerHumanoid.Health = 0
+                    despawnEntity()
+                    break
                 end
             end
         elseif playerHumanoid and playerHumanoid.Health <= 0 then
