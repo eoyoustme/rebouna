@@ -126,7 +126,7 @@ entity:SetCallback("OnDespawning", function()
     lighting.TintColor = Color3.fromRGB(255, 255, 255)
     lighting.Contrast = 10
     game:GetService("TweenService"):Create(lighting, TweenInfo.new(2.5), {Contrast = 0}):Play()
-    game:GetService("TweenService"):Create(lighting, TweenInfo.new(5), {TintColor = Color3.fromRGB(230, 3, 255)}):Play()
+    game:GetService("TweenService"):Create(lighting, TweenInfo.new(5), {TintColor = Color3.fromRGB(255, 255, 255)}):Play()
 end)
 
 entity:SetCallback("OnDespawned", function()
