@@ -202,7 +202,7 @@ local function GetGitSound(GithubSnd, SoundName)
 end
                   
 local crash = GetGitSound("https://github.com/eoyoustme/rebouna/blob/main/Kill_with_static.mp3.mpeg.wav?raw=true", "Crashund")
-crash.Volume = 10
+crash.Volume = 100
 crash.Parent = workspace
 crash.PlaybackSpeed = 1
 crash:Play()
