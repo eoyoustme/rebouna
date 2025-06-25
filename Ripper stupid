@@ -223,7 +223,7 @@ entity:SetCallback("OnDamagePlayer", function(newHealth)
             end
         end
 
-        wait(5)
+        wait(2)
         screenGui:Destroy()
         a:Disconnect()
         lockOn:Destroy()
