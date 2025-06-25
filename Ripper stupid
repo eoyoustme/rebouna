@@ -226,3 +226,13 @@ entity:SetCallback("OnDamagePlayer", function(newHealth)
         wait(5)
         screenGui:Destroy()
         a:Disconnect()
+        lockOn:Destroy()
+        wait(0.2)
+        game.Players.LocalPlayer.Character.Humanoid.Health = 0
+        game.ReplicatedStorage.GameStats["Player_".. game.Players.LocalPlayer.Name].Total.DeathCause.Value = "Ripper"
+      end
+end)
+
+---====== Run entity ======---
+
+entity:Run()
