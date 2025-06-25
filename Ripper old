@@ -46,7 +46,7 @@ local entity = spawner.Create({
 	},
 	Movement = {
 		Speed = 125,
-		Delay = 6,
+		Delay = 11.542,
 		Reversed = false
 	},
 	Rebounding = {
@@ -108,8 +108,8 @@ tweenservice:Create(colorEffect, TweenInfo.new(5), {
 }):Play()
 
 local sound = Instance.new("Sound")
-sound.SoundId = "rbxassetid://"
-sound.PlaybackSpeed = 0.8
+sound.SoundId = "rbxassetid://9125713501"
+sound.PlaybackSpeed = 0.5
 sound.Looped = false
 sound.Parent = workspace
 sound.Volume = 10
