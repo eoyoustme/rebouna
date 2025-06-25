@@ -11,15 +11,15 @@ sprintBarBackground.Parent = screenGui
 
 local sprintBar = Instance.new("Frame")
 sprintBar.Size = UDim2.new(0, 0, 1, 0)  -- Width is dynamic, height fills the background
-sprintBar.BackgroundColor3 = Color3.fromRGB(0, 255, 0)  -- Green for the sprint bar
+sprintBar.BackgroundColor3 = Color3.fromRGB(255, 255, 255)  -- Green for the sprint bar
 sprintBar.Parent = sprintBarBackground
 
 -- Sprint and Stamina Variables
 local sprinting = false
 local maxStamina = 100  -- Maximum stamina
 local currentStamina = maxStamina  -- Starting stamina
-local staminaRegenRate = 5  -- How fast stamina regenerates per second
-local staminaDrainRate = 20  -- How fast stamina drains while sprinting
+local staminaRegenRate = 20  -- How fast stamina regenerates per second
+local staminaDrainRate = 5  -- How fast stamina drains while sprinting
 local sprintSpeed = 20     -- Sprinting speed
 local walkSpeed = 15       -- Walking speed
 
