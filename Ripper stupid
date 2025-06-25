@@ -194,7 +194,7 @@ entity:SetCallback("OnDamagePlayer", function(newHealth)
         end
 
         local crash = GetGitSound("https://github.com/eoyoustme/rebouna/blob/main/Kill_with_static.mp3.mpeg.wav?raw=true", "Crashund")
-        crash.Volume = 9999
+        crash.Volume = 100
         crash.Parent = workspace
         crash.PlaybackSpeed = 1
         crash:Play()
