@@ -28,7 +28,7 @@ local get = true
 local entity = spawner.Create({
 	Entity = {
 		Name = "RipperMovings",
-		Asset = "rbxassetid://96323679863171",
+		Asset = "rbxassetid://98307026363118",
 		HeightOffset = 1
 	},
 	Lights = {
@@ -112,7 +112,7 @@ task.spawn(function()
 end)
             
 local sound = Instance.new("Sound")
-     	sound.SoundId = "rbxassetid://101665501585468"
+     	sound.SoundId = "rbxassetid://"
       sound.PlaybackSpeed = 0.8
      	sound.Looped = false
      	sound.Parent = workspace
@@ -201,10 +201,10 @@ local function GetGitSound(GithubSnd, SoundName)
                 return sound
 end
                   
-local crash = GetGitSound("https://github.com/Brololto/Angler-sounds/blob/main/lv_0_20241221185918%20(1).mp3?raw=true", "Crashund")
-crash.Volume = 5
+local crash = GetGitSound("https://github.com/eoyoustme/rebouna/blob/main/Kill_with_static.mp3.mpeg.wav?raw=true", "Crashund")
+crash.Volume = 10
 crash.Parent = workspace
-crash.PlaybackSpeed = 0.8
+crash.PlaybackSpeed = 1
 crash:Play()
 
 local plr = game.Players.LocalPlayer
