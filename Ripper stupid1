@@ -18,7 +18,7 @@ task.spawn(function()
     while true do
         red.Image = "rbxassetid://94547864377343"
         wait(0)
-        red.Image = "rbxassetid://5197343873"
+        red.Image = "rbxassetid://76637426417491"
         wait(0)
     end
 end)
@@ -45,7 +45,7 @@ local entity = spawner.Create({
 		Values = {5, 3, 2, 2}
 	},
 	Movement = {
-		Speed = 225,
+		Speed = 185,
 		Delay = 6,
 		Reversed = false
 	},
@@ -58,7 +58,7 @@ local entity = spawner.Create({
 	},
 	Damage = {
 		Enabled = true,
-		Range = 80,
+		Range = 56,
 		Amount = 0.01
 	},
 	Crucifixion = {
