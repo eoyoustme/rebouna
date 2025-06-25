@@ -28,7 +28,7 @@ local get = true
 local entity = spawner.Create({
 	Entity = {
 		Name = "RipperMovings",
-		Asset = "rbxassetid://98307026363118",
+		Asset = "rbxassetid://83459696723991",
 		HeightOffset = 1
 	},
 	Lights = {
@@ -48,7 +48,7 @@ local entity = spawner.Create({
 		Values = {5, 3, 2, 2} -- Magnitude, Roughness, FadeIn, FadeOut
 	},
 	Movement = {
-		Speed = 125,
+		Speed = 225,
 		Delay = 6,
 		Reversed = false
 	},
