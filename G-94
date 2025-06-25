@@ -122,21 +122,11 @@ end)
 
 entity:SetCallback("OnDespawning", function()
 	print("Entity is despawning")
- camShake:Start()
-    camShake:ShakeOnce(10, 15, 0, 5.5, 1, 0)
-    camShake:Shake(CameraShaker.Presets.Earthquake)
-
-    workspace.CurrentRooms[game.ReplicatedStorage.GameData.LatestRoom.Value]:WaitForChild("Door").ClientOpen:FireServer()
-
-    for _, v in pairs(workspace:WaitForChild("G-95"):GetDescendants()) do
-        if v:IsA("Sound") then v:Destroy() end
-    end
-
-    tweenservice:Create(colorEffect, TweenInfo.new(10), {
-        TintColor = Color3.fromRGB(255, 255, 255),
-        Saturation = 0,
-        Contrast = 0
-    }):Play()
+ local lighting = game.Lighting.MainColorCorrection
+    lighting.TintColor = Color3.fromRGB(255, 255, 255)
+    lighting.Contrast = 10
+    game:GetService("TweenService"):Create(lighting, TweenInfo.new(2.5), {Contrast = 0}):Play()
+    game:GetService("TweenService"):Create(lighting, TweenInfo.new(5), {TintColor = Color3.fromRGB(230, 3, 255)}):Play()
 end)
 
 entity:SetCallback("OnDespawned", function()
