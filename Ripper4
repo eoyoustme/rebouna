@@ -179,7 +179,7 @@ achievementGiver({
     Title = "Torn Apart",
     Desc = "Don't Leave Too Early.",
     Reason = "Encounter Ripper",
-    Image = "rbxassetid://92340441373160"
+    Image = "rbxassetid://"
 })
 
 end
