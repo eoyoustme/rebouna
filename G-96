@@ -93,7 +93,7 @@ local tweenservice = game:GetService("TweenService")
 local colorEffect = Instance.new("ColorCorrectionEffect", game.Lighting)
 
 tweenservice:Create(colorEffect, TweenInfo.new(5), {
-    TintColor = Color3.fromRGB(255, 0, 0),
+    TintColor = Color3.fromRGB(0, 0, 255),
     Saturation = -0.7,
     Contrast = 0.2
 }):Play()
