@@ -9,7 +9,7 @@ end)
 
 local entityList = {
     {url = "https://raw.githubusercontent.com/eoyoustme/rebouna/refs/heads/main/Cease%20remake", delay = 325},
-    {url = "https://raw.githubusercontent.com/eoyoustme/rebouna/refs/heads/main/Ripper", delay = 150},
+    {url = "https://raw.githubusercontent.com/eoyoustme/rebouna/refs/heads/main/Ripper4", delay = 150},
     {url = "https://raw.githubusercontent.com/eoyoustme/rebouna/refs/heads/main/reband", delay = 210},
     {url = "https://raw.githubusercontent.com/eoyoustme/rebouna/refs/heads/main/Sinturaly", delay = 1000},
     {url = "https://raw.githubusercontent.com/eoyoustme/rebouna/refs/heads/main/Shocker", delay = 35},
