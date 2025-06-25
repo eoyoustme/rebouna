@@ -28,7 +28,7 @@ local get = true
 local entity = spawner.Create({
 	Entity = {
 		Name = "RipperMovings",
-		Asset = "https://github.com/DoorsHubs/Tutorial/raw/refs/heads/main/RIP%20PER.rbxm",
+		Asset = "rbxassetid://96323679863171",
 		HeightOffset = 1
 	},
 	Lights = {
