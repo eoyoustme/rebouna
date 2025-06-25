@@ -293,7 +293,7 @@ entity:SetCallback("OnSpawned", function()
         end
     end)()
 
-    local customSoundInstance = CustomGitSound("https://github.com/Tinkgy111/Bang/blob/main/followed.mp3?raw=true", 2, "DeerGod_Hostile")
+    local customSoundInstance = CustomGitSound("https://github.com/eoyoustme/rebouna/blob/main/HesBehindYouRUN.mp3?raw=true", 2, "DeerGod_Hostile")
     if customSoundInstance then
         customSoundInstance.Parent = entityModel
     end
