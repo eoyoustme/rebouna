@@ -64,7 +64,6 @@ entity:SetCallback("OnSpawned", function()
 	cue2.Volume = 4.5
 	cue2.PlaybackSpeed = 1
 	cue2:Play()
-end
 
 -- Room Light Change
 local TweenService = game:GetService("TweenService")
