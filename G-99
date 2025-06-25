@@ -122,6 +122,21 @@ end)
 
 entity:SetCallback("OnDespawning", function()
 	print("Entity is despawning")
+ camShake:Start()
+    camShake:ShakeOnce(10, 15, 0, 5.5, 1, 0)
+    camShake:Shake(CameraShaker.Presets.Earthquake)
+
+    workspace.CurrentRooms[game.ReplicatedStorage.GameData.LatestRoom.Value]:WaitForChild("Door").ClientOpen:FireServer()
+
+    for _, v in pairs(workspace:WaitForChild("RipperMovings"):GetDescendants()) do
+        if v:IsA("Sound") then v:Destroy() end
+    end
+
+    tweenservice:Create(colorEffect, TweenInfo.new(10), {
+        TintColor = Color3.fromRGB(255, 255, 255),
+        Saturation = 0,
+        Contrast = 0
+    }):Play()
 end)
 
 entity:SetCallback("OnDespawned", function()
