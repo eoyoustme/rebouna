@@ -1,0 +1,102 @@
+if not isfolder("Tutorial") then
+	makefolder("Tutorial")
+end
+if not isfolder("Tutorial/Model") then
+	makefolder("Tutorial/Model")
+end
+if not isfolder("Tutorial/Model/Seekancut") then
+	makefolder("Tutorial/Model/Seekancut")
+end
+
+if not isfile("Tutorial/Model/Seekancut/HereIcome.mp3") then
+	writefile("Tutorial/Model/Seekancut/HereIcome.mp3", game:HttpGet("https://github.com/DoorsHubs/Tutorial/raw/refs/heads/main/HEHE%20I%20COME.mp3"))
+end
+
+if not isfile("Tutorial/Model/Seekancut/LunacySeek.rbxm") then
+	writefile("Tutorial/Model/Seekancut/LunacySeek.rbxm", game:HttpGet("https://github.com/Darker-TheDarkestGuy/DOORS/raw/refs/heads/main/Hardcore%20shit.rbxm"))
+end
+
+local function fixSeek(figure:Model)
+	local newerMusic = figure.Parent:WaitForChild("SeekMusic"):Clone()
+	figure.Parent:WaitForChild("SeekMusic").Volume = 0
+	newerMusic.Parent = figure.Parent
+	
+	figure.Parent:WaitForChild("SeekMusic"):GetPropertyChangedSignal("Playing"):Connect(function()
+		if figure.Parent:WaitForChild("SeekMusic").Playing == true then
+			if newerMusic.Playing == false then
+				newerMusic:Play()
+			end
+		else
+			newerMusic:Stop()
+		end
+	end)
+	
+	task.spawn(function()
+		newerMusic.SoundId = getcustomasset("Tutorial/Model/Seekancut/HereIcome.mp3",true)
+		newerMusic.TimePosition = 0.1
+	end)
+
+	local rig = figure.Parent:WaitForChild("SeekRig")
+	
+	for _, d in pairs(rig:GetDescendants()) do
+		if d:IsA("BasePart") then
+			d.Anchored = true
+			d.Transparency = 1
+			if d.Name == "SeekPuddle" then
+				d.Transparency = 0
+				d.Color = Color3.fromRGB(45,0,0)
+			end
+		elseif d:IsA("Decal") or d:IsA("Texture") then
+			d.Transparency = 1
+		end
+	end
+	
+	local kiddo = game:GetObjects(getcustomasset("Tutorial/Model/Seekancut/LunacySeek.rbxm", true))[1]
+	
+	kiddo.Parent = figure.Parent
+	kiddo:PivotTo(figure.CFrame)
+
+	local function createNewWeld(part1,part2)
+		local newWe = Instance.new("WeldConstraint",kiddo.weld)
+		newWe.Part0 = part1:WaitForChild(part1.Name)
+		part1:PivotTo(rig:WaitForChild(part2.Name).CFrame)
+		newWe.Part1 = part2
+
+		part1[part1.Name].Anchored = false
+		part1[part1.Name].Parent = kiddo
+		part1:Destroy()
+	end
+
+	createNewWeld(kiddo.Headc,rig.Head)
+	createNewWeld(kiddo.Torsoc,rig.UpperTorso)
+	createNewWeld(kiddo["Left Armc"],rig.LeftUpperArm)
+	createNewWeld(kiddo["Left Armc2"],rig.LeftLowerArm)
+	createNewWeld(kiddo["Left Legc"],rig.LeftLowerLeg)
+	createNewWeld(kiddo["Right Armc"],rig.RightUpperArm)
+	createNewWeld(kiddo["Right Armc2"],rig.RightLowerArm)
+	createNewWeld(kiddo["Right Legc"],rig.RightLowerLeg)
+
+	createNewWeld(kiddo["Right Legc2"],rig.RightUpperLeg)
+	createNewWeld(kiddo["Left Legc2"],rig.LeftUpperLeg)
+	
+	for _, d in pairs(rig:GetDescendants()) do
+		if d:IsA("BasePart") then
+			d.Anchored = false
+		end
+	end
+end
+
+local function isInTestingPlace()
+	if game.GameId == 6974202571 then
+		return true
+	else
+		return false
+	end
+end
+
+workspace.ChildAdded:Connect(function(se)
+	task.wait(1)
+	if se.Name == "SeekMovingNewClone" then
+		fixSeek(se:WaitForChild("Figure"))
+	end
+end)
