@@ -1,100 +1,125 @@
-local modelName = "Sussyroom"
-local assetID = "rbxassetid://11626479968"
+--[[
 
--- Hàm này đặt ĐÁY của mô hình ở vị trí Y được chỉ định.
--- Nó cũng có thể nhận các offset X và Z tùy chọn so với vị trí được cung cấp.
-local function placeModelOnFloor(model, floorPosition, offsetX, offsetZ)
-    local cframe, size = model:GetBoundingBox()
-    -- Tính toán vị trí Y mới: đáy của mô hình = floorPosition.Y
-    -- Do đó, tâm của mô hình phải ở floorPosition.Y + (chiều_cao_mô_hình / 2)
-    local newY = floorPosition.Y + (size.Y / 2)
+Slightly rushed storage room remake.
+Includes:
+ - New Room
+ - Some more prompts
+ - Configurable
 
-    -- Áp dụng các offset ngang nếu được cung cấp
-    local finalX = floorPosition.X + (offsetX or 0) -- Sử dụng 0 nếu offsetX là nil
-    local finalZ = floorPosition.Z + (offsetZ or 0) -- Sử dụng 0 nếu offsetZ là nil
+Yeah thats about it.
 
-    local newCFrame = CFrame.new(finalX, newY, finalZ)
-    model:PivotTo(newCFrame)
+Chronooo - Comet Devblvopement :3
+
+CONFIGURATION:
+_G.CUSTOMROOMMODEL = NUMBER ID
+_G.CUSTOMROOMDOOR = NUMBER ID
+_G.CUSTOMCRATELOADSTRING = LOADSTRING URL (STRING)
+
+--]]
+
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local Room = loadstring(game:HttpGet("https://raw.githubusercontent.com/ChronoAcceleration/Comet-Development/refs/heads/main/Doors/Utility/CustomRoomGenerator.lua"))()
+local TriggerCrateOnce = false
+
+if not _G.CUSTOMROOMMODEL then
+    _G.CUSTOMROOMMODEL = "11887366327"
 end
 
-local currentRoom = workspace.CurrentRooms[game.ReplicatedStorage.GameData.LatestRoom.Value]
+if not _G.CUSTOMDOORMODEL then
+    _G.CUSTOMDOORMODEL = "14138979980"
+end
 
-local function hasSussyroom(wing)
-    for _, child in pairs(wing:GetChildren()) do
-        if child.Name == modelName then
-            return true
-        end
+if not _G.CUSTOMCRATELOADSTRING then
+    _G.CUSTOMCRATELOADSTRING = "https://raw.githubusercontent.com/ChronoAcceleration/Comet-Development/refs/heads/main/Doors/Assets/Storage/Candle.lua"
+end
+
+function ReturnLatestRoom()
+    return workspace.CurrentRooms:FindFirstChild(game.ReplicatedStorage.GameData.LatestRoom.Value)
+end
+
+function FixRoomPoint(Point)
+    if Point:IsA("BasePart") then
+        Point.Size = Vector3.new(5, 8, 0.5)
+        Point.Orientation += Vector3.new(0, 180, 0)
+        Point.CFrame *= CFrame.new(0, 0, -1)
+        Point.Name = "PointRoomFix"
+        return Point
     end
-    return false
 end
 
-local candidateWings = {}
+function GenerateRoom(Point)
+    local room = Room.new(_G.CUSTOMROOMMODEL, _G.CUSTOMDOORMODEL, Point, "CustomRoom")
+    
+    room:AddOpenCallback(function()
+        local CustomRoom = room.roomModel
+        local Prompts = CustomRoom.Prompts
+        if not Prompts then print("cant find prompts") return end
 
-for _, wing in pairs(currentRoom:GetChildren()) do
-    if wing:IsA("Model") then
-        local doorCount = 0
-        for _, part in pairs(wing:GetDescendants()) do
-            if part:IsA("BasePart") and string.find(part.Name, "Door") then
-                doorCount = doorCount + 1
+        local function GetPrompt(name)
+            local promptObj = Prompts:FindFirstChild(name)
+            if not promptObj then
+                warn(name.." not found")
+                return nil
+            end
+            return promptObj.Value
+        end
+
+        local CrateRealPrompt = GetPrompt("CratePrompt")
+        local BedRealPrompt = GetPrompt("BedPrompt")
+        local PaintingRealPrompt = GetPrompt("Painting")
+        local VentRealPrompt = GetPrompt("VentPrompt")
+
+        if VentRealPrompt then
+            VentRealPrompt.Triggered:Connect(function()
+                print"vent"
+            end)
+        end
+
+        if PaintingRealPrompt then
+            PaintingRealPrompt.Triggered:Connect(function()
+                print"painting"
+            end)
+        end
+
+        if BedRealPrompt then
+            BedRealPrompt.Triggered:Connect(function()
+                print"bed"
+            end)
+        end
+
+        if CrateRealPrompt then
+            CrateRealPrompt.Triggered:Connect(function()
+                if TriggerCrateOnce then return end
+                TriggerCrateOnce = true
+                print"crate"
+                loadstring(game:HttpGet(_G.CUSTOMCRATELOADSTRING))()
+            end)
+        end
+    end)
+    
+    room:Generate()
+end
+
+function CheckRoom(Room)
+    if Room:FindFirstChild("RandomDoor") then
+        local Doors = Room:FindFirstChild("RandomDoor"):GetChildren()
+        
+        if #Doors > 0 then
+            local ChosenPoint = Doors[#Doors > 1 and math.random(1, #Doors) or 1]
+            local NewPoint = FixRoomPoint(ChosenPoint)
+            if NewPoint then
+                GenerateRoom(NewPoint)
             end
         end
-
-        if doorCount >= 2 and not hasSussyroom(wing) then
-            table.insert(candidateWings, wing)
-        end
     end
 end
 
-for _, wing in pairs(candidateWings) do
-    local oldModel = wing:FindFirstChild(modelName)
-    if oldModel then
-        oldModel:Destroy()
+game.ReplicatedStorage.GameData.LatestRoom.Changed:Connect(function()
+    task.wait(0.1)
+    local latestRoom = ReturnLatestRoom()
+    if latestRoom then
+        CheckRoom(latestRoom)
     end
+end)
 
-    -- Xóa hết các đối tượng khác trong wing
-    for _, child in pairs(wing:GetChildren()) do
-        if child.Name ~= modelName then
-            child:Destroy()
-        end
-    end
-
-    local newModel = Instance.new("Model")
-    newModel.Name = modelName
-    newModel.Parent = wing
-
-    local obj = game:GetObjects(assetID)[1]
-
-    local wingCFrame, wingSize = wing:GetBoundingBox()
-    local wingCenterPos = wingCFrame.Position
-
-    -- Tính toán tọa độ Y của sàn cánh phòng
-    -- Giả định rằng pivot của cánh phòng nằm ở tâm của nó,
-    -- hoặc bounding box của nó đại diện chính xác cho chiều cao của nó.
-    local wingFloorY = wingCenterPos.Y - (wingSize.Y / 2)
-
-    -- --- ĐIỀU CHỈNH CÁC OFFSET NÀY ĐỂ ĐẶT VỊ TRÍ NGANG ---
-    -- Đây là các giá trị bạn sẽ thay đổi để di chuyển mô hình theo chiều rộng và chiều dài của phòng
-    local offsetX = 0  -- Điều chỉnh vị trí X tương đối so với wingCenterPos.X
-    local offsetZ = 0  -- Điều chỉnh vị trí Z tương đối so với wingCenterPos.Z
-
-    -- Ví dụ:
-    -- offsetX = wingSize.X / 4  -- Đặt nó cách 1/4 chiều dài của cánh phòng theo trục X
-    -- offsetZ = -wingSize.Z / 4 -- Đặt nó cách 1/4 chiều sâu của cánh phòng theo trục Z (âm để đi lùi)
-
-    -- Đặt mô hình Sussyroom bằng cách sử dụng Y sàn đã tính toán và các offset ngang
-    placeModelOnFloor(obj, Vector3.new(wingCenterPos.X, wingFloorY, wingCenterPos.Z), offsetX, offsetZ)
-
-    obj.Parent = newModel
-
-    if obj.PrimaryPart then
-        obj.PrimaryPart.Anchored = true
-    else
-        for _, part in pairs(obj:GetDescendants()) do
-            if part:IsA("BasePart") then
-                part.Anchored = true
-            end
-        end
-    end
-
-    print("Spawn Sussyroom tại cánh phòng: "..wing.Name)
-end
+print("Running!")
