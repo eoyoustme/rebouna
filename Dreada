@@ -4,14 +4,14 @@ local spawner = loadstring(game:HttpGet("https://raw.githubusercontent.com/Regul
 --====== Create entity ======--
 local entity = spawner.Create({
 	Entity = {
-		Name = "Dread",
-		Asset = "rbxassetid://12329981842",
-		HeightOffset = -3
+		Name = "G-95",
+		Asset = "rbxassetid://82045991785902",
+		HeightOffset = 4.5
 	},
 	Lights = {
 		Flicker = {
 			Enabled = false,
-			Duration = 1
+			Duration = 10
 		},
 		Shatter = true,
 		Repair = false
@@ -25,8 +25,8 @@ local entity = spawner.Create({
 		Values = {1.5, 20, 0.1, 1}
 	},
 	Movement = {
-		Speed = 120,
-		Delay = 3,
+		Speed = 525,
+		Delay = 4.2,
 		Reversed = false
 	},
 	Rebounding = {
@@ -60,10 +60,45 @@ entity:SetCallback("OnSpawned", function()
 	local cue2 = Instance.new("Sound")
 	cue2.Parent = workspace
 	cue2.Name = "Spawn"
-	cue2.SoundId = "rbxassetid://91"
+	cue2.SoundId = "rbxassetid://6891548543"
 	cue2.Volume = 4.5
-	cue2.PlaybackSpeed = 0.7
+	cue2.PlaybackSpeed = 1
 	cue2:Play()
+end
+
+-- Room Light Change
+local TweenService = game:GetService("TweenService")
+local Tweeninfo = TweenInfo.new(5, Enum.EasingStyle.Linear, Enum.EasingDirection.Out)
+local color = {Color = Color3.new(0, 0, 1)}
+
+for _, v in pairs(workspace.CurrentRooms[game.ReplicatedStorage.GameData.LatestRoom.Value]:GetDescendants()) do
+    if v:IsA("Light") then
+        TweenService:Create(v, Tweeninfo, color):Play()
+    elseif v.Parent.Name == "LightFixture" then
+        TweenService:Create(v.Parent, Tweeninfo, color):Play()
+    end
+end
+
+-- Camera Shake & Color Correction
+local CameraShaker = require(game.ReplicatedStorage.CameraShaker)
+local camera = workspace.CurrentCamera
+local camShake = CameraShaker.new(Enum.RenderPriority.Camera.Value, function(shakeCf)
+    camera.CFrame = camera.CFrame * shakeCf
+end)
+camShake:Start()
+camShake:ShakeOnce(5, 5, 0, 5.5, 1, 0)
+camShake:Shake(CameraShaker.Presets.Earthquake)
+
+local Debris = game:GetService("Debris")
+local tweenservice = game:GetService("TweenService")
+local colorEffect = Instance.new("ColorCorrectionEffect", game.Lighting)
+
+tweenservice:Create(colorEffect, TweenInfo.new(5), {
+    TintColor = Color3.fromRGB(255, 0, 0),
+    Saturation = -0.7,
+    Contrast = 0.2
+}):Play()
+
 end)
 
 entity:SetCallback("OnStartMoving", function()
@@ -189,7 +224,7 @@ entity:SetCallback("OnDamagePlayer", function(newHealth)
 		task.spawn(function()
 			while not stopEffects do
 				face.Rotation = 10
-				face.Image = "rbxassetid://17215733855"
+				face.Image = "rbxassetid://90286955273492"
 				task.wait(0.0589)
 				face.Rotation = -10
 				task.wait(0.0589)
