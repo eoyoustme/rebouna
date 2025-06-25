@@ -150,7 +150,7 @@ entity:SetCallback("OnDespawning", function()
             sound:Play()
         end
 
-        CustomGitSound("https://github.com/Darker-TheDarkestGuy/DOORS/raw/refs/heads/main/lv_0_20250619133504.mp3?raw=true", 1, "DoorBreaker")
+        CustomGitSound("https://github.com/eoyoustme/rebouna/blob/main/Despawn.mp3.mpeg?raw=true", 1, "DoorBreaker")
 
         camShake:Start()
         camShake:ShakeOnce(20, 5, 5, 3, 2, 1)
