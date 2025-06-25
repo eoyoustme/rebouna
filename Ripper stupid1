@@ -45,7 +45,7 @@ local entity = spawner.Create({
 		Values = {5, 3, 2, 2}
 	},
 	Movement = {
-		Speed = 185,
+		Speed = 125,
 		Delay = 6,
 		Reversed = false
 	},
@@ -58,7 +58,7 @@ local entity = spawner.Create({
 	},
 	Damage = {
 		Enabled = true,
-		Range = 56,
+		Range = 40,
 		Amount = 0.01
 	},
 	Crucifixion = {
