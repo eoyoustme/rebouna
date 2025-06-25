@@ -70,7 +70,7 @@ game.Lighting.MainColorCorrection.Contrast = 10
 local tween = game:GetService("TweenService")
 tween:Create(game.Lighting.MainColorCorrection, TweenInfo.new(2.5), {Contrast = 0}):Play()
 local TweenService = game:GetService("TweenService")
-local TW = TweenService:Create(game.Lighting.MainColorCorrection, TweenInfo.new(5),{TintColor = Color3.fromRGB(0, 0, 1)})
+local TW = TweenService:Create(game.Lighting.MainColorCorrection, TweenInfo.new(5),{TintColor = Color3.fromRGB(0, 0, 255)})
 TW:Play()
 wait(0)
 
