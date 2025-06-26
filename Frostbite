@@ -67,11 +67,11 @@ entity.Part.CFrame = entity.CFrame
 local pointLight = Instance.new("PointLight")
 pointLight.Range = 60
 pointLight.Brightness = 9999
-pointLight.Color = Color3.fromRGB(150, 200, 255)
+pointLight.Color = Color3.fromRGB(255, 255, 255)
 pointLight.Parent = entity
 
 -- Tween giảm sáng từ từ
-local lightTween = tweenservice:Create(pointLight, TweenInfo.new(10, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+local lightTween = tweenservice:Create(pointLight, TweenInfo.new(15, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
     Range = 0,
     Brightness = 0
 })
@@ -101,7 +101,7 @@ entity.Attachment.Heylois.Enabled = false
 entity.Attachment.BlackTrai2l.Enabled = false
 entity.Attachment.BlackTrai3l.Enabled = false
 
-wait(7)
+wait(8)
 
 -- Bật hiệu ứng lại
 entity.Attachment.face.Enabled = true
