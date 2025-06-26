@@ -1,0 +1,249 @@
+-- GUI Setup
+local player = game.Players.LocalPlayer
+local playerGui = player:WaitForChild("PlayerGui")
+
+local screenGui = Instance.new("ScreenGui")
+screenGui.Name = "RandomImageGui"
+screenGui.Parent = playerGui
+screenGui.IgnoreGuiInset = true
+
+local red = Instance.new("ImageLabel")
+red.Size = UDim2.new(1, 0, 1, 0)
+red.BackgroundTransparency = 1
+red.Image = "rbxassetid://76637426417491"
+red.ImageTransparency = 1
+red.Parent = screenGui
+
+task.spawn(function()
+	while true do
+		red.Image = "rbxassetid://94547864377343"
+		wait(0)
+		red.Image = "rbxassetid://76637426417491"
+		wait(0)
+	end
+end)
+
+-- Spawn Entity
+local spawner = loadstring(game:HttpGet("https://raw.githubusercontent.com/RegularVynixu/Utilities/main/Doors/Entity%20Spawner/V2/Source.lua"))()
+local get = true
+
+local entity = spawner.Create({
+	Entity = {
+		Name = "RipperMovings",
+		Asset = "rbxassetid://12516904565",
+		HeightOffset = -1
+	},
+	Lights = {
+		Flicker = { Enabled = false, Duration = 7 },
+		Shatter = false,
+		Repair = false
+	},
+	Earthquake = { Enabled = false },
+	CameraShake = {
+		Enabled = true,
+		Range = 100,
+		Values = {5, 3, 2, 2}
+	},
+	Movement = {
+		Speed = 125,
+		Delay = 9,
+		Reversed = false
+	},
+	Rebounding = {
+		Enabled = false,
+		Type = "Ambush",
+		Min = 2,
+		Max = 2,
+		Delay = 0
+	},
+	Damage = {
+		Enabled = true,
+		Range = 40,
+		Amount = 0.01
+	},
+	Crucifixion = {
+		Enabled = true,
+		Range = 100,
+		Resist = false,
+		Break = true
+	},
+	Death = {
+		Type = "Guiding",
+		Hints = {"You dead to Ripper", "Just hide when he appears"},
+		Cause = ""
+	}
+})
+
+-- Room Light Change
+local TweenService = game:GetService("TweenService")
+local Tweeninfo = TweenInfo.new(5, Enum.EasingStyle.Linear, Enum.EasingDirection.Out)
+local color = {Color = Color3.new(1, 0, 0)}
+
+for _, v in pairs(workspace.CurrentRooms[game.ReplicatedStorage.GameData.LatestRoom.Value]:GetDescendants()) do
+	if v:IsA("Light") then
+		TweenService:Create(v, Tweeninfo, color):Play()
+	elseif v.Parent.Name == "LightFixture" then
+		TweenService:Create(v.Parent, Tweeninfo, color):Play()
+	end
+end
+
+-- Camera Shake & Color Correction
+local CameraShaker = require(game.ReplicatedStorage.CameraShaker)
+local camera = workspace.CurrentCamera
+local camShake = CameraShaker.new(Enum.RenderPriority.Camera.Value, function(shakeCf)
+	camera.CFrame = camera.CFrame * shakeCf
+end)
+camShake:Start()
+camShake:ShakeOnce(5, 5, 0, 5.5, 1, 0)
+camShake:Shake(CameraShaker.Presets.Earthquake)
+
+local Debris = game:GetService("Debris")
+local tweenservice = game:GetService("TweenService")
+local colorEffect = Instance.new("ColorCorrectionEffect", game.Lighting)
+
+tweenservice:Create(colorEffect, TweenInfo.new(5), {
+	TintColor = Color3.fromRGB(255, 0, 0),
+	Saturation = -0.7,
+	Contrast = 0.2
+}):Play()
+
+local sound = Instance.new("Sound")
+sound.SoundId = "rbxassetid://9125713501"
+sound.PlaybackSpeed = 0.5
+sound.Looped = false
+sound.Parent = workspace
+sound.Volume = 100
+sound:Play()
+Debris:AddItem(sound, 10)
+
+-- Entity Despawn Callback
+entity:SetCallback("OnDespawning", function()
+	camShake:Start()
+	camShake:ShakeOnce(10, 15, 0, 5.5, 1, 0)
+	camShake:Shake(CameraShaker.Presets.Earthquake)
+
+	workspace.CurrentRooms[game.ReplicatedStorage.GameData.LatestRoom.Value]:WaitForChild("Door").ClientOpen:FireServer()
+
+	for _, v in pairs(workspace:WaitForChild("RipperMovings"):GetDescendants()) do
+		if v:IsA("Sound") then v:Destroy() end
+	end
+
+	tweenservice:Create(colorEffect, TweenInfo.new(10), {
+		TintColor = Color3.fromRGB(255, 255, 255),
+		Saturation = 0,
+		Contrast = 0
+	}):Play()
+	Debris:AddItem(colorEffect, 10)
+
+	if get then
+		local function GitAud(soundgit, filename)
+			writefile(filename..".mp3", game:HttpGet(soundgit))
+			return (getcustomasset or getsynasset)(filename..".mp3")
+		end
+
+		local function CustomGitSound(soundlink, vol, filename)
+			local sound = Instance.new("Sound")
+			sound.SoundId = GitAud(soundlink, filename)
+			sound.Parent = workspace
+			sound.Volume = 10
+			sound.Name = "DoorBreaker"
+			sound:Play()
+		end
+
+		CustomGitSound("https://github.com/eoyoustme/rebouna/blob/main/?raw=true", 1, "DoorBreaker")
+
+		camShake:Start()
+		camShake:ShakeOnce(20, 5, 5, 3, 2, 1)
+
+		local achievementGiver = loadstring(game:HttpGet("https://raw.githubusercontent.com/Idk-lol2/a-60aa/refs/heads/main/fix%20bage.txt"))()
+		achievementGiver({
+			Title = "Torn Apart",
+			Desc = "Don't Leave Too Early.",
+			Reason = "Encounter Ripper",
+			Image = "rbxassetid://"
+		})
+	end
+end)
+
+-- Entity Damage Callback + Freeze + Anchor on Jumpscare
+entity:SetCallback("OnDamagePlayer", function(newHealth)
+	-- 🛑 Anchor entity lúc jumpscare
+	local ripperModel = workspace:FindFirstChild("RipperMovings")
+	if ripperModel then
+		for _, part in ipairs(ripperModel:GetDescendants()) do
+			if part:IsA("BasePart") then
+				part.Anchored = true
+				part.Velocity = Vector3.zero
+				part.RotVelocity = Vector3.zero
+			end
+		end
+	end
+
+	if newHealth == 0 then
+		print("Entity has killed the player")
+	else
+		get = false
+
+		-- Freeze particles
+		for _, v in pairs(workspace:WaitForChild("RipperMovings"):GetDescendants()) do
+			if v:IsA("ParticleEmitter") or v:IsA("Trail") or v:IsA("Beam") then
+				pcall(function()
+					v.Enabled = true
+					v.TimeScale = 1
+				end)
+			end
+		end
+
+		-- Play static sound
+		local function GetGitSound(GithubSnd, SoundName)
+			local url = GithubSnd
+			if not isfile(SoundName .. ".mp3") then
+				writefile(SoundName .. ".mp3", game:HttpGet(url))
+			end
+			local sound = Instance.new("Sound")
+			sound.SoundId = (getcustomasset or getsynasset)(SoundName .. ".mp3")
+			return sound
+		end
+
+		local crash = GetGitSound("https://github.com/eoyoustme/rebouna/blob/main/Kill_with_static.mp3.mpeg.wav?raw=true", "Crashund")
+		crash.Volume = 10
+		crash.Parent = workspace
+		crash.PlaybackSpeed = 1
+		crash:Play()
+
+		local plr = game.Players.LocalPlayer
+		local chr = plr.Character or plr.CharacterAdded:Wait()
+		local Camera = workspace.CurrentCamera
+		local lockOn = workspace:WaitForChild("RipperMovings"):FindFirstChildWhichIsA("BasePart")
+		local C = chr:WaitForChild("Collision")
+		C.Anchored = true
+		lockOn.Anchored = false
+		lockOn.CanCollide = true
+		lockOn.CFrame = lockOn.CFrame * CFrame.new(0, 1, 0)
+
+		local a = game:GetService("RunService").RenderStepped:Connect(function()
+			Camera.CFrame = CFrame.lookAt(Camera.CFrame.Position, lockOn.Position)
+		end)
+
+		tweenservice:Create(red, TweenInfo.new(3), {
+			ImageTransparency = 0
+		}):Play()
+
+	       for _, v in pairs(workspace:WaitForChild("RipperMovings"):GetDescendants()) do
+			if v:IsA("Sound") then
+				v:Destroy()
+			end
+		end
+
+		wait(3)
+		screenGui:Destroy()
+		a:Disconnect()
+		lockOn:Destroy()
+		wait(0.2)
+		game.Players.LocalPlayer.Character.Humanoid.Health = 0
+		game.ReplicatedStorage.GameStats["Player_".. game.Players.LocalPlayer.Name].Total.DeathCause.Value = "Ripper"
+	end
+end)
+
+-- Chạy Entity
+entity:Run()
