@@ -1,0 +1,164 @@
+-- Check current room
+local entityModel = true
+local latestRoom = game.ReplicatedStorage.GameData.LatestRoom.Value
+
+-- If in Seek, Figure, or Room 90+
+if game.Workspace:FindFirstChild("SeekMovingNewClone") or 
+   latestRoom == 50 or latestRoom == 100 or  
+   (latestRoom >= 90 and latestRoom <= 100) then
+    entityModel = false
+end
+
+local plr = game.Players.LocalPlayer
+local chr = plr.Character or plr.CharacterAdded:Wait()
+local cam = workspace.CurrentCamera
+local toma = true
+local TweenService = game:GetService("TweenService")
+local depthsTer = game:GetObjects("rbxassetid://101479656080626")[1] -- Load DepthsTer from the ID
+depthsTer.Parent = game.Workspace
+depthsTer.Name = "Phonker"
+workspace.Phonker.Depth.PlaySound:Destroy()
+
+local part = depthsTer:FindFirstChildWhichIsA("BasePart") or depthsTer:FindFirstChildWhichIsA("Part")
+
+-- Set the position of DepthsTer in the room
+part.CFrame = game.Workspace.CurrentRooms:GetChildren()[#game.Workspace.CurrentRooms:GetChildren() - 1].Parts.Floor.CFrame + Vector3.new(0, 6, 0)
+
+function GitAud(soundgit,filename)
+    SoundName=tostring(SoundName)
+    local url=soundgit
+    local FileName = filename
+    writefile(FileName..".mp3", game:HttpGet(url))
+    return (getcustomasset or getsynasset)(FileName..".mp3")
+end
+
+function CustomGitSound(soundlink, vol, filename)
+    local sound = Instance.new("Sound")
+    sound.SoundId = GitAud(soundlink, filename)
+    sound.Parent = workspace
+    sound.Volume = 1
+    sound.PlaybackSpeed = 1
+    sound.Name = "StartPhonk"
+   sound:Play()
+end
+
+CustomGitSound("https://github.com/DoorsHubs/Tutorial/raw/refs/heads/main/XRecorder_Edited_20250614_18.mp3?raw=true", 1, " StartPhonk")
+
+wait(4.55)
+task.spawn(function()
+    while toma == true do
+        task.wait(0)  -- Reduce the wait time to increase damage speed
+
+local _, camera = game.Workspace.CurrentCamera:WorldToViewportPoint(part.Position)
+        
+        -- If the player is not looking at DepthTer, they take damage
+        if not camera then
+
+local player = game.Players.LocalPlayer
+local playerGui = player:WaitForChild("PlayerGui")
+
+local screenGui = Instance.new("ScreenGui")
+screenGui.Name = "SkullNuke"
+screenGui.Parent = playerGui
+screenGui.IgnoreGuiInset = true
+
+local warning = Instance.new("ImageLabel")
+warning.Name = "SkullNukeUi"
+warning.Size = UDim2.new(1, 0, 1, 0)
+warning.BackgroundTransparency = 1 -- Make the background fully transparent
+warning.Image = "rbxassetid://134421913765616" -- Set the image using a random Image ID
+warning.ImageTransparency = 0
+warning.Parent = screenGui
+game.Players.LocalPlayer.Character.Humanoid:TakeDamage(10)
+local C = game.Players.LocalPlayer.Character:WaitForChild("Collision")
+C.Anchored = true
+game.Lighting.MainColorCorrection.TintColor = Color3.fromRGB(48, 48, 48)
+
+function GitAud(soundgit,filename)
+    SoundName=tostring(SoundName)
+    local url=soundgit
+    local FileName = filename
+    writefile(FileName..".mp3", game:HttpGet(url))
+    return (getcustomasset or getsynasset)(FileName..".mp3")
+end
+
+function CustomGitSound(soundlink, vol, filename)
+    local sound = Instance.new("Sound")
+    sound.SoundId = GitAud(soundlink, filename)
+    sound.Parent = workspace
+    sound.Name = "MusicCuzyes"
+    sound.Volume = 1
+   sound:Play()
+end
+
+CustomGitSound("https://github.com/DoorsHubs/Tutorial/raw/refs/heads/main/XRecorder_Edited_20250625_03.mp3?raw=true", 1, "PhonkerMusic")
+
+wait(2.5)
+game.Players.LocalPlayer.PlayerGui.SkullNuke:Destroy()
+C.Anchored = false
+game.Lighting.MainColorCorrection.TintColor = Color3.fromRGB(255, 255, 255)
+        end
+        
+        -- If the player dies, update the death cause and show the death hint
+        if game.Players.LocalPlayer.Character.Humanoid.Health <= 0 then
+            -- Show death hint
+            firesignal(game.ReplicatedStorage.RemotesFolder.DeathHint.OnClientEvent, {"You died to who you call Phonker...","He spawns in center of room and he will damage you if you dont look at him","He doesnt like to be ignoring"},"Blue")
+            wait(0.01)
+            -- Update the death cause in the game stats
+            game:GetService("ReplicatedStorage").GameStats["Player_".. game.Players.LocalPlayer.Name].Total.DeathCause.Value = "Phonker"
+        end
+    end
+end)
+
+-- Wait for the room to change
+game.ReplicatedStorage.GameData.LatestRoom.Changed:Wait()
+toma = false
+
+-- Destroy DepthTer when no longer needed
+game.Workspace.Phonker:Destroy()
+game.Lighting.MainColorCorrection.TintColor = Color3.fromRGB(0, 0, 0)
+game.Lighting.MainColorCorrection.Contrast = 10
+local tween = game:GetService("TweenService")
+tween:Create(game.Lighting.MainColorCorrection, TweenInfo.new(2.5), {Contrast = 0}):Play()
+wait(1)
+local TweenService = game:GetService("TweenService")
+local TW = TweenService:Create(game.Lighting.MainColorCorrection, TweenInfo.new(2.5),{TintColor = Color3.fromRGB(255, 255, 255)})
+TW:Play()
+local cue2 = Instance.new("Sound")
+	cue2.Parent = game.Workspace
+	cue2.Name = "Spawn"
+	cue2.SoundId = "rbxassetid://7053083974"
+	cue2.Volume = 5
+	cue2.PlaybackSpeed = 1
+	cue2:Play()
+wait(3)
+local cue = Instance.new("Sound")
+	cue.Parent = game.Workspace
+	cue.Name = "Spawn"
+	cue.SoundId = "rbxassetid://1201103772"
+	cue.Volume = 1
+	cue.PlaybackSpeed = 1.5
+	cue:Play()
+game.Lighting.MainColorCorrection.TintColor = Color3.fromRGB(255, 107, 8)
+game.Lighting.MainColorCorrection.Contrast = 10
+local tween = game:GetService("TweenService")
+tween:Create(game.Lighting.MainColorCorrection, TweenInfo.new(2.5), {Contrast = 0}):Play()
+local TweenService = game:GetService("TweenService")
+local TW = TweenService:Create(game.Lighting.MainColorCorrection, TweenInfo.new(5),{TintColor = Color3.fromRGB(255, 255, 255)})
+TW:Play()
+local caption = game.Players.LocalPlayer:WaitForChild("PlayerGui").MainUI.MainFrame.Caption
+caption.TextColor3 = Color3.fromRGB(3, 255, 11)
+require(game.Players.LocalPlayer.PlayerGui.MainUI.Initiator.Main_Game).caption("Toxicity: +15%",true)
+task.wait(0)
+_G.stats.Value += 15
+
+---====== Load achievement giver ======---
+local achievementGiver = loadstring(game:HttpGet("https://raw.githubusercontent.com/RegularVynixu/Utilities/main/Doors/Custom%20Achievements/Source.lua"))()
+
+---====== Display achievement ======---
+achievementGiver({
+    Title = "Legitimate Coercion",
+    Desc = "LET'S TRYING TO NOT LOOK AT ME!",
+    Reason = "Encounter Phonker",
+    Image = "rbxassetid://122595659523787"
+})
