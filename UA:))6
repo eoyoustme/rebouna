@@ -142,7 +142,7 @@ entity:SetCallback("OnDamagePlayer", function(newHealth)
 		-- Khi health xuống 0 thì delay 3 giây rồi mới cho chết
 		task.spawn(function()
 			wait(3)
-			game.Players.LocalPlayer.Character.Humanoid.Health = 0
+			game.Players.LocalPlayer.Character.Humanoid:TakeDamage(125)
 			death = true
 		end)
 	end
