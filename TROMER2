@@ -100,7 +100,7 @@ local to = true
 local player = game.Players.LocalPlayer
 local character = player.Character or player.CharacterAdded:Wait()
 local humanoidRootPart = character:WaitForChild("HumanoidRootPart")
-local entity = workspace:WaitForChild("A60")
+local entity = workspace:WaitForChild("TROMER")
 local entityPrimaryPart = entity:FindFirstChild("RushNew")
 
 local function Moving(target, dur)
