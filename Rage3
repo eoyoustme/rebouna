@@ -124,7 +124,7 @@ ReplicatedStorage.GameData.LatestRoom.Changed:Connect(function()
                     task.spawn(function()
                         while to and primaryPart.Parent and humanoidRootPart do
                             local targetCFrame = humanoidRootPart.CFrame
-                            local tween = TweenService:Create(primaryPart, TweenInfo.new(4, Enum.EasingStyle.Quad), {CFrame = targetCFrame})
+                            local tween = TweenService:Create(primaryPart, TweenInfo.new(0.5, Enum.EasingStyle.Quad), {CFrame = targetCFrame})
                             tween:Play()
                             tween.Completed:Wait()
                         end
