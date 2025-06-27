@@ -122,6 +122,12 @@ local function Moving(target, dur)
     local tween = TweenService:Create(entityPrimaryPart, tween_info, {CFrame = target})
     tween:Play()
     tween.Completed:Wait()
+
+task.spawn(function()
+while to == true do wait(0)
+Moving(humanoidRootPart.CFrame, 0.5)
+end
+end)
 	end
 end)
 
