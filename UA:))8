@@ -157,6 +157,8 @@ entity:SetCallback("OnDamagePlayer", function(newHealth)
 				local camera = workspace.CurrentCamera
 				game:GetService("TweenService"):Create(entityPrimaryPart, TweenInfo.new(0), {CFrame = camera.CFrame * CFrame.new(0, -0.5, -6)}):Play()
 				game.Players.LocalPlayer.Character.Humanoid.WalkSpeed = 0
+                               wait(3)
+			game.Players.LocalPlayer.Character.Humanoid:TakeDamage(125)
 			end
 			isTweenRunning = false
 		end)
