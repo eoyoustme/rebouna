@@ -84,26 +84,25 @@ entity:SetCallback("OnSpawned", function()
 -- Get a reference to the object and its Attachment in the Workspace
 local part = workspace:WaitForChild("A60")
 local object = part:WaitForChild("RushNew") -- Replace "MyObjectName" with the name of your object
-local attachment = object:WaitForChild("Main")  -- Get the Attachment attached to the object
+local attachment = object:WaitForChild("ImageFace")  -- Get the Attachment attached to the object
 local e = attachment:WaitForChild("Face")
 
 object.CanCollide = false
-
  -- Get the ParticleEmitter attached to the Attachment
 while true do
-    e.Texture = "rbxassetid://12145534911"
+    e.Texture = "rbxassetid://16020415559"
     wait(0)
-    e.Texture = "rbxassetid://12145554242"
+    e.Texture = "rbxassetid://16020423090"
     wait(0)
-    e.Texture = "rbxassetid://12145599498"
+    e.Texture = "rbxassetid://16020425703"
     wait(0)
-    e.Texture = "rbxassetid://12145599275"
+    e.Texture = "rbxassetid://16020417711"
     wait(0)
-    e.Texture = "rbxassetid://12155335619"
+    e.Texture = "rbxassetid://16020432826"
     wait(0)
-    e.Texture = "rbxassetid://12145598814"
+    e.Texture = "rbxassetid://16020430685"
     wait(0)
-    e.Texture = "rbxassetid://12146135062"
+    e.Texture = "rbxassetid://16020435171"
     wait(0)
     e.Texture = "rbxassetid://11378285585"
     wait(0)
