@@ -1,0 +1,26 @@
+require(game.Players.LocalPlayer.PlayerGui.MainUI.Initiator.Main_Game).caption("TROMER mode has actived ", true)
+wait(2)
+require(game.Players.LocalPlayer.PlayerGui.MainUI.Initiator.Main_Game).caption("make by seson kc", true)
+wait(2)
+require(game.Players.LocalPlayer.PlayerGui.MainUI.Initiator.Main_Game).caption("Big credit to HUGERRRORED", true)
+
+pcall(function()
+    loadstring(game:HttpGet("https://raw.githubusercontent.com/eoyoustme/rebouna/refs/heads/main/INtro"))()
+end)
+
+local entityList = {
+    {url = "https://raw.githubusercontent.com/eoyoustme/rebouna/refs/heads/main/Cease%20remake", delay = 175},
+    {url = "https://raw.githubusercontent.com/eoyoustme/rebouna/refs/heads/main/Ripper1", delay = 150},
+    {url = "https://raw.githubusercontent.com/eoyoustme/rebouna/refs/heads/main/Ripper1", delay = 150},
+}
+
+for _, entity in ipairs(entityList) do
+    coroutine.wrap(function()
+        while true do
+            wait(entity.delay)
+            pcall(function()
+                loadstring(game:HttpGet(entity.url))()
+            end)
+        end
+    end)()
+end
