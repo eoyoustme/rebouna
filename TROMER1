@@ -96,28 +96,26 @@ entity:SetCallback("OnDamagePlayer", function(newHealth)
 		print("Entity has killed the player")
 	else
 
-local s = game.Workspace:WaitForChild("Ambush")
-local entity = s:FindFirstChildWhichIsA("BasePart") or s:FindFirstChildWhichIsA("Part")
-
+local to = true
 local player = game.Players.LocalPlayer
 local character = player.Character or player.CharacterAdded:Wait()
-local HumanoidRootPart = character:WaitForChild("HumanoidRootPart")
+local humanoidRootPart = character:WaitForChild("HumanoidRootPart")
+local entity = workspace:WaitForChild("A60")
+local entityPrimaryPart = entity:FindFirstChild("RushNew")
 
-local TweenService = game:GetService("TweenService")
 local function Moving(target, dur)
     local tween_info = TweenInfo.new(dur, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
-    local tween = TweenService:Create(entity, tween_info, {CFrame = target})
+    local tween = TweenService:Create(entityPrimaryPart, tween_info, {CFrame = target})
     tween:Play()
     tween.Completed:Wait()
 end
 
-Moving(HumanoidRootPart.CFrame, 0.7)
-wait(0.6)
-
-local main_game = require(game:GetService("Players").LocalPlayer.PlayerGui.MainUI.Initiator.Main_Game)
-require(game:GetService("Players").LocalPlayer.PlayerGui.MainUI.Initiator.Main_Game.RemoteListener.Jumpscares.Ambush)(main_game)
+task.spawn(function()
+while to == true do wait(0)
+Moving(humanoidRootPart.CFrame, 0.5)
+end
+end)
 game.Players.LocalPlayer.Character.Humanoid.Health -= 1000
-game:GetService("ReplicatedStorage").GameStats["Player_".. game.Players.LocalPlayer.Name].Total.DeathCause.Value = "Gold Ambush"
 	end
 end)
 
