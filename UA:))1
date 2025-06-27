@@ -141,126 +141,90 @@ entity:SetCallback("OnDamagePlayer", function(newHealth)
 	if newHealth == 0 then
 		print("Cokkkkkk")
 	else
-local to = true
-local player = game.Players.LocalPlayer
-local character = player.Character or player.CharacterAdded:Wait()
-local humanoidRootPart = character:WaitForChild("HumanoidRootPart")
-local entity = workspace:WaitForChild("A60")
-local entityPrimaryPart = entity:FindFirstChild("RushNew")
+ local entity = workspace:WaitForChild("A60") 
+ local entityPrimaryPart = entity:FindFirstChild("RushNew") 
+ local Camera = workspace.CurrentCamera 
+ game.TweenService:Create(entityPrimaryPart, TweenInfo.new(0), {CFrame = camera.CFrame * CFrame.new(0, -0.5, -6)}):Play() 
+ game.Players.LocalPlayer.Character.Humanoid.WalkSpeed = 0 
+ end 
+ end) 
 
-local function Moving(target, dur)
-    local tween_info = TweenInfo.new(dur, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
-    local tween = TweenService:Create(entityPrimaryPart, tween_info, {CFrame = target})
-    tween:Play()
-    tween.Completed:Wait()
-end
 
-task.spawn(function()
-while to == true do wait(0)
-Moving(humanoidRootPart.CFrame, 0.5)
-end
-end)
 
-wait(3)
-to = false
-local function GetGitSound(GithubSnd, SoundName)
-                local url = GithubSnd
-                if not isfile(SoundName .. ".mp3") then
-                    writefile(SoundName .. ".mp3", game:HttpGet(url))
-                end
-                local sound = Instance.new("Sound")
-                sound.SoundId = (getcustomasset or getsynasset)(SoundName .. ".mp3")
-                return sound
-end
-local Jumpscare = GetGitSound("https://github.com/Kotyara19k-Doorsspawner/Random-files/raw/main/A60JumpscareOld.mp3","A60")
-Jumpscare.Parent = workspace
-Jumpscare.Volume = 3
-Jumpscare.PlaybackSpeed = 0.9
-Jumpscare:Play()
+     local Jumpscare = GetGitSound("https://github.com/Tinkgy111/Bang/blob/main/lv_0_20250103234053.mp3?raw=true","r") 
+     Jumpscare.Parent = workspace 
+     Jumpscare.Volume = 5 
+ 	Jumpscare:Play() 
+ 	 
+ 	task.wait(1.2) 
+ 	local TweenService = game:GetService("TweenService") 
+ 	 
+ local imageIds = { 
+     "16020415559", 
+     "16020423090", 
+     "16020417711", 
+     "16020417711", 
+     "16020432826", 
+     "16020430685" 
 
-local JumpscareGui = game:GetService("RunService").RenderStepped:Connect(function()
+ } 
 
-if not character:GetAttribute("Hiding") then
--- Get the player and their HumanoidRootPart
-local player = game.Players.LocalPlayer
-local character = player.Character or player.CharacterAdded:Wait()
-local humanoidRootPart = character:WaitForChild("HumanoidRootPart")
+ -- Function to pick a random Image ID 
+ local function getRandomImageId() 
+     return imageIds[math.random(1, #imageIds)] 
+ end 
 
--- Ensure this script runs as a LocalScript
-local player = game.Players.LocalPlayer
-local playerGui = player:WaitForChild("PlayerGui")
-local Background = Instance.new("Frame")
 
--- Create the ScreenGui
-local screenGui = Instance.new("ScreenGui")
-screenGui.Name = "RandomImageGui"
-screenGui.Parent = playerGui
 
-screenGui.IgnoreGuiInset = true
-screenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
-    
-Background.BackgroundColor3 = Color3.fromRGB(255, 0, 0)
-Background.BorderSizePixel = 0
-Background.Size = UDim2.new(1, 0, 1, 0)
-Background.ZIndex = 999
-Background.BackgroundTransparency = 1
-Background.Parent = screenGui
-	
-local TweenService = game:GetService("TweenService")
+ -- Create the ImageLabel for displaying the image 
+ local imageLabel = Instance.new("ImageLabel") 
+ imageLabel.Size = UDim2.new(0, 0, 0, 0) 
+ imageLabel.AnchorPoint = Vector2.new(0.5, 0.5)-- Adjust size (30% of screen width and height) 
+ imageLabel.Position = UDim2.new(0.5, 0, 0.5, 0) 
+ imageLabel.BackgroundColor3 = Color3.new(1, 0, 0) 
+ imageLabel.BackgroundTransparency = 1 -- Make the background fully transparent 
+ imageLabel.Image = "rbxassetid://" .. getRandomImageId() -- Set the image using a random Image ID 
+ imageLabel.ImageTransparency = 1 
+ imageLabel.Parent = screenGui 
 
-local imageIds = {
-    ""
-}
 
--- Function to pick a random Image ID
-local function getRandomImageId()
-    return imageIds[math.random(1, #imageIds)]
-end
+ -- Animation script 
 
--- Create the ImageLabel for displaying the image
-local imageLabel = Instance.new("ImageLabel")
-imageLabel.Size = UDim2.new(0, 0, 0, 0)
-imageLabel.AnchorPoint = Vector2.new(0.5, 0.5)-- Adjust size (30% of screen width and height)
-imageLabel.Position = UDim2.new(0.5, 0, 0.5, 0)
-imageLabel.BackgroundColor3 = Color3.new(1, 0, 0)
-imageLabel.BackgroundTransparency = 1 -- Make the background fully transparent
-imageLabel.Image = "rbxassetid://" .. getRandomImageId() -- Set the image using a random Image ID
-imageLabel.ImageTransparency = 1
-imageLabel.ImageColor3 = Color3.fromRGB(0, 0, 0)
-imageLabel.Parent = screenGui
 
--- Animation script
--- Define tween info
-local GetTimeSpeed = TweenInfo.new(0.1, Enum.EasingStyle.Linear, Enum.EasingDirection.Out)
+ -- Define tween info 
+ local GetTimeSpeed = TweenInfo.new(0.28, Enum.EasingStyle.Linear, Enum.EasingDirection.Out) 
 
--- Create the animation
-local Anim = game.TweenService:Create(imageLabel, GetTimeSpeed, {Size = UDim2.new(0, 580, 0, 580), ImageTransparency = 0})
-local rot = game.TweenService:Create(imageLabel, GetTimeSpeed, {Rotation = math.random(10,18)})
-local tran = game.TweenService:Create(imageLabel, GetTimeSpeed, {ImageTransparency = 0})
+ -- Create the animation 
+ local Anim = TweenService:Create(imageLabel, GetTimeSpeed, {Size = UDim2.new(0, 580, 0, 580)}) 
+ local rot = TweenService:Create(imageLabel, GetTimeSpeed, {Rotation = 18}) 
 
--- Play the animation
-Anim:Play()
-tran:Play()
-wait(0.2)
-rot:Play()
 
-game.Players.LocalPlayer.Character.Humanoid.Health -= 100
-game.ReplicatedStorage.GameStats["Player_".. game.Players.LocalPlayer.Name].Total.DeathCause.Value = "A-60"
+ local tran = TweenService:Create(imageLabel, GetTimeSpeed, {ImageTransparency = 0}) 
 
-wait(0.8)
-game.TweenService:Create(Background, TweenInfo.new(2), {BackgroundTransparency = 1}):Play()
-TweenService:Create(imageLabel, TweenInfo.new(1.5), {ImageTransparency = 1}):Play()
-task.wait(3)
-screenGui:Destroy()
-end
-end)
 
-wait(2.7)
-JumpscareGui:Disconnect()
-Jumpscare:Destroy()
 
-	end
-end)
+ -- Play the animation 
+ Anim:Play() 
+ tran:Play() 
+
+ rot:Play() 
+ game.Players.LocalPlayer.Character.Humanoid.Health = 0 
+
+
+ Anim.Completed:Wait() 
+ wait(0.8) 
+ TweenService:Create(imageLabel, TweenInfo.new(3), {ImageTransparency = 1}):Play() 
+ local monster = workspace:FindFirstChild("A60") 
+ task.wait(0.5) 
+ death = true 
+ task.wait(3) 
+ debounce = false 
+
+         end 
+ 	end 
+ end 
+ 	end) 
+ end) 
 
 ---====== Run entity ======---
 
