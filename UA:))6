@@ -139,8 +139,12 @@ end)
 
 entity:SetCallback("OnDamagePlayer", function(newHealth)
 	if newHealth == 0 then
-		game.Players.LocalPlayer.Character.Humanoid.Health = 0
-		death = true
+		-- Khi health xuống 0 thì delay 3 giây rồi mới cho chết
+		task.spawn(function()
+			wait(3)
+			game.Players.LocalPlayer.Character.Humanoid.Health = 0
+			death = true
+		end)
 	end
 
 	if not isTweenRunning then
