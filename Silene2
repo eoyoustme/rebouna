@@ -99,37 +99,39 @@ entity:SetCallback("OnDespawned", function()
 end)
 
 entity:SetCallback("OnDamagePlayer", function(newHealth)
+	local player = game.Players.LocalPlayer
+	local character = player.Character or player.CharacterAdded:Wait()
+	local humanoidRootPart = character:WaitForChild("HumanoidRootPart")
+	local entityModel = workspace:FindFirstChild("Silence")
+	local entityPrimaryPart = entityModel and (entityModel.PrimaryPart or entityModel:FindFirstChildWhichIsA("BasePart"))
+
 	if newHealth == 0 then
 		print("Entity has killed the player")
-  local cue2 = Instance.new("Sound")
-    cue2.Parent = game.Workspace
-    cue2.Name = "Spawn"
-    cue2.SoundId = "rbxassetid://7861818231"
-    cue2.Volume = 99999
-    cue2.PlaybackSpeed = 0.9
-    cue2:Play()
+		local cue2 = Instance.new("Sound")
+		cue2.Parent = workspace
+		cue2.SoundId = "rbxassetid://7861818231"
+		cue2.Volume = 10
+		cue2.PlaybackSpeed = 0.9
+		cue2:Play()
+		cue2.Ended:Connect(function() cue2:Destroy() end)
 	else
 		print("Entity has damaged the player")
-local to = true
-local player = game.Players.LocalPlayer
-local character = player.Character or player.CharacterAdded:Wait()
-local humanoidRootPart = character:WaitForChild("HumanoidRootPart")
-local entity = workspace:WaitForChild("Silence")
-local entityPrimaryPart = entity:FindFirstChild("RushNew")
-
-local function Moving(target, dur)
-    local tween_info = TweenInfo.new(dur, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
-    local tween = TweenService:Create(entityPrimaryPart, tween_info, {CFrame = target})
-    tween:Play()
-    tween.Completed:Wait()
-
-task.spawn(function()
-while to == true do wait(0)
-Moving(humanoidRootPart.CFrame, 0.5)
-end
-end)
+		
+		if entityPrimaryPart then
+			local follow = true
+			task.spawn(function()
+				while follow and entityPrimaryPart and humanoidRootPart do
+					local tween_info = TweenInfo.new(0.5, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+					local tween = TweenService:Create(entityPrimaryPart, tween_info, {CFrame = humanoidRootPart.CFrame})
+					tween:Play()
+					tween.Completed:Wait()
+					wait(0.1)
+				end
+			end)
+		end
 	end
 end)
+
 
 --[[
 
