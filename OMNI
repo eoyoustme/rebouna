@@ -7,7 +7,7 @@ local spawner = loadstring(game:HttpGet("https://raw.githubusercontent.com/Regul
 
 local entity = spawner.Create({
 	Entity = {
-		Name = "TROMER",
+		Name = "OMNI",
 		Asset = "rbxassetid://81037108395977",
 		HeightOffset = 0
 	},
@@ -65,7 +65,7 @@ game.Workspace.CurrentRooms:GetChildren()[#game.Workspace.CurrentRooms:GetChildr
 local sound = Instance.new("Sound")
 sound.Name = "Arrival"
 sound.SoundId = "rbxassetid://7861818231" 
-sound.Parent = game.Workspace.Ambush
+sound.Parent = game.Workspace.OMNI
 sound.Volume = 2.5
 sound.PlaybackSpeed = 0.75
 local a = Instance.new("DistortionSoundEffect",sound)
@@ -100,7 +100,7 @@ local to = true
 local player = game.Players.LocalPlayer
 local character = player.Character or player.CharacterAdded:Wait()
 local humanoidRootPart = character:WaitForChild("HumanoidRootPart")
-local entity = workspace:WaitForChild("TROMER")
+local entity = workspace:WaitForChild("OMNI")
 local entityPrimaryPart = entity:FindFirstChild("RushNew")
 
 local function Moving(target, dur)
