@@ -1,0 +1,126 @@
+---====== Load spawner ======---
+
+local g = true
+local spawner = loadstring(game:HttpGet("https://raw.githubusercontent.com/RegularVynixu/Utilities/main/Doors/Entity%20Spawner/V2/Source.lua"))()
+
+---====== Create entity ======---
+
+local entity = spawner.Create({
+	Entity = {
+		Name = "TORMER",
+		Asset = "rbxassetid://81037108395977",
+		HeightOffset = 0
+	},
+	Lights = {
+		Flicker = {
+			Enabled = false,
+			Duration = 1
+		},
+		Shatter = false,
+		Repair = false
+	},
+	Earthquake = {
+		Enabled = false
+	},
+	CameraShake = {
+		Enabled = true,
+		Range = 100,
+		Values = {5, 20, 0.1, 1} -- Magnitude, Roughness, FadeIn, FadeOut
+	},
+	Movement = {
+		Speed = 180,
+		Delay = 6,
+		Reversed = false
+	},
+	Rebounding = {
+		Enabled = true,
+		Type = "Ambush", -- "Blitz"
+		Min = 1,
+		Max = 3,
+		Delay = 0.7
+	},
+	Damage = {
+		Enabled = true,
+		Range = 60,
+		Amount = 0.01
+	},
+	Crucifixion = {
+		Enabled = true,
+		Range = 40,
+		Resist = false,
+		Break = true
+	},
+	Death = {
+		Type = "Guiding", -- "Curious"
+		Hints = {"Death", "Hints", "Go", "Here"},
+		Cause = ""
+	}
+})
+
+---====== Debug entity ======---
+
+entity:SetCallback("OnSpawned", function()
+
+game.Workspace.CurrentRooms:GetChildren()[#game.Workspace.CurrentRooms:GetChildren() - 1]:SetAttribute("Ambient",Color3.fromRGB(0, 0, 0))
+local sound = Instance.new("Sound")
+sound.Name = "Arrival"
+sound.SoundId = "rbxassetid://7861818231" 
+sound.Parent = game.Workspace.Ambush
+sound.Volume = 2.5
+sound.PlaybackSpeed = 0.75
+local a = Instance.new("DistortionSoundEffect",sound)
+a.Level = 0.75
+local d = Instance.new("PitchShiftSoundEffect",sound)
+d.Octave = 0.5
+sound:Play()
+
+wait(5)
+while g == true do wait(5)
+local CameraShaker = require(game.ReplicatedStorage.CameraShaker)
+local camara = game.Workspace.CurrentCamera
+local camShake = CameraShaker.new(Enum.RenderPriority.Camera.Value, function(shakeCf)
+ camara.CFrame = camara.CFrame * shakeCf
+end)
+camShake:Start()
+camShake:ShakeOnce(30,35,0,2,1,6)
+end
+
+end)
+
+entity:SetCallback("OnDespawning", function()
+g = false
+end)
+
+entity:SetCallback("OnDamagePlayer", function(newHealth)
+	if newHealth == 0 then
+		print("Entity has killed the player")
+	else
+
+local s = game.Workspace:WaitForChild("Ambush")
+local entity = s:FindFirstChildWhichIsA("BasePart") or s:FindFirstChildWhichIsA("Part")
+
+local player = game.Players.LocalPlayer
+local character = player.Character or player.CharacterAdded:Wait()
+local HumanoidRootPart = character:WaitForChild("HumanoidRootPart")
+
+local TweenService = game:GetService("TweenService")
+local function Moving(target, dur)
+    local tween_info = TweenInfo.new(dur, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+    local tween = TweenService:Create(entity, tween_info, {CFrame = target})
+    tween:Play()
+    tween.Completed:Wait()
+end
+
+Moving(HumanoidRootPart.CFrame, 0.7)
+wait(0.6)
+
+local main_game = require(game:GetService("Players").LocalPlayer.PlayerGui.MainUI.Initiator.Main_Game)
+require(game:GetService("Players").LocalPlayer.PlayerGui.MainUI.Initiator.Main_Game.RemoteListener.Jumpscares.Ambush)(main_game)
+game.Players.LocalPlayer.Character.Humanoid.Health -= 1000
+game:GetService("ReplicatedStorage").GameStats["Player_".. game.Players.LocalPlayer.Name].Total.DeathCause.Value = "Gold Ambush"
+	end
+end)
+
+---====== Run entity ======---
+
+entity:Run()
