@@ -5,13 +5,13 @@ wait(2)
 require(game.Players.LocalPlayer.PlayerGui.MainUI.Initiator.Main_Game).caption("Big credit to HUGERRRORED", true)
 
 pcall(function()
-    loadstring(game:HttpGet("https://raw.githubusercontent.com/eoyoustme/rebouna/refs/heads/main/INtro"))()
+    loadstring(game:HttpGet("https://raw.githubusercontent.com/eoyoustme/rebouna/refs/heads/main/INTRo%20TREmor"))()
 end)
 
 local entityList = {
-    {url = "https://raw.githubusercontent.com/eoyoustme/rebouna/refs/heads/main/Cease%20remake", delay = 175},
-    {url = "https://raw.githubusercontent.com/eoyoustme/rebouna/refs/heads/main/Ripper1", delay = 150},
-    {url = "https://raw.githubusercontent.com/eoyoustme/rebouna/refs/heads/main/Ripper1", delay = 150},
+    {url = "https://pastebin.com/raw/mZq0TBy1", delay = 75},
+    {url = "https://raw.githubusercontent.com/eoyoustme/rebouna/refs/heads/main/REVER", delay = 210},
+    {url = "https://raw.githubusercontent.com/eoyoustme/rebouna/refs/heads/main/TROMER", delay = 150},
 }
 
 for _, entity in ipairs(entityList) do
