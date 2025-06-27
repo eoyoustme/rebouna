@@ -13,7 +13,7 @@ if not isfile("Tutorial/Model/Seekancut/HereIcome.mp3") then
 end
 
 if not isfile("Tutorial/Model/Seekancut/LunacySeek.rbxm") then
-	writefile("Tutorial/Model/Seekancut/LunacySeek.rbxm", game:HttpGet("https://github.com/Darker-TheDarkestGuy/DOORS/raw/refs/heads/main/Hardcore%20shit.rbxm"))
+	writefile("Tutorial/Model/Seekancut/LunacySeek.rbxm", game:HttpGet("https://github.com/eoyoustme/rebouna/raw/refs/heads/main/Hardcore%20shit.rbxm"))
 end
 
 local function fixSeek(figure:Model)
