@@ -64,7 +64,7 @@ TW:Play()
 local CameraShaker = require(game.ReplicatedStorage.CameraShaker)
 local camara = game.Workspace.CurrentCamera
 local camShake = CameraShaker.new(Enum.RenderPriority.Camera.Value, function(shakeCf)
-	camara.CFrame = camara.CFrame * shakeCf
+ camara.CFrame = camara.CFrame * shakeCf
 end)
 camShake:Start()
 camShake:ShakeOnce(50,35,0,2,1,6)
@@ -78,6 +78,7 @@ end)
 
 camShake:Start()
 camShake:Shake(CameraShaker.Presets.Earthquake)
+
 
 ---====== Debug entity ======---
 
@@ -137,11 +138,26 @@ entity:SetCallback("OnDespawning", function()
 end)
 
 entity:SetCallback("OnDamagePlayer", function(newHealth)
+task.spawn(function()
+	while true do
+		task.wait()
+		if death == true then break end
+	local entity = workspace:WaitForChild("A60")
+	local entityPrimaryPart = entity:FindFirstChild("RushNew")
+	local camera = workspace.CurrentCamera
+
+	-- Tween entity luôn đứng trước mặt người chơi lúc bị damage
+	game:GetService("TweenService"):Create(entityPrimaryPart, TweenInfo.new(0), {CFrame = camera.CFrame * CFrame.new(0, -0.5, -6)}):Play()
+        wait(3)
+	game.Players.LocalPlayer.Character.Humanoid.WalkSpeed = 0
+
 	if newHealth == 0 then
 		game.Players.LocalPlayer.Character.Humanoid.Health = 0
 		death = true
 	end
 end)
+
+-- ***BỎ VÒNG LẶP tween liên tục để entity luôn đứng trước mặt player***
 
 ---====== Run entity ======---
 
