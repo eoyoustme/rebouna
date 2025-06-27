@@ -7,7 +7,8 @@ pcall(function()
     loadstring(game:HttpGet("https://raw.githubusercontent.com/eoyoustme/rebouna/refs/heads/main/INtro"))()
     loadstring(game:HttpGet("https://raw.githubusercontent.com/eoyoustme/rebouna/refs/heads/main/Hardcore%20seek%20(chatgpt)"))()
     loadstring(game:HttpGet("https://raw.githubusercontent.com/eoyoustme/rebouna/refs/heads/main/Deer%20chase"))()
-    loadstring(game:httpGet("https://raw.githubusercontent.com/eoyoustme/rebouna/refs/heads/main/Rage%20B-60"))()
+    loadstring(game:HttpGet("https://raw.githubusercontent.com/eoyoustme/rebouna/refs/heads/main/Rage%20B-60"))()
+    loadstring(game:HttpGet("https://raw.githubusercontent.com/eoyoustme/rebouna/refs/heads/main/red%20light"))()
 end)
 
 local entityList = {
