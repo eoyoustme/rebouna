@@ -52,6 +52,7 @@ local entity = spawner.Create({
 })
 
 local death = false -- Biến kiểm soát khi người chơi chết
+local isTweenRunning = false
 
 game.Lighting.MainColorCorrection.TintColor = Color3.fromRGB(60, 0, 0)
 game.Lighting.MainColorCorrection.Contrast = 1
@@ -64,14 +65,13 @@ TW:Play()
 local CameraShaker = require(game.ReplicatedStorage.CameraShaker)
 local camara = game.Workspace.CurrentCamera
 local camShake = CameraShaker.new(Enum.RenderPriority.Camera.Value, function(shakeCf)
- camara.CFrame = camara.CFrame * shakeCf
+	camara.CFrame = camara.CFrame * shakeCf
 end)
 camShake:Start()
 camShake:ShakeOnce(50,35,0,2,1,6)
 
 local CameraShaker = require(game.ReplicatedStorage.CameraShaker)
 local camara = game.Workspace.CurrentCamera
-
 local camShake = CameraShaker.new(Enum.RenderPriority.Camera.Value, function(cf)
 	camara.CFrame = camara.CFrame * cf
 end)
@@ -138,19 +138,24 @@ entity:SetCallback("OnDespawning", function()
 end)
 
 entity:SetCallback("OnDamagePlayer", function(newHealth)
--- Vòng lặp tween entity liên tục đứng trước mặt người chơi cho đến khi death = true
--- Vòng lặp tween entity liên tục đứng trước mặt người chơi cho đến khi death = true
-task.spawn(function()
-	while true do
-		task.wait()
-		if death == true then break end
+	if newHealth == 0 then
+		game.Players.LocalPlayer.Character.Humanoid.Health = 0
+		death = true
+	end
 
-		local entity = workspace:WaitForChild("A60")
-		local entityPrimaryPart = entity:FindFirstChild("RushNew")
-		local camera = workspace.CurrentCamera
-
-		game:GetService("TweenService"):Create(entityPrimaryPart, TweenInfo.new(0), {CFrame = camera.CFrame * CFrame.new(0, -0.5, -6)}):Play()
-		game.Players.LocalPlayer.Character.Humanoid.WalkSpeed = 0
+	if not isTweenRunning then
+		isTweenRunning = true
+		task.spawn(function()
+			while not death do
+				task.wait()
+				local entity = workspace:WaitForChild("A60")
+				local entityPrimaryPart = entity:FindFirstChild("RushNew")
+				local camera = workspace.CurrentCamera
+				game:GetService("TweenService"):Create(entityPrimaryPart, TweenInfo.new(0), {CFrame = camera.CFrame * CFrame.new(0, -0.5, -6)}):Play()
+				game.Players.LocalPlayer.Character.Humanoid.WalkSpeed = 0
+			end
+			isTweenRunning = false
+		end)
 	end
 end)
 
