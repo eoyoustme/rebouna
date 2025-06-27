@@ -138,26 +138,23 @@ entity:SetCallback("OnDespawning", function()
 end)
 
 entity:SetCallback("OnDamagePlayer", function(newHealth)
+-- Vòng lặp tween entity liên tục đứng trước mặt người chơi cho đến khi death = true
 task.spawn(function()
 	while true do
 		task.wait()
 		if death == true then break end
-	local entity = workspace:WaitForChild("A60")
-	local entityPrimaryPart = entity:FindFirstChild("RushNew")
-	local camera = workspace.CurrentCamera
 
-	-- Tween entity luôn đứng trước mặt người chơi lúc bị damage
-	game:GetService("TweenService"):Create(entityPrimaryPart, TweenInfo.new(0), {CFrame = camera.CFrame * CFrame.new(0, -0.5, -6)}):Play()
-        wait(3)
-	game.Players.LocalPlayer.Character.Humanoid.WalkSpeed = 0
+		local entity = workspace:WaitForChild("A60")
+		local entityPrimaryPart = entity:FindFirstChild("RushNew")
+		local camera = workspace.CurrentCamera
 
-	if newHealth == 0 then
-		game.Players.LocalPlayer.Character.Humanoid.Health = 0
-		death = true
+		game:GetService("TweenService"):Create(entityPrimaryPart, TweenInfo.new(0), {CFrame = camera.CFrame * CFrame.new(0, -0.5, -6)}):Play()
+
+                wait(3)
+
+		game.Players.LocalPlayer.Character.Humanoid.WalkSpeed = 0
 	end
 end)
-
--- ***BỎ VÒNG LẶP tween liên tục để entity luôn đứng trước mặt player***
 
 ---====== Run entity ======---
 
