@@ -1,87 +1,203 @@
-game.ReplicatedStorage.GameData.LatestRoom.Changed:Connect(function()
-if game:GetService("ReplicatedStorage").GameData.Floor.Value == "Hotel" then
-if game.ReplicatedStorage.GameData.LatestRoom.Value == 50 then
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local TweenService = game:GetService("TweenService")
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
 
----====== Load spawner ======---
+ReplicatedStorage.GameData.LatestRoom.Changed:Connect(function()
+    if ReplicatedStorage.GameData.Floor.Value == "Hotel" and ReplicatedStorage.GameData.LatestRoom.Value == 50 then
+        -- Load entity spawner
+        local spawner = loadstring(game:HttpGet("https://raw.githubusercontent.com/RegularVynixu/Utilities/main/Doors/Entity%20Spawner/V2/Source.lua"))()
 
-local spawner = loadstring(game:HttpGet("https://raw.githubusercontent.com/RegularVynixu/Utilities/main/Doors/Entity%20Spawner/V2/Source.lua"))()
+        -- Create entity
+        local entity = spawner.Create({
+            Entity = {
+                Name = "B-60",
+                Asset = "rbxassetid://84110007813568",
+                HeightOffset = 0
+            },
+            Lights = {
+                Flicker = {
+                    Enabled = true,
+                    Duration = 5
+                },
+                Shatter = false,
+                Repair = false
+            },
+            Earthquake = {
+                Enabled = false
+            },
+            CameraShake = {
+                Enabled = true,
+                Range = 100,
+                Values = {5, 70, 2, 5}
+            },
+            Movement = {
+                Speed = 1000,
+                Delay = 50,
+                Reversed = true
+            },
+            Rebounding = {
+                Enabled = true,
+                Type = "Ambush",
+                Min = 12,
+                Max = 12,
+                Delay = 0.001
+            },
+            Damage = {
+                Enabled = true,
+                Range = 20,
+                Amount = 0.01
+            },
+            Crucifixion = {
+                Enabled = true,
+                Range = 40,
+                Resist = false,
+                Break = true
+            },
+            Death = {
+                Type = "Guiding",
+                Hints = {"Death", "Hints", "Go", "Here"},
+                Cause = ""
+            }
+        })
 
----====== Create entity ======---
+        -- On entity spawn
+        entity:SetCallback("OnSpawned", function()
+            print("Entity has spawned")
 
-local entity = spawner.Create({
-	Entity = {
-		Name = "B_60",
-		Asset = "rbxassetid://84110007813568",
-		HeightOffset = 0
-	},
-	Lights = {
-		Flicker = {
-			Enabled = true,
-			Duration = 5
-		},
-		Shatter = false,
-		Repair = false
-	},
-	Earthquake = {
-		Enabled = false
-	},
-	CameraShake = {
-		Enabled = false,
-		Range = 100,
-		Values = {1.5, 20, 0.1, 1} -- Magnitude, Roughness, FadeIn, FadeOut
-	},
-	Movement = {
-		Speed = 1000,
-		Delay = 60,
-		Reversed = false
-	},
-	Rebounding = {
-		Enabled = true,
-		Type = "Ambush", -- "Blitz"
-		Min = 12,
-		Max = 12,
-		Delay = 0.001
-	},
-	Damage = {
-		Enabled = true,
-		Range = 20,
-		Amount = 0.01
-	},
-	Crucifixion = {
-		Enabled = true,
-		Range = 40,
-		Resist = false,
-		Break = true
-	},
-	Death = {
-		Type = "Guiding", -- "Curious"
-		Hints = {"Death", "Hints", "Go", "Here"},
-		Cause = ""
-	}
-})
+            task.spawn(function()
+                local success, err = pcall(function()
+                    local part = workspace:WaitForChild("B-60")
+                    local object = part:WaitForChild("RushNew")
+                    local attachment = object:WaitForChild("Main")
+                    local face = attachment:WaitForChild("Face")
 
----====== Debug entity ======---
+                    object.CanCollide = false
 
-entity:SetCallback("OnSpawned", function()
-    print("Entity has spawned")
-game.ReplicatedStorage.GameData.LatestRoom.Changed:Wait()
-game.Workspace.CommonSense:Destroy()
-end)
+                    local textures = {
+                        "rbxassetid://16020415559",
+                        "rbxassetid://16020423090",
+                        "rbxassetid://16020425703",
+                        "rbxassetid://16020417711",
+                        "rbxassetid://16020432826",
+                        "rbxassetid://16020430685",
+                        "rbxassetid://16020435171",
+                        "rbxassetid://11378285585",
+                    }
 
-entity:SetCallback("OnDamagePlayer", function(newHealth)
-	if newHealth == 0 then
-		print("Entity has killed the player")
-	else
-		print("Entity has damaged the player")
-		game.Players.LocalPlayer.Character.Humanoid:TakeDamage(1000)
-        game:GetService("ReplicatedStorage").GameStats["Player_".. game.Players.LocalPlayer.Name].Total.DeathCause.Value = "Rage B-60"
-	end
-end)
+                    while part and part.Parent do
+                        for _, texture in ipairs(textures) do
+                            face.Texture = texture
+                            task.wait(0.03)
+                        end
+                    end
+                end)
 
----====== Run entity ======---
+                if not success then
+                    warn("Error in OnSpawned texture animation:", err)
+                end
+            end)
 
-entity:Run()
+            -- Optional cleanup
+            if workspace:FindFirstChild("CommonSense") then
+                workspace.CommonSense:Destroy()
+            end
+        end)
 
-end
-end
+        -- On player damaged
+        entity:SetCallback("OnDamagePlayer", function(newHealth)
+            if newHealth == 0 then
+                print("Entity has killed the player")
+            else
+                print("Entity has damaged the player")
+
+                task.spawn(function()
+                    local player = Players.LocalPlayer
+                    local character = player.Character or player.CharacterAdded:Wait()
+                    local humanoidRootPart = character:WaitForChild("HumanoidRootPart")
+                    local entityModel = workspace:WaitForChild("B-60")
+                    local primaryPart = entityModel:FindFirstChild("RushNew")
+                    if not primaryPart then return end
+
+                    -- Entity follows player
+                    local to = true
+                    task.spawn(function()
+                        while to and primaryPart.Parent and humanoidRootPart do
+                            local targetCFrame = humanoidRootPart.CFrame
+                            local tween = TweenService:Create(primaryPart, TweenInfo.new(4, Enum.EasingStyle.Quad), {CFrame = targetCFrame})
+                            tween:Play()
+                            tween.Completed:Wait()
+                        end
+                    end)
+
+                    wait(2)
+                    to = false
+
+                    -- Jumpscare sound
+                    local function GetGitSound(url, name)
+                        if not isfile(name .. ".mp3") then
+                            writefile(name .. ".mp3", game:HttpGet(url))
+                        end
+                        local sound = Instance.new("Sound")
+                        sound.SoundId = (getcustomasset or getsynasset)(name .. ".mp3")
+                        return sound
+                    end
+
+                    local jumpscareSound = GetGitSound("https://github.com/Kotyara19k-Doorsspawner/Random-files/raw/main/A60JumpscareOld.mp3", "A60")
+                    jumpscareSound.Parent = workspace
+                    jumpscareSound.Volume = 3
+                    jumpscareSound.PlaybackSpeed = 0.9
+                    jumpscareSound:Play()
+
+                    -- GUI Effect
+                    local screenGui = Instance.new("ScreenGui", player:WaitForChild("PlayerGui"))
+                    screenGui.IgnoreGuiInset = true
+                    screenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+                    screenGui.Name = "A60JumpscareGui"
+
+                    local bg = Instance.new("Frame")
+                    bg.Size = UDim2.new(1, 0, 1, 0)
+                    bg.BackgroundColor3 = Color3.fromRGB(255, 0, 0)
+                    bg.BackgroundTransparency = 1
+                    bg.ZIndex = 999
+                    bg.Parent = screenGui
+
+                    local imageIds = {
+                        "12145534911", "12145554242", "12145599498",
+                        "12145599275", "12155335619", "12145598814",
+                        "12146135062", "11378285585", "1972219024",
+                        "1822114127", "3413871766", "3354536350",
+                        "17865063", "4749623118", "1857893092",
+                        "4508624823", "6309704436", "10458678325"
+                    }
+
+                    local img = Instance.new("ImageLabel")
+                    img.AnchorPoint = Vector2.new(0.5, 0.5)
+                    img.Position = UDim2.new(0.5, 0, 0.5, 0)
+                    img.Size = UDim2.new(0, 0, 0, 0)
+                    img.ImageColor3 = Color3.fromRGB(0, 0, 255)
+                    img.ImageTransparency = 1
+                    img.BackgroundTransparency = 1
+                    img.Image = "rbxassetid://" .. imageIds[math.random(1, #imageIds)]
+                    img.Parent = screenGui
+
+                    TweenService:Create(img, TweenInfo.new(0.1), {Size = UDim2.new(0, 580, 0, 580), ImageTransparency = 0}):Play()
+                    TweenService:Create(img, TweenInfo.new(0.1), {Rotation = math.random(10, 18)}):Play()
+
+                    player.Character.Humanoid.Health -= 100
+                    ReplicatedStorage.GameStats["Player_"..player.Name].Total.DeathCause.Value = "A-60"
+
+                    wait(2.7)
+                    TweenService:Create(bg, TweenInfo.new(2), {BackgroundTransparency = 1}):Play()
+                    TweenService:Create(img, TweenInfo.new(1.5), {ImageTransparency = 1}):Play()
+                    task.wait(3)
+                    screenGui:Destroy()
+                    jumpscareSound:Destroy()
+                end)
+            end
+        end)
+
+        -- Run entity
+        entity:Run()
+    end
 end)
