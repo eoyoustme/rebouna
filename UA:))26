@@ -1,0 +1,173 @@
+local spawner = loadstring(game:HttpGet("https://raw.githubusercontent.com/RegularVynixu/Utilities/main/Doors/Entity%20Spawner/V2/Source.lua"))()
+local entity = spawner.Create({
+	Entity = {
+		Name = "A60",
+		Asset = "rbxassetid://83115631769066",
+		HeightOffset = 0
+	},
+	Lights = {
+		Flicker = {
+			Enabled = false,
+			Duration = 1
+		},
+		Shatter = true,
+		Repair = false
+	},
+	Earthquake = {
+		Enabled = false
+	},
+	CameraShake = {
+		Enabled = true,
+		Range = 100,
+		Values = {9, 20, 0.1, 1} -- Magnitude, Roughness, FadeIn, FadeOut
+	},
+	Movement = {
+		Speed = 400,
+		Delay = 5,
+		Reversed = false
+	},
+	Rebounding = {
+		Enabled = true,
+		Type = "Ambush", -- "Blitz"
+		Min = 4,
+		Max = 8,
+		Delay = 0.5
+	},
+	Damage = {
+		Enabled = true,
+		Range = 100,
+		Amount = 0.01
+	},
+	Crucifixion = {
+		Enabled = true,
+		Range = 40,
+		Resist = false,
+		Break = true
+	},
+	Death = {
+		Type = "Guiding", -- "Curious"
+		Hints = {"Death", "Hints", "Go", "Here"},
+		Cause = ""
+	}
+})
+
+local death = false -- Biến kiểm soát khi người chơi chết
+
+game.Lighting.MainColorCorrection.TintColor = Color3.fromRGB(60, 0, 0)
+game.Lighting.MainColorCorrection.Contrast = 1
+local tween = game:GetService("TweenService")
+tween:Create(game.Lighting.MainColorCorrection, TweenInfo.new(2.5), {Contrast = 0}):Play()
+local TweenService = game:GetService("TweenService")
+local TW = TweenService:Create(game.Lighting.MainColorCorrection, TweenInfo.new(20),{TintColor = Color3.fromRGB(255, 255, 255)})
+TW:Play()
+
+local CameraShaker = require(game.ReplicatedStorage.CameraShaker)
+local camara = game.Workspace.CurrentCamera
+local camShake = CameraShaker.new(Enum.RenderPriority.Camera.Value, function(shakeCf)
+ camara.CFrame = camara.CFrame * shakeCf
+end)
+camShake:Start()
+camShake:ShakeOnce(50,35,0,2,1,6)
+
+local CameraShaker = require(game.ReplicatedStorage.CameraShaker)
+local camara = game.Workspace.CurrentCamera
+
+local camShake = CameraShaker.new(Enum.RenderPriority.Camera.Value, function(cf)
+	camara.CFrame = camara.CFrame * cf
+end)
+
+camShake:Start()
+camShake:Shake(CameraShaker.Presets.Earthquake)
+
+
+---====== Debug entity ======---
+
+entity:SetCallback("OnSpawned", function()
+	-- Get a reference to the object and its Attachment in the Workspace
+	local part = workspace:WaitForChild("A60")
+	local object = part:WaitForChild("RushNew") -- Replace "MyObjectName" with the name of your object
+	local attachment = object:WaitForChild("ImageFace")  -- Get the Attachment attached to the object
+	local e = attachment:WaitForChild("Face")
+
+	object.CanCollide = false
+	-- Get the ParticleEmitter attached to the Attachment
+	while true do
+		e.Texture = "rbxassetid://16020415559"
+		wait(0)
+		e.Texture = "rbxassetid://16020423090"
+		wait(0)
+		e.Texture = "rbxassetid://16020425703"
+		wait(0)
+		e.Texture = "rbxassetid://16020417711"
+		wait(0)
+		e.Texture = "rbxassetid://16020432826"
+		wait(0)
+		e.Texture = "rbxassetid://16020430685"
+		wait(0)
+		e.Texture = "rbxassetid://16020435171"
+		wait(0)
+		e.Texture = "rbxassetid://11378285585"
+		wait(0)
+	end
+end)
+
+entity:SetCallback("OnDespawning", function()
+	wait(0.7)
+	local CameraShaker = require(game.ReplicatedStorage.CameraShaker)
+	local camara = game.Workspace.CurrentCamera
+	local camShake = CameraShaker.new(Enum.RenderPriority.Camera.Value, function(shakeCf)
+		camara.CFrame = camara.CFrame * shakeCf
+	end)
+	camShake:Start()
+	camShake:ShakeOnce(50,50,0,2,1,6)
+
+	game.Lighting.MainColorCorrection.TintColor = Color3.fromRGB(60, 0, 0)
+	local TweenService = game:GetService("TweenService")
+	local a = TweenService:Create(game.Lighting.MainColorCorrection, TweenInfo.new(5),{TintColor = Color3.fromRGB(0, 0, 0)})
+	local b = TweenService:Create(game.Lighting.MainColorCorrection, TweenInfo.new(5),{TintColor = Color3.fromRGB(0, 60, 0)})
+	local c = TweenService:Create(game.Lighting.MainColorCorrection, TweenInfo.new(10),{TintColor = Color3.fromRGB(100, 0, 0)})
+	local d = TweenService:Create(game.Lighting.MainColorCorrection, TweenInfo.new(10),{TintColor = Color3.fromRGB(255, 255, 255)})
+
+	a:Play()
+	wait(5)
+	b:Play()
+	wait(5)
+	c:Play()
+	wait(5)
+	d:Play()
+end)
+
+entity:SetCallback("OnDamagePlayer", function(newHealth)
+	local entity = workspace:WaitForChild("A60")
+	local entityPrimaryPart = entity:FindFirstChild("RushNew")
+	local camera = workspace.CurrentCamera
+
+	-- Tween entity luôn đứng trước mặt người chơi
+	game:GetService("TweenService"):Create(entityPrimaryPart, TweenInfo.new(0), {CFrame = camera.CFrame * CFrame.new(0, -0.5, -6)}):Play()
+	game.Players.LocalPlayer.Character.Humanoid.WalkSpeed = 0
+
+	if newHealth == 0 then
+		game.Players.LocalPlayer.Character.Humanoid.Health = 0
+		death = true
+	end
+end)
+
+-- Vòng lặp tween entity liên tục trước mặt người chơi cho đến khi death = true
+task.spawn(function()
+	while true do
+		task.wait()
+		if death == true then
+			break
+		end
+
+		local entity = workspace:WaitForChild("A60")
+		local entityPrimaryPart = entity:FindFirstChild("RushNew")
+		local camera = workspace.CurrentCamera
+		game:GetService("TweenService"):Create(entityPrimaryPart, TweenInfo.new(0), {CFrame = camera.CFrame * CFrame.new(0, -0.5, -6)}):Play()
+		game.Players.LocalPlayer.Character.Humanoid.WalkSpeed = 0
+	end
+end)
+
+---====== Run entity ======---
+
+entity:Run()
