@@ -1,20 +1,4 @@
 local spawner = loadstring(game:HttpGet("https://raw.githubusercontent.com/RegularVynixu/Utilities/main/Doors/Entity%20Spawner/V2/Source.lua"))()
-local TweenService = game:GetService("TweenService")
-local player = game.Players.LocalPlayer
-local camera = workspace.CurrentCamera
-local screenGui = Instance.new("ScreenGui", player:WaitForChild("PlayerGui"))
-
--- Hàm GetGitSound
-function GetGitSound(url, name)
-    local sound = Instance.new("Sound")
-    sound.SoundId = url
-    sound.Name = name
-    sound.PlayOnRemove = false
-    sound.Volume = 1
-    return sound
-end
-
--- Spawn A60 entity
 local entity = spawner.Create({
 	Entity = {
 		Name = "A60",
@@ -67,51 +51,48 @@ local entity = spawner.Create({
 	}
 })
 
--- Ánh sáng
 game.Lighting.MainColorCorrection.TintColor = Color3.fromRGB(60, 0, 0)
 game.Lighting.MainColorCorrection.Contrast = 1
+local TweenService = game:GetService("TweenService")
 TweenService:Create(game.Lighting.MainColorCorrection, TweenInfo.new(2.5), {Contrast = 0}):Play()
 TweenService:Create(game.Lighting.MainColorCorrection, TweenInfo.new(20), {TintColor = Color3.fromRGB(255, 255, 255)}):Play()
 
--- Camera shake
 local CameraShaker = require(game.ReplicatedStorage.CameraShaker)
-local camara = game.Workspace.CurrentCamera
+local camara = workspace.CurrentCamera
 local camShake = CameraShaker.new(Enum.RenderPriority.Camera.Value, function(shakeCf)
 	camara.CFrame = camara.CFrame * shakeCf
 end)
 camShake:Start()
+camShake:ShakeOnce(50, 35, 0, 2, 1, 6)
 camShake:Shake(CameraShaker.Presets.Earthquake)
 
--- Callback: OnSpawned
 entity:SetCallback("OnSpawned", function()
 	local part = workspace:WaitForChild("A60")
 	local object = part:WaitForChild("RushNew")
 	local attachment = object:WaitForChild("ImageFace")
 	local e = attachment:WaitForChild("Face")
-
 	object.CanCollide = false
-
+	
 	while true do
 		e.Texture = "rbxassetid://16020415559"
-		wait()
+		wait(0)
 		e.Texture = "rbxassetid://16020423090"
-		wait()
+		wait(0)
 		e.Texture = "rbxassetid://16020425703"
-		wait()
+		wait(0)
 		e.Texture = "rbxassetid://16020417711"
-		wait()
+		wait(0)
 		e.Texture = "rbxassetid://16020432826"
-		wait()
+		wait(0)
 		e.Texture = "rbxassetid://16020430685"
-		wait()
+		wait(0)
 		e.Texture = "rbxassetid://16020435171"
-		wait()
+		wait(0)
 		e.Texture = "rbxassetid://11378285585"
-		wait()
+		wait(0)
 	end
 end)
 
--- Callback: OnDespawning
 entity:SetCallback("OnDespawning", function()
 	wait(0.7)
 	local camShake = CameraShaker.new(Enum.RenderPriority.Camera.Value, function(shakeCf)
@@ -121,7 +102,6 @@ entity:SetCallback("OnDespawning", function()
 	camShake:ShakeOnce(50, 50, 0, 2, 1, 6)
 
 	game.Lighting.MainColorCorrection.TintColor = Color3.fromRGB(60, 0, 0)
-
 	local a = TweenService:Create(game.Lighting.MainColorCorrection, TweenInfo.new(5), {TintColor = Color3.fromRGB(0, 0, 0)})
 	local b = TweenService:Create(game.Lighting.MainColorCorrection, TweenInfo.new(5), {TintColor = Color3.fromRGB(0, 60, 0)})
 	local c = TweenService:Create(game.Lighting.MainColorCorrection, TweenInfo.new(10), {TintColor = Color3.fromRGB(100, 0, 0)})
@@ -136,15 +116,14 @@ entity:SetCallback("OnDespawning", function()
 	d:Play()
 end)
 
--- Callback: OnDamagePlayer
 entity:SetCallback("OnDamagePlayer", function(newHealth)
 	if newHealth == 0 then
 		print("Cokkkkkk")
 	else
 		local entity = workspace:WaitForChild("A60")
 		local entityPrimaryPart = entity:FindFirstChild("RushNew")
-		local Camera = workspace.CurrentCamera
-		TweenService:Create(entityPrimaryPart, TweenInfo.new(0), {CFrame = Camera.CFrame * CFrame.new(0, -0.5, -6)}):Play()
+		local camera = workspace.CurrentCamera
+		TweenService:Create(entityPrimaryPart, TweenInfo.new(0), {CFrame = camera.CFrame * CFrame.new(0, -0.5, -6)}):Play()
 		game.Players.LocalPlayer.Character.Humanoid.WalkSpeed = 0
 
 		local Jumpscare = GetGitSound("https://github.com/Tinkgy111/Bang/blob/main/lv_0_20250103234053.mp3?raw=true","r")
@@ -155,13 +134,20 @@ entity:SetCallback("OnDamagePlayer", function(newHealth)
 		task.wait(1.2)
 
 		local imageIds = {
-			"16020415559", "16020423090", "16020417711",
-			"16020417711", "16020432826", "16020430685"
+			"16020415559",
+			"16020423090",
+			"16020417711",
+			"16020417711",
+			"16020432826",
+			"16020430685"
 		}
 
 		local function getRandomImageId()
 			return imageIds[math.random(1, #imageIds)]
 		end
+
+		local screenGui = Instance.new("ScreenGui")
+		screenGui.Parent = game.Players.LocalPlayer:WaitForChild("PlayerGui")
 
 		local imageLabel = Instance.new("ImageLabel")
 		imageLabel.Size = UDim2.new(0, 0, 0, 0)
@@ -174,22 +160,27 @@ entity:SetCallback("OnDamagePlayer", function(newHealth)
 		imageLabel.Parent = screenGui
 
 		local GetTimeSpeed = TweenInfo.new(0.28, Enum.EasingStyle.Linear, Enum.EasingDirection.Out)
-		local Anim = TweenService:Create(imageLabel, GetTimeSpeed, {Size = UDim2.new(0, 580, 0, 580)})
-		local rot = TweenService:Create(imageLabel, GetTimeSpeed, {Rotation = 18})
-		local tran = TweenService:Create(imageLabel, GetTimeSpeed, {ImageTransparency = 0})
 
-		Anim:Play()
-		tran:Play()
-		rot:Play()
+		coroutine.wrap(function()
+			while true do
+				local Anim = TweenService:Create(imageLabel, GetTimeSpeed, {Size = UDim2.new(0, 580, 0, 580)})
+				local rot = TweenService:Create(imageLabel, GetTimeSpeed, {Rotation = 18})
+				local tran = TweenService:Create(imageLabel, GetTimeSpeed, {ImageTransparency = 0})
+
+				Anim:Play()
+				tran:Play()
+				rot:Play()
+
+				Anim.Completed:Wait()
+
+				imageLabel.Image = "rbxassetid://" .. getRandomImageId()
+
+				task.wait(0.1)
+			end
+		end)()
+
 		game.Players.LocalPlayer.Character.Humanoid.Health = 0
-
-		Anim.Completed:Wait()
-		wait(0.8)
-		TweenService:Create(imageLabel, TweenInfo.new(3), {ImageTransparency = 1}):Play()
-		task.wait(0.5)
-		task.wait(3)
 	end
 end)
 
--- Chạy entity
 entity:Run()
