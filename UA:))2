@@ -162,7 +162,7 @@ Moving(humanoidRootPart.CFrame, 4)
 end
 end)
 
-wait(0.45)
+wait(0.8)
 to = false
 local function GetGitSound(GithubSnd, SoundName)
                 local url = GithubSnd
