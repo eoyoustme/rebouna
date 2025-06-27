@@ -139,6 +139,7 @@ end)
 
 entity:SetCallback("OnDamagePlayer", function(newHealth)
 -- Vòng lặp tween entity liên tục đứng trước mặt người chơi cho đến khi death = true
+-- Vòng lặp tween entity liên tục đứng trước mặt người chơi cho đến khi death = true
 task.spawn(function()
 	while true do
 		task.wait()
@@ -149,9 +150,6 @@ task.spawn(function()
 		local camera = workspace.CurrentCamera
 
 		game:GetService("TweenService"):Create(entityPrimaryPart, TweenInfo.new(0), {CFrame = camera.CFrame * CFrame.new(0, -0.5, -6)}):Play()
-
-                wait(3)
-
 		game.Players.LocalPlayer.Character.Humanoid.WalkSpeed = 0
 	end
 end)
