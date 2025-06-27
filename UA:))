@@ -1,26 +1,4 @@
-spawn(function() -- A-60 
- while task.wait(36) do 
- print("A-60 is here!!!!") 
- if workspace:FindFirstChild("SeekMovingNewClone") 
-         or workspace.CurrentRooms:FindFirstChild("50") 
-         or workspace.CurrentRooms:FindFirstChild("100") then 
-             repeat task.wait() until not workspace:FindFirstChild("SeekMovingNewClone") 
-                 and not workspace.CurrentRooms:FindFirstChild("50") 
-                 and not workspace.CurrentRooms:FindFirstChild("100") 
-         end 
 
-
-  local function GetGitSound(GithubSnd, SoundName) 
-                 local url = GithubSnd 
-                 if not isfile(SoundName .. ".mp3") then 
-                     writefile(SoundName .. ".mp3", game:HttpGet(url)) 
-                 end 
-                 local sound = Instance.new("Sound") 
-                 sound.SoundId = (getcustomasset or getsynasset)(SoundName .. ".mp3") 
-                 return sound 
-             end 
-             local debounce = false 
-             local death = false 
  ---====== Load spawner ======--- 
 
  local spawner = loadstring(game:HttpGet("https://raw.githubusercontent.com/RegularVynixu/Utilities/main/Doors/Entity%20Spawner/V2/Source.lua"))() 
