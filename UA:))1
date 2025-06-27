@@ -139,106 +139,111 @@ end)
 
 entity:SetCallback("OnDamagePlayer", function(newHealth)
 	if newHealth == 0 then
-		-- Khi health xuống 0 thì delay 3 giây rồi mới cho chết
+		if death then return end -- tránh chạy nhiều lần
+		death = true
+		
+		local player = game.Players.LocalPlayer
+		local humanoid = player.Character and player.Character:FindFirstChildOfClass("Humanoid")
+		if not humanoid then return end
+		
+		humanoid.WalkSpeed = 0
+		
+		-- Tween entity đứng trước mặt player liên tục
+		local tweenService = game:GetService("TweenService")
+		local camera = workspace.CurrentCamera
+		local entityPart = workspace:WaitForChild("A60"):WaitForChild("RushNew")
+		
+		local tweenLoop = task.spawn(function()
+			while death do
+				task.wait(0.03)
+				local tween = tweenService:Create(entityPart, TweenInfo.new(0.1), {
+					CFrame = camera.CFrame * CFrame.new(0, -0.5, -6)
+				})
+				tween:Play()
+				humanoid.WalkSpeed = 0
+			end
+		end)
+		
+		-- Delay 3s rồi gây damage cho player chết
 		task.spawn(function()
 			wait(3)
-			game.Players.LocalPlayer.Character.Humanoid:TakeDamage(125)
-			death = true
+			humanoid:TakeDamage(125)
 		end)
-	end
-
-	if not isTweenRunning then
-		isTweenRunning = true
-		task.spawn(function()
-			while not death do
-				task.wait()
-				local entity = workspace:WaitForChild("A60")
-				local entityPrimaryPart = entity:FindFirstChild("RushNew")
-				local camera = workspace.CurrentCamera
-				game:GetService("TweenService"):Create(entityPrimaryPart, TweenInfo.new(0), {CFrame = camera.CFrame * CFrame.new(0, -0.5, -6)}):Play()
-				game.Players.LocalPlayer.Character.Humanoid.WalkSpeed = 0
+		
+		-- Phát jumpscare GUI + âm thanh (copy nguyên đoạn của bạn)
+		local function GetGitSound(url, name)
+			if not isfile(name .. ".mp3") then
+				writefile(name .. ".mp3", game:HttpGet(url))
 			end
-			isTweenRunning = false
-           local function GetGitSound(url, name)
-		if not isfile(name .. ".mp3") then
-			writefile(name .. ".mp3", game:HttpGet(url))
+			local sound = Instance.new("Sound")
+			sound.SoundId = (getcustomasset or getsynasset)(name .. ".mp3")
+			sound.Volume = 6
+			sound.PlaybackSpeed = 1
+			sound.Parent = workspace
+			return sound
 		end
-		local sound = Instance.new("Sound")
-		sound.SoundId = (getcustomasset or getsynasset)(name .. ".mp3")
-		sound.Volume = 6
-		sound.PlaybackSpeed = 1
-		sound.Parent = workspace
-		return sound
+		
+		local jumpSound = GetGitSound("https://github.com/eoyoustme/Monoxide/blob/main/lv_0_20250103234053.mp3?raw=true", "A60")
+		jumpSound:Play()
+		
+		local gui = Instance.new("ScreenGui")
+		gui.Name = "JumpscareGui"
+		gui.IgnoreGuiInset = true
+		gui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+		gui.Parent = player:WaitForChild("PlayerGui")
+		
+		local background = Instance.new("Frame", gui)
+		background.Size = UDim2.new(1, 0, 1, 0)
+		background.BackgroundColor3 = Color3.fromRGB(255, 0, 0)
+		background.BorderSizePixel = 0
+		background.BackgroundTransparency = 1
+		background.ZIndex = 999
+		
+		local imageLabel = Instance.new("ImageLabel", gui)
+		imageLabel.Size = UDim2.new(0, 0, 0, 0)
+		imageLabel.AnchorPoint = Vector2.new(0.5, 0.5)
+		imageLabel.Position = UDim2.new(0.5, 0, 0.5, 0)
+		imageLabel.Image = "rbxassetid://12145534911"
+		imageLabel.ImageTransparency = 1
+		imageLabel.BackgroundTransparency = 1
+		imageLabel.ImageColor3 = Color3.fromRGB(255, 255, 255)
+		imageLabel.ZIndex = 999
+		
+		local tweenInfo = TweenInfo.new(0.1, Enum.EasingStyle.Linear)
+		tweenService:Create(imageLabel, tweenInfo, {
+			Size = UDim2.new(0, 580, 0, 580),
+			ImageTransparency = 0,
+			Rotation = math.random(10, 10)
+		}):Play()
+		
+		local faces = {
+			"12145534911", "12145554242", "12145599498", "12145599275", "12155335619",
+			"12145598814", "12146135062", "11378285585", "1972219024", "1822114127",
+			"3413871766", "3354536350", "17865063", "4749623118", "1857893092",
+			"4508624823", "6309704436", "10458678325"
+		}
+		
+		local running = true
+		task.spawn(function()
+			while running do
+				imageLabel.Image = "rbxassetid://" .. faces[math.random(1, #faces)]
+				task.wait(0.07)
+			end
+		end)
+		
+		wait(0.4)
+		tweenService:Create(background, TweenInfo.new(2), {BackgroundTransparency = 1}):Play()
+		tweenService:Create(imageLabel, TweenInfo.new(1.5), {ImageTransparency = 0.1}):Play()
+		
+		task.wait(2)
+		running = false
+		gui:Destroy()
+		jumpSound:Destroy()
+		
+		-- Sau jumpscare có thể reset hoặc giữ chết tùy bạn
+		-- Ví dụ:
+		humanoid.WalkSpeed = 0
 	end
-
-	-- Play Jumpscare Sound
-	local jumpSound = GetGitSound("https://github.com/eoyoustme/Monoxide/blob/main/lv_0_20250103234053.mp3?raw=true", "A60")
-	jumpSound:Play()
-
-	-- GUI Setup
-	local player = game.Players.LocalPlayer
-	local gui = Instance.new("ScreenGui", player:WaitForChild("PlayerGui"))
-	gui.Name = "JumpscareGui"
-	gui.IgnoreGuiInset = true
-	gui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
-
-	local background = Instance.new("Frame", gui)
-	background.Size = UDim2.new(1, 0, 1, 0)
-	background.BackgroundColor3 = Color3.fromRGB(255, 0, 0)
-	background.BorderSizePixel = 0
-	background.BackgroundTransparency = 1
-	background.ZIndex = 999
-
-	local imageLabel = Instance.new("ImageLabel", gui)
-	imageLabel.Size = UDim2.new(0, 0, 0, 0)
-	imageLabel.AnchorPoint = Vector2.new(0.5, 0.5)
-	imageLabel.Position = UDim2.new(0.5, 0, 0.5, 0)
-	imageLabel.Image = "rbxassetid://12145534911"
-	imageLabel.ImageTransparency = 1
-	imageLabel.BackgroundTransparency = 1
-	imageLabel.ImageColor3 = Color3.fromRGB(255, 255, 255)
-	imageLabel.ZIndex = 999
-
-	local TweenService = game:GetService("TweenService")
-	local tweenInfo = TweenInfo.new(0.1, Enum.EasingStyle.Linear)
-
-	-- Tween in
-	TweenService:Create(imageLabel, tweenInfo, {
-		Size = UDim2.new(0, 580, 0, 580),
-		ImageTransparency = 0,
-		Rotation = math.random(10, 10)
-	}):Play()
-
-	-- Image switching logic
-	local faces = {
-		"12145534911", "12145554242", "12145599498", "12145599275", "12155335619",
-		"12145598814", "12146135062", "11378285585", "1972219024", "1822114127",
-		"3413871766", "3354536350", "17865063", "4749623118", "1857893092",
-		"4508624823", "6309704436", "10458678325"
-	}
-
-	local running = true
-	task.spawn(function()
-		while running do
-			imageLabel.Image = "rbxassetid://" .. faces[math.random(1, #faces)]
-			task.wait(0.07)
-		end
-	end)
-
-	-- Fade out
-	wait(0.2)
-	wait(0.2)
-	TweenService:Create(background, TweenInfo.new(2), {BackgroundTransparency = 1}):Play()
-	TweenService:Create(imageLabel, TweenInfo.new(1.5), {ImageTransparency = 0.1}):Play()
-
-	task.wait(2)
-	running = false
-	gui:Destroy()
-	jumpSound:Destroy()
-
-	-- Final effects
-	game.Players.LocalPlayer.Character.Humanoid.Health -= 100
-	game.ReplicatedStorage.GameStats["Player_"..player.Name].Total.DeathCause.Value = "Multi Monster prime "
 end)
 
 ---====== Run entity ======---
