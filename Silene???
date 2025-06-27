@@ -41,7 +41,7 @@ local entity = spawner.Create({
 	Damage = {
 		Enabled = true,
 		Range = 40,
-		Amount = 125
+		Amount = 12
 	},
 	Crucifixion = {
 		Enabled = true,
@@ -110,7 +110,18 @@ entity:SetCallback("OnDamagePlayer", function(newHealth)
     cue2:Play()
 	else
 		print("Entity has damaged the player")
+local to = true
+local player = game.Players.LocalPlayer
+local character = player.Character or player.CharacterAdded:Wait()
+local humanoidRootPart = character:WaitForChild("HumanoidRootPart")
+local entity = workspace:WaitForChild("OMNI")
+local entityPrimaryPart = entity:FindFirstChild("RushNew")
 
+local function Moving(target, dur)
+    local tween_info = TweenInfo.new(dur, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+    local tween = TweenService:Create(entityPrimaryPart, tween_info, {CFrame = target})
+    tween:Play()
+    tween.Completed:Wait()
 	end
 end)
 
