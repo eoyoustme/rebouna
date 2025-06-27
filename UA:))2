@@ -2,7 +2,7 @@ local spawner = loadstring(game:HttpGet("https://raw.githubusercontent.com/Regul
 local entity = spawner.Create({
 	Entity = {
 		Name = "A60",
-		Asset = "rbxassetid://74103016339839",
+		Asset = "rbxassetid://83115631769066",
 		HeightOffset = 0
 	},
 	Lights = {
@@ -84,7 +84,7 @@ entity:SetCallback("OnSpawned", function()
 -- Get a reference to the object and its Attachment in the Workspace
 local part = workspace:WaitForChild("A60")
 local object = part:WaitForChild("RushNew") -- Replace "MyObjectName" with the name of your object
-local attachment = object:WaitForChild("Main")  -- Get the Attachment attached to the object
+local attachment = object:WaitForChild("ImageFace")  -- Get the Attachment attached to the object
 local e = attachment:WaitForChild("Face")
 
 object.CanCollide = false
