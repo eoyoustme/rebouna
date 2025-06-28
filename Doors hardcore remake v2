@@ -10,7 +10,8 @@ pcall(function()
     loadstring(game:HttpGet("https://raw.githubusercontent.com/eoyoustme/rebouna/refs/heads/main/Rage%20B-60"))()
     loadstring(game:HttpGet("https://raw.githubusercontent.com/eoyoustme/rebouna/refs/heads/main/red%20light"))()
     loadstring(game:HttpGet("https://pastebin.com/raw/HUNQ8vN5"))()
-    loadstring(game:HttpGet("https://pastebin.com/raw/9xxyx9Ue"))() 
+    loadstring(game:HttpGet("https://pastebin.com/raw/9xxyx9Ue"))()
+    loadstring(game:HttpGet("https://raw.githubusercontent.com/eoyoustme/rebouna/refs/heads/main/Deer%20sence2"))()
 end)
 
 local entityList = {
