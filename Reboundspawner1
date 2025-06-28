@@ -195,8 +195,6 @@ ItemName.PrimaryPart = ItemName.RushNew
 
 ItemName.Rebound_Cue:Destroy()
 
-ItemName.PrimaryPart.Sound:Destroy()
-
 ItemName.PrimaryPart.Footsteps:Destroy()
 
 ItemName.PrimaryPart.Idle:Destroy()
@@ -339,7 +337,7 @@ end
                         
                         task.spawn(entityTable.Debug.OnDeath)
                         Hum.Health = 0
-                        ReSt.GameStats["Player_".. Plr.Name].Total.DeathCause.Value = Rebound
+                        ReSt.GameStats["Player_".. Plr.Name].Total.DeathCause.Value = ???
                         
                         if #entityTable.Config.CustomDialog > 0 then
                             firesignal(ReSt.Bricks.DeathHint.OnClientEvent, entityTable.Config.CustomDialog)
@@ -466,8 +464,8 @@ Spawner.runJumpscare = function(config)
 
     local teaseConfig = config.Tease
     local absHeight = JumpscareGui.AbsoluteSize.Y
-    local minTeaseSize = absHeight / 5
-    local maxTeaseSize = absHeight / 2.5
+    local minTeaseSize = absHeight / 10
+    local maxTeaseSize = absHeight / 5
 
     if teaseConfig[1] then
         local teaseAmount = math.random(teaseConfig.Min, teaseConfig.Max)
@@ -475,13 +473,13 @@ Spawner.runJumpscare = function(config)
         sound1:Play()
         
         for _ = teaseConfig.Min, teaseAmount do
-            task.wait(math.random(100, 200) / 100)
+            task.wait(math.random(200, 300) / 200)
 
             local growFactor = (maxTeaseSize - minTeaseSize) / teaseAmount
             Face.Size = UDim2.new(0, Face.AbsoluteSize.X + growFactor, 0, Face.AbsoluteSize.Y + growFactor)
         end
 
-        task.wait(math.random(100, 200) / 100)
+        task.wait(math.random(200, 300) / 200)
     end
     
     -- Flashing
