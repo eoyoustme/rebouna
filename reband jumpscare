@@ -20,7 +20,7 @@ Face.BackgroundTransparency = 1
 Face.Position = UDim2.new(0.5, 0, 0.5, 0)
 Face.ResampleMode = Enum.ResamplerMode.Pixelated
 Face.Size = UDim2.new(0, 150, 0, 150)
-Face.Image = "rbxassetid://17119192568"
+Face.Image = "rbxassetid://18550340669"
 
 Background.Parent = JumpscareGui
 Face.Parent = Background
@@ -63,7 +63,7 @@ end)
 
 -- Jumpscare effect
 game.TweenService:Create(Face, TweenInfo.new(0.01), {
-    Size = UDim2.new(0, 1550, 0, 1150),
+    Size = UDim2.new(0, 1150, 0, 1150),
     ImageTransparency = 0
 }):Play()
 
@@ -71,7 +71,7 @@ game.TweenService:Create(Face, TweenInfo.new(0.01), {
 task.spawn(function()
     local originalPos = Face.Position
     for i = 1, 15 do
-        local offset = math.random(-100, 100)
+        local offset = math.random(-1, 1)
         Face.Position = originalPos + UDim2.new(0, offset, 0, 0)
         task.wait(0.03)
     end
