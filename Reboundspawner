@@ -1,3 +1,5 @@
+-- make by OG HUNGER
+
 -- Github Sounds
 function GetGitSound(GithubSnd,SoundName)
 	local url=GithubSnd
