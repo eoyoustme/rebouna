@@ -1,5 +1,3 @@
--- make by OG HUNGER
-
 -- Github Sounds
 function GetGitSound(GithubSnd,SoundName)
 	local url=GithubSnd
@@ -74,7 +72,7 @@ function dragEntity(entityModel, pos, speed)
         end
     end)
 
-    repeat task.wait(0.1) until not entityConnections.movementNode.Connected
+    repeat task.wait(0.7) until not entityConnections.movementNode.Connected
 end
 
 function loadSound(soundData)
@@ -195,6 +193,8 @@ ItemName.PrimaryPart = ItemName.RushNew
 
 ItemName.Rebound_Cue:Destroy()
 
+ItemName.PrimaryPart.Sound:Destroy()
+
 ItemName.PrimaryPart.Footsteps:Destroy()
 
 ItemName.PrimaryPart.Idle:Destroy()
@@ -203,7 +203,7 @@ spawn.Parent = entityModel.PrimaryPart
 spawn.Name = "ReboundSpawn"
 spawn.SoundId = "rbxassetid://9114221327"
 spawn.Volume = 5
-spawn.PlaybackSpeed = 1.2
+spawn.PlaybackSpeed = 1.3
 spawn.RollOffMaxDistance = 10000
 spawn.RollOffMinDistance = 450
 spawn:Play()
@@ -337,7 +337,7 @@ end
                         
                         task.spawn(entityTable.Debug.OnDeath)
                         Hum.Health = 0
-                        ReSt.GameStats["Player_".. Plr.Name].Total.DeathCause.Value = ???
+                        ReSt.GameStats["Player_".. Plr.Name].Total.DeathCause.Value = Rebound
                         
                         if #entityTable.Config.CustomDialog > 0 then
                             firesignal(ReSt.Bricks.DeathHint.OnClientEvent, entityTable.Config.CustomDialog)
