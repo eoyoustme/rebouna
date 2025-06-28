@@ -5,8 +5,8 @@ local Spawner = loadstring(game:HttpGet('https://raw.githubusercontent.com/MuhXd
 local entity = Spawner.createEntity({
     CustomName = "OG hunger", -- Custom name of your entity
     Model = "rbxassetid://122309151397392", -- Can be GitHub file or rbxassetid
-    Speed = 10000, -- Percentage, 100 = default Rush speed
-    DelayTime = 3, -- Time before starting cycles (seconds)
+    Speed = 1000, -- Percentage, 100 = default Rush speed
+    DelayTime = 6, -- Time before starting cycles (seconds)
     HeightOffset = 0,
     CanKill = true,
     NoDieOnCrouching = false,
