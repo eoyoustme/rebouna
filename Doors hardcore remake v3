@@ -16,7 +16,7 @@ end)
 
 local entityList = {
     {url = "https://raw.githubusercontent.com/eoyoustme/rebouna/refs/heads/main/Cease%20remake", delay = 175},
-    {url = "https://raw.githubusercontent.com/eoyoustme/rebouna/refs/heads/main/Ripper1", delay = 150},
+    {url = "https://raw.githubusercontent.com/eoyoustme/rebouna/refs/heads/main/Ripper2", delay = 150},
     {url = "https://raw.githubusercontent.com/eoyoustme/rebouna/refs/heads/main/reband", delay = 240},
     {url = "https://raw.githubusercontent.com/eoyoustme/rebouna/refs/heads/main/Sinturaly", delay = 1000},
     {url = "https://raw.githubusercontent.com/eoyoustme/rebouna/refs/heads/main/Shocker", delay = 35},
@@ -25,7 +25,7 @@ local entityList = {
     {url = "https://raw.githubusercontent.com/eoyoustme/rebouna/refs/heads/main/UA:))2", delay = 600},
     {url = "https://raw.githubusercontent.com/eoyoustme/rebouna/refs/heads/main/Deer%20god", delay = 320},
     {url = "https://raw.githubusercontent.com/eoyoustme/rebouna/refs/heads/main/owner112", delay = 886},
-    {url = "https://raw.githubusercontent.com/eoyoustme/rebouna/refs/heads/main/HC%20Rush2", delay = 100},
+    {url = "https://raw.githubusercontent.com/eoyoustme/rebouna/refs/heads/main/HC%20Rush3", delay = 100},
     {url = "https://raw.githubusercontent.com/eoyoustme/rebouna/refs/heads/main/Frostbite", delay = 450},
     {url = "https://raw.githubusercontent.com/eoyoustme/rebouna/refs/heads/main/Dread%20hardcore%20remake%20v2", delay = 666},
     {url = "https://raw.githubusercontent.com/eoyoustme/rebouna/refs/heads/main/A-90%20hardcore%20remake", delay = 90},
