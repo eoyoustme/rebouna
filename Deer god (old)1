@@ -79,7 +79,8 @@ function CustomGitSound(soundlink, vol, filename)
 end
 
 CustomGitSound("https://github.com/eoyoustme/rebouna/raw/refs/heads/main/HesBehindYouRUN.mp3?raw=true", 1, " Music")
-
+game.ReplicatedStorage.GameData.LatestRoom.Changed:Wait()
+game.Workspace.Deer god:Destroy()
 end)
 
 entity:SetCallback("OnStartMoving", function()
