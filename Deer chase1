@@ -1,6 +1,6 @@
 game.ReplicatedStorage.GameData.LatestRoom.Changed:Connect(function()
 if game:GetService("ReplicatedStorage").GameData.Floor.Value == "Hotel" then
-if game.ReplicatedStorage.GameData.LatestRoom.Value == 30 then
+if game.ReplicatedStorage.GameData.LatestRoom.Value == 32 then
 
 ---====== Load spawner ======---
 
@@ -12,7 +12,7 @@ local entity = spawner.Create({
 	Entity = {
 		Name = "Deer god",
 		Asset = "rbxassetid://11393625763",
-		HeightOffset = 0
+		HeightOffset = -2
 	},
 	Lights = {
 		Flicker = {
