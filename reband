@@ -34,7 +34,7 @@ cue1:Play()
 local cue2 = Instance.new("Sound")
     cue2.Parent = game.Workspace
     cue2.Name = "Spawn"
-    cue2.SoundId = "rbxassetid://104868924499219"
+    cue2.SoundId = "rbxassetid://9114221327"
     cue2.Volume = 99999
     cue2.PlaybackSpeed = 0.7
     cue2:Play()
