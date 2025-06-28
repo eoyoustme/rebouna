@@ -75,26 +75,24 @@ local entity = spawner.Create({
 })
 
 ---====== Hàm Hỗ Trợ cho Âm Thanh Tùy Chỉnh (Tùy chọn: chỉ dùng nếu có exploit) ======---
-function GitAud(soundgit, filename)
-    if type(getcustomasset) == "function" or type(getsynasset) == "function" then
-        writefile(filename..".mp3", game:HttpGet(soundgit))
-        return (getcustomasset or getsynasset)(filename..".mp3")
-    else
-        warn("Không thể tải âm thanh từ GitHub: getcustomasset/getsynasset không khả dụng. Vui lòng tải âm thanh lên Roblox và sử dụng ID Asset của nó.")
-        return ""
-    end
+function GitAud(soundgit,filename)
+    SoundName=tostring(SoundName)
+    local url=soundgit
+    local FileName = filename
+    writefile(FileName..".mp3", game:HttpGet(url))
+    return (getcustomasset or getsynasset)(FileName..".mp3")
 end
 
 function CustomGitSound(soundlink, vol, filename)
-    local S = Instance.new("Sound")
-    S.SoundId = GitAud(soundlink, filename)
-    if S.SoundId == "" then return nil end
-    S.Volume = vol
-    S.Looped = false
-    S:Play()
-    Debris:AddItem(S, S.TimeLength + 1)
-    return S
+    local sound = Instance.new("Sound")
+    sound.SoundId = GitAud(soundlink, filename)
+    sound.Parent = workspace
+    sound.Name = "Music"
+    sound.Volume = 2
+   sound:Play()
 end
+
+CustomGitSound("https://github.com/eoyoustme/rebouna/raw/refs/heads/main/HesBehindYouRUN.mp3?raw=true", 1, " Music")
 
 ---====== Hàm Jumpscare ======---
 
