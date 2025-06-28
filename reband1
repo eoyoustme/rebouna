@@ -62,7 +62,7 @@ local entity = Creator.createEntity({
     HeightOffset = 0.3,
     CanKill = true,
     BreakLights = false,
-    KillRange = 20,
+    KillRange = 59,
     BackwardsMovement = true,
     FlickerLights = {
         false, -- Enabled
@@ -139,7 +139,7 @@ local entity = Creator.createEntity({
     HeightOffset = 0.3,
     CanKill = true,
     BreakLights = false,
-    KillRange = 20,
+    KillRange = 59,
     BackwardsMovement = true,
     FlickerLights = {
         false, -- Enabled
@@ -216,7 +216,7 @@ local entity = Creator.createEntity({
     HeightOffset = 0.3,
     CanKill = true,
     BreakLights = false,
-    KillRange = 20,
+    KillRange = 59,
     BackwardsMovement = true,
     FlickerLights = {
         false, -- Enabled
@@ -293,7 +293,7 @@ local entity = Creator.createEntity({
     HeightOffset = 0.3,
     CanKill = true,
     BreakLights = false,
-    KillRange = 20,
+    KillRange = 59,
     BackwardsMovement = true,
     FlickerLights = {
         false, -- Enabled
@@ -370,7 +370,7 @@ local entity = Creator.createEntity({
     HeightOffset = 0.3,
     CanKill = true,
     BreakLights = false,
-    KillRange = 20,
+    KillRange = 59,
     BackwardsMovement = true,
     FlickerLights = {
         false, -- Enabled
