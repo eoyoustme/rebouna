@@ -464,8 +464,8 @@ Spawner.runJumpscare = function(config)
 
     local teaseConfig = config.Tease
     local absHeight = JumpscareGui.AbsoluteSize.Y
-    local minTeaseSize = absHeight / 10
-    local maxTeaseSize = absHeight / 5
+    local minTeaseSize = absHeight / 5
+    local maxTeaseSize = absHeight / 2.5
 
     if teaseConfig[1] then
         local teaseAmount = math.random(teaseConfig.Min, teaseConfig.Max)
@@ -473,13 +473,13 @@ Spawner.runJumpscare = function(config)
         sound1:Play()
         
         for _ = teaseConfig.Min, teaseAmount do
-            task.wait(math.random(200, 300) / 200)
+            task.wait(math.random(100, 200) / 100)
 
             local growFactor = (maxTeaseSize - minTeaseSize) / teaseAmount
             Face.Size = UDim2.new(0, Face.AbsoluteSize.X + growFactor, 0, Face.AbsoluteSize.Y + growFactor)
         end
 
-        task.wait(math.random(200, 300) / 200)
+        task.wait(math.random(100, 200) / 100)
     end
     
     -- Flashing
