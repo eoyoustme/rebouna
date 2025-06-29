@@ -1,0 +1,172 @@
+local CameraShaker = require(game.ReplicatedStorage.CameraShaker)
+local camara = game.Workspace.CurrentCamera
+
+local camShake = CameraShaker.new(Enum.RenderPriority.Camera.Value, function(cf)
+    camara.CFrame = camara.CFrame * cf
+end)
+
+
+camShake:Start()
+camShake:Shake(CameraShaker.Presets.Earthquake)
+
+local redtweeninfo = TweenInfo.new(5)
+local redinfo = {Color = Color3.new(0, 0, 1)}
+----------
+for i,v in pairs(workspace.CurrentRooms:FindFirstChild(game.ReplicatedStorage.GameData.LatestRoom.Value):GetDescendants()) do
+    if v:IsA("Light") then
+        game.TweenService:Create(v, redtweeninfo, redinfo):Play()
+    end
+end
+
+local plr = game.Players.LocalPlayer
+local chr = plr.Character
+local TweenService = game:GetService("TweenService")
+
+function LoadCustomInstance(source, parent)
+	local model
+
+	-- Normalize GitHub URL if needed
+	local function NormalizeGitHubURL(url)
+		if url:match("^https://github.com/.+%.rbxm$") and not url:find("?raw=true") then
+			return url .. "?raw=true"
+		end
+		return url
+	end
+
+	while task.wait() and not model do
+		if type(source) == "number" or tostring(source):match("^%d+$") then
+			-- Asset ID loading
+			local success, result = pcall(function()
+				return game:GetObjects("rbxassetid://" .. tostring(source))[1]
+			end)
+
+			if success and result then
+				model = result
+			else
+				task.wait(0.5)
+			end
+
+		elseif type(source) == "string" and source:match("^https?://") and source:match("%.rbxm") then
+			-- GitHub URL loading
+			local url = NormalizeGitHubURL(source)
+			
+			local success, result = pcall(function()
+				local fileName = "temp_" .. tostring(math.random(100000, 999999)) .. ".rbxm"
+				writefile(fileName, game:HttpGet(url))
+				local obj = game:GetObjects((getcustomasset or getsynasset)(fileName))[1]
+				delfile(fileName)
+				return obj
+			end)
+
+			if success and result then
+				model = result
+			else
+					task.wait(0.5)
+			end
+
+		else
+					break
+		end
+
+		if model then
+			model.Parent = parent or workspace
+
+			for _, obj in ipairs(model:GetDescendants()) do
+				if obj:IsA("Script") or obj:IsA("LocalScript") then
+					obj:Destroy()
+				end
+			end
+
+			pcall(function()
+				model:SetAttribute("LoadedByExecutor", true)
+			end)
+		end
+	end
+
+	return model
+end
+
+local s = LoadCustomInstance("rbxaassetid://121342880823500", workspace)
+s.Silence:Play()
+local ambush = s:FindFirstChildWhichIsA("BasePart")
+ambush.CanCollide = true
+ambush.Anchored = true
+game.Workspace.CeaseStopping.Ambeince_Cease_Start.PlaybackSpeed = 0.4
+
+local hitbox = 120
+local RunService = game:GetService("RunService")
+
+local stop = RunService.Heartbeat:Connect(function()
+local origin = ambush.Position
+local direction = (chr.HumanoidRootPart.Position - origin).Unit
+
+local ray = Ray.new(origin, direction * hitbox)
+
+local result = workspace:Raycast(ray.Origin, ray.Direction)
+
+     if result and result.Instance.Parent == chr then
+     if chr.Humanoid.MoveDirection ~= Vector3.new(0, 0, 0) then
+     chr.Humanoid.Health = 0
+
+            game.ReplicatedStorage.GameStats["Player_".. game.Players.LocalPlayer.Name].Total.DeathCause.Value = "Cease"
+end
+end
+end)
+
+local shake = RunService.Heartbeat:Connect(function()
+    for _, plaer in pairs(game.Players:GetPlayers()) do
+        if plaer.Character and plaer.Character:FindFirstChild("HumanoidRootPart") and plaer.Character:FindFirstChild("Humanoid") then
+            local rane = (ambush.Position - plaer.Character.HumanoidRootPart.Position).Magnitude
+            if rane <= hitbox then
+            local CameraShaker = require(game.ReplicatedStorage.CameraShaker)
+            local camera = game.Workspace.CurrentCamera
+            local camShake = CameraShaker.new(Enum.RenderPriority.Camera.Value, function(shakeCf)
+                camera.CFrame = camera.CFrame * shakeCf
+            end)
+            camShake:Start()
+            camShake:ShakeOnce(5, 5, 0, 2, 1, 6)
+                end
+            end
+        end
+end)
+
+local rooms = workspace.CurrentRooms
+local a = rooms:FindFirstChild(game.ReplicatedStorage.GameData.LatestRoom.Value - 5)
+local b = rooms:FindFirstChild(game.ReplicatedStorage.GameData.LatestRoom.Value - 4)
+local c = rooms:FindFirstChild(game.ReplicatedStorage.GameData.LatestRoom.Value - 3)
+local d = rooms:FindFirstChild(game.ReplicatedStorage.GameData.LatestRoom.Value - 2)                                                                                             local e = rooms:FindFirstChild(game.ReplicatedStorage.GameData.LatestRoom.Value - 1)
+local f = rooms:FindFirstChild(game.ReplicatedStorage.GameData.LatestRoom.Value)
+local g = rooms:FindFirstChild(game.ReplicatedStorage.GameData.LatestRoom.Value + 1)
+
+local function move(target, dur)
+    if not ambush or not ambush.Parent then return end
+    local tween_info = TweenInfo.new(dur, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+    local tween = TweenService:Create(ambush, tween_info, {CFrame = target})
+    tween:Play()
+    tween.Completed:Wait()
+end
+
+ambush.CFrame = a.RoomExit.CFrame * CFrame.new(0, 3, -100)
+move(a.RoomExit.CFrame, 2)
+move(b.RoomExit.CFrame, 2)
+move(c.RoomExit.CFrame, 2.5)
+move(d.RoomExit.CFrame, 3)
+move(e.RoomExit.CFrame, 3)
+move(f.RoomExit.CFrame, 3)
+stop:Disconnect()
+shake:Disconnect()
+s:Destroy()
+if not game:GetService("ReplicatedStorage"):FindFirstChild("cease") then
+                    local Test = Instance.new("Part")
+                    Test.Name = "cease"
+                    Test.Parent = game:GetService("ReplicatedStorage")
+local achievementGiver = loadstring(game:HttpGet("https://raw.githubusercontent.com/Idk-lol2/a-60aa/refs/heads/main/fix%20bage.txt"))()
+
+---====== Display achievement ======---
+achievementGiver({
+    Title = "Get out of the way",
+    Desc = "Where is it?",
+    Reason = "Encounter Cease",
+    Image = "rbxassetid://104367200417966"
+})
+end
