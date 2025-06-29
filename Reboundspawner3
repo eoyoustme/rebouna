@@ -203,7 +203,7 @@ spawn.Parent = entityModel.PrimaryPart
 spawn.Name = "ReboundSpawn"
 spawn.SoundId = "rbxassetid://9114221327"
 spawn.Volume = 5
-spawn.PlaybackSpeed = 1.3
+spawn.PlaybackSpeed = 1.2
 spawn.RollOffMaxDistance = 10000
 spawn.RollOffMinDistance = 450
 spawn:Play()
