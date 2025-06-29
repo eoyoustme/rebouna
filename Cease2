@@ -7,7 +7,7 @@ local spawner = loadstring(game:HttpGet("https://raw.githubusercontent.com/Regul
 local entity = spawner.Create({
 	Entity = {
 		Name = "Cease",
-		Asset = "https://github.com/DoorsHubs/Tutorial/raw/refs/heads/main/cEASE.rbxm",
+		Asset = "rbxassetid://121342880823500",
 		HeightOffset = 0
 	},
 	Lights = {
