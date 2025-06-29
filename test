@@ -199,7 +199,6 @@ ItemName.PrimaryPart.Footsteps:Destroy()
 
 ItemName.PrimaryPart.Idle:Destroy()
     local spawn = Instance.new("Sound")
-    wait(4)
 function GitAud(soundgit,filename)
     SoundName=tostring(SoundName)
     local url=soundgit
@@ -217,7 +216,7 @@ function CustomGitSound(soundlink, vol, filename)
 end
 
 CustomGitSound("https://github.com/Kotyara19k-Doorsspawner/Random-files/raw/main/Y2meta.app%20-%20DOORS%20HARDCORE_REBOUND%20MOVING%20START%20(320%20kbps).mp3", 1, "ReboundMoving")
-wait(0.5)
+wait(4)
 spawn.Parent = entityModel.PrimaryPart
 spawn.Name = "ReboundSpawn"
 spawn.SoundId = "rbxassetid://9114221327"
