@@ -199,24 +199,6 @@ ItemName.PrimaryPart.Footsteps:Destroy()
 
 ItemName.PrimaryPart.Idle:Destroy()
     local spawn = Instance.new("Sound")
-function GitAud(soundgit,filename)
-    SoundName=tostring(SoundName)
-    local url=soundgit
-    local FileName = filename
-    writefile(FileName..".mp3", game:HttpGet(url))
-    return (getcustomasset or getsynasset)(FileName..".mp3")
-end
-
-function CustomGitSound(soundlink, vol, filename)
-    local sound = Instance.new("Sound")
-    sound.SoundId = GitAud(soundlink, filename)
-    sound.Parent = workspace
-    sound.Name = "rebandspawn"
-    sound.Volume = 0.1
-   sound:Play()
-end
-
-CustomGitSound("https://github.com/Kotyara19k-Doorsspawner/Random-files/raw/main/Y2meta.app%20-%20DOORS%20HARDCORE_REBOUND%20MOVING%20START%20(320%20kbps).mp3?raw=true", 1, " rebandspawn")
 wait(4)
 spawn.Parent = entityModel.PrimaryPart
 spawn.Name = "ReboundSpawn"
