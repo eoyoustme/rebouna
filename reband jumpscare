@@ -13,6 +13,7 @@ Background.BackgroundColor3 = Color3.fromRGB(3, 25, 99)
 Background.BorderSizePixel = 0
 Background.Size = UDim2.new(1, 0, 1, 0)
 Background.ZIndex = 999
+Background.Parent = JumpscareGui
 
 Face.Name = "Face"
 Face.AnchorPoint = Vector2.new(0.5, 0.5)
@@ -21,29 +22,29 @@ Face.Position = UDim2.new(0.5, 0, 0.5, 0)
 Face.ResampleMode = Enum.ResamplerMode.Pixelated
 Face.Size = UDim2.new(0, 150, 0, 150)
 Face.Image = "rbxassetid://18550340669"
-
-Background.Parent = JumpscareGui
+Face.ZIndex = 1000
+Face.ImageTransparency = 0
 Face.Parent = Background
 
 -- Sound setup
 local scare = Instance.new("Sound")
-scare.Parent = JumpscareGui
 scare.Name = "MyEarsBurn"
 scare.SoundId = "rbxassetid://85271883712040"
 scare.PlaybackSpeed = 3
 scare.Volume = 999
+scare.Parent = JumpscareGui
 
 local shift = Instance.new("PitchShiftSoundEffect")
 shift.Octave = 0.5
 shift.Parent = scare
 
 local distort = Instance.new("DistortionSoundEffect")
-distort.Parent = scare
 distort.Level = 1
+distort.Parent = scare
 
 local distort2 = Instance.new("DistortionSoundEffect")
-distort2.Parent = scare
 distort2.Level = 1
+distort2.Parent = scare
 
 local eq = Instance.new("EqualizerSoundEffect")
 eq.HighGain = 10
@@ -53,32 +54,33 @@ eq.Parent = scare
 
 -- Flashing background
 task.spawn(function()
-    while JumpscareGui.Parent do
-        Background.BackgroundColor3 = Color3.fromRGB(3, 25, 99)
-        task.wait(math.random(25, 100) / 1000)
-        Background.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-        task.wait(math.random(25, 100) / 1000)
-    end
+	while JumpscareGui.Parent do
+		Background.BackgroundColor3 = Color3.fromRGB(3, 25, 99)
+		task.wait(math.random(25, 100) / 1000)
+		Background.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+		task.wait(math.random(25, 100) / 1000)
+	end
 end)
 
--- Jumpscare effect
-game.TweenService:Create(Face, TweenInfo.new(0.01), {
-    Size = UDim2.new(0, 1150, 0, 1150),
-    ImageTransparency = 0
+-- Jumpscare zoom effect (phóng to dần đến khi phủ toàn màn hình)
+game.TweenService:Create(Face, TweenInfo.new(0.7, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+	Size = UDim2.new(2.5, 0, 2.5, 0),
+	ImageTransparency = 0
 }):Play()
 
 -- Shake effect
 task.spawn(function()
-    local originalPos = Face.Position
-    for i = 1, 15 do
-        local offset = math.random(-1, 1)
-        Face.Position = originalPos + UDim2.new(0, offset, 0, 0)
-        task.wait(0.03)
-    end
-    Face.Position = originalPos
+	local originalPos = Face.Position
+	for i = 1, 15 do
+		local offsetX = math.random(-5, 5)
+		local offsetY = math.random(-5, 5)
+		Face.Position = originalPos + UDim2.new(0, offsetX, 0, offsetY)
+		task.wait(0.03)
+	end
+	Face.Position = originalPos
 end)
 
+-- Play sound and cleanup
 scare:Play()
 task.wait(0.7)
 JumpscareGui:Destroy()
-
