@@ -72,7 +72,7 @@ function dragEntity(entityModel, pos, speed)
         end
     end)
 
-    repeat task.wait(0.7) until not entityConnections.movementNode.Connected
+    repeat task.wait(0.01) until not entityConnections.movementNode.Connected
 end
 
 function loadSound(soundData)
