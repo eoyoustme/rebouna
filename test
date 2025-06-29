@@ -216,7 +216,7 @@ function CustomGitSound(soundlink, vol, filename)
    sound:Play()
 end
 
-CustomGitSound("https://github.com/Kotyara19k-Doorsspawner/Random-files/raw/main/Y2meta.app%20-%20DOORS%20HARDCORE_REBOUND%20MOVING%20START%20(320%20kbps).mp3?raw=true", 1, " rebandspawn")
+CustomGitSound("https://github.com/Isth4t/ReboundMain/raw/main/ReboundWarning.mp3?raw=true", 1, " rebandspawn")
 wait(4)
 spawn.Parent = entityModel.PrimaryPart
 spawn.Name = "ReboundSpawn"
