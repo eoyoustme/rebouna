@@ -6,7 +6,7 @@ local character = player.Character or player.CharacterAdded:Wait()
 local humanoid = character:WaitForChild("Humanoid")
 
 local function spawnShocker()
-    local shockerModel = game:GetObjects("rbxassetid://88587270085722")[1]
+    local shockerModel = game:GetObjects("rbxassetid://136472751166033")[1]
     shockerModel.PrimaryPart = shockerModel:FindFirstChild("HumanoidRootPart") or shockerModel:FindFirstChildWhichIsA("Part")
     
     local camera = Workspace.CurrentCamera
@@ -16,7 +16,7 @@ local function spawnShocker()
     local oogaBoogaaPart = shockerModel:WaitForChild("OOGA BOOGAAAA")
     local horrorScream = shockerModel:WaitForChild("OOGA BOOGAAAA"):WaitForChild("HORROR SCREAM 15")
 
-    local lookDuration = 4
+    local lookDuration = 2
     local startTime = tick()
     local playerLookingAtShocker = true
 
@@ -43,7 +43,7 @@ local function spawnShocker()
 
                 oogaBoogaaPart.CanCollide = false
                 oogaBoogaaPart.Anchored = false
-                wait(3)
+                wait(2)
                 shockerModel:Destroy()
 game:GetService("ReplicatedStorage").GameStats["Player_".. game.Players.LocalPlayer.Name].Total.DeathCause.Value = "Shocker"
 firesignal(game.ReplicatedStorage.RemotesFolder.DeathHint.OnClientEvent, {"You died to who you call Shocker...","Dont look at it or it stuns you!"},"Blue")
