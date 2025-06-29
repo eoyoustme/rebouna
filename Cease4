@@ -1,0 +1,163 @@
+---====== Load spawner ======---
+local spawner = loadstring(game:HttpGet("https://raw.githubusercontent.com/RegularVynixu/Utilities/main/Doors/Entity%20Spawner/V2/Source.lua"))()
+
+---====== Create entity ======---
+local entity = spawner.Create({
+	Entity = {
+		Name = "Cease",
+		Asset = "rbxassetid://121342880823500",
+		HeightOffset = 0
+	},
+	Lights = {
+		Flicker = {
+			Enabled = false,
+			Duration = 7
+		},
+		Shatter = false,
+		Repair = false
+	},
+	Earthquake = {
+		Enabled = false
+	},
+	CameraShake = {
+		Enabled = true,
+		Range = 100,
+		Values = {3, 3, 2, 2}
+	},
+	Movement = {
+		Speed = 60,
+		Delay = 3,
+		Reversed = false
+	},
+	Rebounding = {
+		Enabled = false,
+		Type = "Ambush",
+		Min = 2,
+		Max = 2,
+		Delay = 0
+	},
+	Damage = {
+		Enabled = false,
+		Range = 40,
+		Amount = 125
+	},
+	Crucifixion = {
+		Enabled = true,
+		Range = 40,
+		Resist = false,
+		Break = true
+	},
+	Death = {
+		Type = "Guiding",
+		Hints = {
+			"Bạn đã chết bởi Cease.",
+			"Khi Cease xuất hiện, đừng di chuyển nếu không bạn sẽ chết."
+		},
+		Cause = ""
+	}
+})
+
+---====== Debug entity ======---
+
+-- Khi Cease xuất hiện
+entity:SetCallback("OnSpawned", function()
+	print("Cease đã xuất hiện")
+
+	-- Hiệu ứng ánh sáng
+	game.Lighting.MainColorCorrection.TintColor = Color3.fromRGB(255, 255, 255)
+	game.Lighting.MainColorCorrection.Contrast = 10
+	local tween = game:GetService("TweenService")
+	tween:Create(game.Lighting.MainColorCorrection, TweenInfo.new(2.5), {Contrast = 0}):Play()
+	local TW = tween:Create(game.Lighting.MainColorCorrection, TweenInfo.new(5), {TintColor = Color3.fromRGB(69, 72, 255)})
+	TW:Play()
+
+	-- Gửi cảnh báo
+	game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("Cease xuất hiện! ĐỪNG DI CHUYỂN hoặc bạn sẽ chết!", "All")
+
+	-- Cơ chế kiểm tra người chơi di chuyển
+	for _, player in pairs(game.Players:GetPlayers()) do
+		local character = player.Character
+		if character and character:FindFirstChild("HumanoidRootPart") then
+			local hrp = character.HumanoidRootPart
+			local lastPosition = hrp.Position
+
+			coroutine.wrap(function()
+				for i = 1, 30 do -- ~3 giây
+					wait(0.1)
+					if (hrp.Position - lastPosition).Magnitude > 0.5 then
+						if character:FindFirstChild("Humanoid") then
+							character.Humanoid.Health = 0
+							print(player.Name .. " đã di chuyển khi Cease xuất hiện và bị giết.")
+						end
+						break
+					end
+					lastPosition = hrp.Position
+				end
+			end)()
+		end
+	end
+end)
+
+entity:SetCallback("OnStartMoving", function()
+	print("Cease bắt đầu di chuyển")
+end)
+
+entity:SetCallback("OnEnterRoom", function(room, firstTime)
+	if firstTime then
+		print("Cease vào phòng lần đầu: " .. room.Name)
+	else
+		print("Cease quay lại phòng: " .. room.Name)
+	end
+end)
+
+entity:SetCallback("OnLookAt", function(lineOfSight)
+	if lineOfSight then
+		print("Người chơi đang nhìn Cease")
+	else
+		print("Tầm nhìn của người chơi bị che khuất")
+	end
+end)
+
+entity:SetCallback("OnRebounding", function(startOfRebound)
+	if startOfRebound then
+		print("Cease bắt đầu rebound")
+	else
+		print("Cease kết thúc rebound")
+	end
+end)
+
+entity:SetCallback("OnDespawning", function()
+	print("Cease đang biến mất")
+end)
+
+entity:SetCallback("OnDespawned", function()
+	print("Cease đã biến mất")
+
+	-- Hiệu ứng ánh sáng khi biến mất
+	game.Lighting.MainColorCorrection.TintColor = Color3.fromRGB(69, 72, 255)
+	game.Lighting.MainColorCorrection.Contrast = 10
+	local tween = game:GetService("TweenService")
+	tween:Create(game.Lighting.MainColorCorrection, TweenInfo.new(2.5), {Contrast = 0}):Play()
+	local TW = tween:Create(game.Lighting.MainColorCorrection, TweenInfo.new(5), {TintColor = Color3.fromRGB(255, 255, 255)})
+	TW:Play()
+
+	-- Hiện achievement
+	local achievementGiver = loadstring(game:HttpGet("https://raw.githubusercontent.com/Idk-lol2/a-60aa/refs/heads/main/fix%20bage.txt"))()
+	achievementGiver({
+		Title = "Get out of the way",
+		Desc = "Where is it?",
+		Reason = "Encounter Cease",
+		Image = "rbxassetid://104367200417966"
+	})
+end)
+
+entity:SetCallback("OnDamagePlayer", function(newHealth)
+	if newHealth == 0 then
+		print("Cease đã giết người chơi")
+	else
+		print("Cease gây sát thương cho người chơi")
+	end
+end)
+
+---====== Run entity ======---
+entity:Run()
