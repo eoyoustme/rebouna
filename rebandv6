@@ -1,7 +1,7 @@
 local part = Instance.new("Part")
 part.Name = "Bound"
 part.Parent = workspace
-game.Lighting.MainColorCorrection.TintColor = Color3.fromRGB(0, 255, 238)
+game.Lighting.MainColorCorrection.TintColor = Color3.fromRGB(65, 138, 255)
 game.Lighting.MainColorCorrection.Contrast = 0.2
 game.Lighting.MainColorCorrection.Saturation = -0.7
 local tween = game:GetService("TweenService")
