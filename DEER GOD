@@ -7,7 +7,7 @@ local spawner = loadstring(game:HttpGet("https://raw.githubusercontent.com/Regul
 local entity = spawner.Create({
 	Entity = {
 		Name = "DEER GOD",
-		Asset = "https://github.com/eoyoustme/rebouna/raw/main/deerman.rbxm",
+		Asset = "rbxassetid://76464107151900",
 		HeightOffset = 0
 	},
 	Lights = {
@@ -27,7 +27,7 @@ local entity = spawner.Create({
 		Values = {1.5, 20, 0.1, 1} -- Magnitude, Roughness, FadeIn, FadeOut
 	},
 	Movement = {
-		Speed = 56,
+		Speed = 32,
 		Delay = 0,
 		Reversed = false
 	},
