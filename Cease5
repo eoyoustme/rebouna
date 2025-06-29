@@ -71,29 +71,34 @@ entity:SetCallback("OnSpawned", function()
 	local TW = tween:Create(game.Lighting.MainColorCorrection, TweenInfo.new(5), {TintColor = Color3.fromRGB(69, 72, 255)})
 	TW:Play()
 
-	-- Gửi cảnh báo
-	game.ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("Cease xuất hiện! ĐỪNG DI CHUYỂN hoặc bạn sẽ chết!", "All")
+	-- Lấy vị trí Cease hiện tại
+	local ceasePosition = entity.Model:GetPivot().Position
 
-	-- Cơ chế kiểm tra người chơi di chuyển
+	-- Kiểm tra từng người chơi
 	for _, player in pairs(game.Players:GetPlayers()) do
 		local character = player.Character
-		if character and character:FindFirstChild("HumanoidRootPart") then
+		if character and character:FindFirstChild("HumanoidRootPart") and character:FindFirstChild("Humanoid") then
 			local hrp = character.HumanoidRootPart
-			local lastPosition = hrp.Position
+			local humanoid = character.Humanoid
 
-			coroutine.wrap(function()
-				for i = 1, 30 do -- ~3 giây
-					wait(0.1)
-					if (hrp.Position - lastPosition).Magnitude > 0.5 then
-						if character:FindFirstChild("Humanoid") then
-							character.Humanoid.Health = 0
-							print(player.Name .. " đã di chuyển khi Cease xuất hiện và bị giết.")
+			-- Kiểm tra nếu ở trong phạm vi 40
+			if (hrp.Position - ceasePosition).Magnitude <= 40 then
+				local lastPos = hrp.Position
+
+				-- Theo dõi trong 1 giây
+				coroutine.wrap(function()
+					for i = 1, 10 do
+						wait(0.1)
+						local speed = (hrp.Position - lastPos).Magnitude / 0.1
+						if speed > 1 then
+							humanoid.Health = 0
+							print(player.Name.." di chuyển quá nhanh trong phạm vi Cease và đã bị giết.")
+							break
 						end
-						break
+						lastPos = hrp.Position
 					end
-					lastPosition = hrp.Position
-				end
-			end)()
+				end)()
+			end
 		end
 	end
 end)
