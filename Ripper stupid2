@@ -204,7 +204,7 @@ entity:SetCallback("OnDamagePlayer", function(newHealth)
         local Camera = workspace.CurrentCamera
         local lockOn = workspace:WaitForChild("RipperMovings"):FindFirstChildWhichIsA("BasePart")
         local C = chr:WaitForChild("Collision")
-        C.Anchored = false
+        C.Anchored = true
         lockOn.Anchored = false
         lockOn.CanCollide = true
         lockOn.CFrame = lockOn.CFrame * CFrame.new(0, 5, 0)
