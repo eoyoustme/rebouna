@@ -41,10 +41,19 @@ local cue2 = Instance.new("Sound")
 local CameraShaker = require(game.ReplicatedStorage.CameraShaker)
 local camara = game.Workspace.CurrentCamera
 local camShake = CameraShaker.new(Enum.RenderPriority.Camera.Value, function(shakeCf)
-	camara.CFrame = camara.CFrame * shakeCf
+ camara.CFrame = camara.CFrame * shakeCf
 end)
 camShake:Start()
-camShake:ShakeOnce(10,3,0.1,6,2,0.5)
+camShake:ShakeOnce(90,70,0,4,2,12)
+local CameraShaker = require(game.ReplicatedStorage.CameraShaker)
+local camara = game.Workspace.CurrentCamera
+
+local camShake = CameraShaker.new(Enum.RenderPriority.Camera.Value, function(cf)
+	camara.CFrame = camara.CFrame * cf
+end)
+
+camShake:Start()
+camShake:Shake(CameraShaker.Presets.Earthquake)
 local speed = math.random(125,155)
 local delay = {"2", "2.5", "1.5", "1", "2.1"}
 local fuck = delay[math.random(1, #delay)]
