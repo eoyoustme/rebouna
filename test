@@ -208,14 +208,15 @@ function GitAud(soundgit,filename)
 end
 
 function CustomGitSound(soundlink, vol, filename)
-    local ReboudMov = Instance.new("Sound")
-    ReboudMov.SoundId = GitAud(soundlink, filename)
-    ReboudMov.Parent = workspace
-    ReboudMov.Volume = 2
-    ReboudMov:Play()
+    local sound = Instance.new("Sound")
+    sound.SoundId = GitAud(soundlink, filename)
+    sound.Parent = workspace
+    sound.Name = "rebandspawn"
+    sound.Volume = 2
+   sound:Play()
 end
 
-CustomGitSound("https://github.com/Kotyara19k-Doorsspawner/Random-files/raw/main/Y2meta.app%20-%20DOORS%20HARDCORE_REBOUND%20MOVING%20START%20(320%20kbps).mp3", 1, "ReboundMoving")
+CustomGitSound("https://github.com/Kotyara19k-Doorsspawner/Random-files/raw/main/Y2meta.app%20-%20DOORS%20HARDCORE_REBOUND%20MOVING%20START%20(320%20kbps).mp3?raw=true", 1, " rebandspawn")
 wait(4)
 spawn.Parent = entityModel.PrimaryPart
 spawn.Name = "ReboundSpawn"
