@@ -1,30 +1,49 @@
-require(game.Players.LocalPlayer.PlayerGui.MainUI.Initiator.Main_Game).caption("The Hardcore Desolation v? has active ", true)
+local a,b=game.Players.LocalPlayer,"caption"
+local c=require(a.PlayerGui.MainUI.Initiator.MainGame)
+local d=game:GetService("HttpService")
+
+c[b]("The Hardcore Desolation v? has active ",true)
 wait(2)
-require(game.Players.LocalPlayer.PlayerGui.MainUI.Initiator.Main_Game).caption("Made by Seson Kc, Help model by Hungered", true)
+c[b]("Made by Seson Kc, Help model by Hungered",true)
 
-pcall(function()
-    loadstring(game:HttpGet("https://raw.githubusercontent.com/eoyoustme/rebouna/refs/heads/main/Sprint"))()
-    loadstring(game:HttpGet("https://raw.githubusercontent.com/eoyoustme/rebouna/refs/heads/main/seson%20man"))()
-    loadstring(game:HttpGet("https://raw.githubusercontent.com/eoyoustme/rebouna/refs/heads/main/ambience"))()
-end)
+local function decode(link)
+    return d:Base64Decode(link)
+end
 
-local entityList = {
-    {url = "https://raw.githubusercontent.com/eoyoustme/rebouna/refs/heads/main/Ripper%20stupid2", delay = 150},
-    {url = "https://raw.githubusercontent.com/eoyoustme/rebouna/refs/heads/main/shockman", delay = 35},
-    {url = "https://raw.githubusercontent.com/eoyoustme/rebouna/refs/heads/main/DEER%20GOD12", delay = 320},
-    {url = "https://raw.githubusercontent.com/eoyoustme/rebouna/refs/heads/main/frostman", delay = 350},
-    {url = "https://raw.githubusercontent.com/eoyoustme/rebouna/refs/heads/main/A-90%20Hardcore%20me", delay = 90},
+local function safeLoad(url)
+    pcall(function()
+        loadstring(game:HttpGet(decode(url)))()
+    end)
+end
+
+local initialScripts={
+    " aHR0cHM6Ly9yYXcuZ2l0aHVidXNlcmNvbnRlbnQuY29tL2VveW91c3RtZS9yZWJvdW5hL3JlZnMv"
+    .."aGVhZHMvbWFpbi9TcHJpbnQ=",
+    " aHR0cHM6Ly9yYXcuZ2l0aHVidXNlcmNvbnRlbnQuY29tL2VveW91c3RtZS9yZWJvdW5hL3JlZnMv"
+    .."aGVhZHMvbWFpbi9zZXNvbiUyMG1hbg==",
+    " aHR0cHM6Ly9yYXcuZ2l0aHVidXNlcmNvbnRlbnQuY29tL2VveW91c3RtZS9yZWJvdW5hL3JlZnMv"
+    .."aGVhZHMvbWFpbi9hbWJpZW5jZQ=="
 }
 
-for _, entity in ipairs(entityList) do
+for ,v in ipairs(initialScripts) do
+    safeLoad(v)
+end
+
+local entityList={
+    {delay=150,url=" aHR0cHM6Ly9yYXcuZ2l0aHVidXNlcmNvbnRlbnQuY29tL2VveW91c3RtZS9yZWJvdW5hL3JlZnMvaGVhZHMvbWFpbi9SaXBwZXIlMjBzdHVwaWQy"},
+    {delay=35,url=" aHR0cHM6Ly9yYXcuZ2l0aHVidXNlcmNvbnRlbnQuY29tL2VveW91c3RtZS9yZWJvdW5hL3JlZnMvaGVhZHMvbWFpbi9zaG9ja21hbgo="},
+    {delay=320,url=" aHR0cHM6Ly9yYXcuZ2l0aHVidXNlcmNvbnRlbnQuY29tL2VveW91c3RtZS9yZWJvdW5hL3JlZnMvaGVhZHMvbWFpbi9ERUVSJTIwR09EMTI="},
+    {delay=350,url=" aHR0cHM6Ly9yYXcuZ2l0aHVidXNlcmNvbnRlbnQuY29tL2VveW91c3RtZS9yZWJvdW5hL3JlZnMvaGVhZHMvbWFpbi9mcm9zdG1hbg=="},
+    {delay=90,url=" aHR0cHM6Ly9yYXcuZ2l0aHVidXNlcmNvbnRlbnQuY29tL2VveW91c3RtZS9yZWJvdW5hL3JlZnMvaGVhZHMvbWFpbi9BLTkwJTIwSGFyZGNvcmUlMjBtZQ=="}
+}
+
+for _,e in ipairs(entityList) do
     coroutine.wrap(function()
         while true do
-            wait(entity.delay)
+            wait(e.delay)
             game.ReplicatedStorage.GameData.LatestRoom.Changed:Wait()
-		        wait(3)
-            pcall(function()
-                loadstring(game:HttpGet(entity.url))()
-            end)
+            wait(3)
+            safeLoad(e.url)
         end
     end)()
 end
