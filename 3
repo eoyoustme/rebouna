@@ -108,16 +108,18 @@ function hell(oldentity)
 	entity.Name = "Fake" .. oldentity.Name
 	oldentity:Destroy()
 
+	local gate = Portal:Clone()
+	gate.Parent = workspace
+	local pentagram = gate.Pentagram
+
+	-- Giữ các Part của entity cố định
 	for _, part in pairs(entity:GetDescendants()) do
 		if part:IsA("BasePart") then
 			part.Anchored = true
 		end
 	end
 
-	local gate = Portal:Clone()
-	gate.Parent = workspace
-	local pentagram = gate.Pentagram
-
+	-- Xoay portal liên tục
 	local gate_spin = game:GetService("RunService").Heartbeat:Connect(function()
 		pentagram.RingAddonA.Orientation += Vector3.new(0, 2, 0)
 		pentagram.RingAddonB.Orientation += Vector3.new(0, -2, 0)
@@ -125,7 +127,7 @@ function hell(oldentity)
 		pentagram.Base.Orientation += Vector3.new(0, -1, 0)
 	end)
 
-	-- Gắn Crucifix vào tay người chơi bằng AlignPosition + AlignOrientation tránh gây lỗi đứng lún
+	-- Gắn crucifix vào tay người chơi
 	local RightHand = Character:FindFirstChild("RightHand") or Character:FindFirstChild("Right Arm")
 	if RightHand then
 		local attach1 = Instance.new("Attachment", RightHand)
@@ -148,7 +150,7 @@ function hell(oldentity)
 		alignOri.Parent = gate.Crucifix.Glow
 	end
 
-	-- Phát âm thanh
+	-- Âm thanh crucifix
 	local glowSound = gate.Crucifix.Glow:FindFirstChild("Sound")
 	if glowSound then
 		glowSound.SoundId = "rbxassetid://6555668806"
@@ -156,28 +158,37 @@ function hell(oldentity)
 		glowSound:Play()
 	end
 
-	-- Tween entity bay lên trời
+	-- Camera rung
+	camShake:ShakeOnce(10, 15, 4, 5)
+
+	-- Tween entity lên trời
 	local function move(part)
-		tweensv:Create(part, TweenInfo.new(3, Enum.EasingStyle.Quad, Enum.EasingDirection.InOut), {
-			Position = part.Position + Vector3.new(0, 5, 0)
+		task.wait(1) -- Đứng yên 1 giây
+
+		-- Phát sáng mạnh trước khi kéo
+		tweensv:Create(gate.Crucifix.Glow.Light, TweenInfo.new(0.2), {
+			Brightness = 12,
+			Range = 40
 		}):Play()
 
-		task.wait(3)
-
-		tweensv:Create(part, TweenInfo.new(2, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut), {
-			Position = part.Position + Vector3.new(0, 50, 0)
+		-- Kéo entity lên trời rất nhanh
+		tweensv:Create(part, TweenInfo.new(0.5, Enum.EasingStyle.Sine, Enum.EasingDirection.Out), {
+			Position = part.Position + Vector3.new(0, 80, 0)
 		}):Play()
 
-		-- Fade sounds/lights
+		-- Fade ánh sáng / âm thanh sau 1.5s
+		task.wait(1.5)
+
 		for _, v in pairs(entity:GetDescendants()) do
 			if v:IsA("Sound") then
 				tweensv:Create(v, TweenInfo.new(0.5), { Volume = 0 }):Play()
 			elseif v:IsA("Light") then
-				tweensv:Create(v, TweenInfo.new(3), { Range = 0 }):Play()
+				tweensv:Create(v, TweenInfo.new(1), { Range = 0 }):Play()
 			end
 		end
 	end
 
+	-- Tween toàn bộ part
 	for _, part in pairs(entity:GetDescendants()) do
 		if part:IsA("BasePart") then
 			spawn(function()
@@ -186,12 +197,14 @@ function hell(oldentity)
 		end
 	end
 
-	-- Hiệu ứng đóng portal
+	-- Portal kết thúc hiệu ứng
 	spawn(function()
 		task.wait(5)
-		camShake:ShakeOnce(3, 10, 0.7, 0.5)
-		gate.Crucifix.Glow.ExplodeParticle:Emit(50)
 
+		camShake:ShakeOnce(3, 10, 0.7, 0.5)
+
+		-- Hiệu ứng bùng nổ ánh sáng
+		gate.Crucifix.Glow.ExplodeParticle:Emit(50)
 		tweensv:Create(gate.Crucifix.Glow, TweenInfo.new(1), {
 			Size = gate.Crucifix.Glow.Size * 4,
 			Transparency = 1
@@ -202,7 +215,8 @@ function hell(oldentity)
 		gate_spin:Disconnect()
 	end)
 
-	task.wait(10)
+	-- Cleanup entity
+	task.wait(4)
 	entity:Destroy()
 end
 
