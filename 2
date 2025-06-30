@@ -1,14 +1,14 @@
 -- made by PenguinManiack#2322
 
 --// Tweakable values
-_G.Uses = 1
-_G.Range = 50.5
+_G.Uses = 5
+_G.Range = 40
 
 local Uses = _G.Uses
 
 local tweensv = game:GetService("TweenService")
 local Player = game.Players.LocalPlayer
-local Character = Player.Character
+local Character = Player.Character or Player.CharacterAdded:Wait()
 local Hum = Character:WaitForChild("Humanoid")
 
 local CameraShaker = require(game.ReplicatedStorage.CameraShaker)
@@ -125,23 +125,35 @@ function hell(oldentity)
 		pentagram.Base.Orientation += Vector3.new(0, -1, 0)
 	end)
 
-	-- Gắn Crucifix vào tay người chơi (không tween CFrame)
+	-- Gắn Crucifix vào tay người chơi bằng AlignPosition + AlignOrientation tránh gây lỗi đứng lún
 	local RightHand = Character:FindFirstChild("RightHand") or Character:FindFirstChild("Right Arm")
 	if RightHand then
-		gate.Crucifix.Glow.CFrame = RightHand.CFrame
+		local attach1 = Instance.new("Attachment", RightHand)
+		local attach2 = Instance.new("Attachment", gate.Crucifix.Glow)
 
-		local weld = Instance.new("WeldConstraint")
-		weld.Part0 = gate.Crucifix.Glow
-		weld.Part1 = RightHand
-		weld.Parent = gate.Crucifix.Glow
+		local alignPos = Instance.new("AlignPosition")
+		alignPos.Attachment0 = attach2
+		alignPos.Attachment1 = attach1
+		alignPos.RigidityEnabled = true
+		alignPos.Responsiveness = 200
+		alignPos.MaxForce = math.huge
+		alignPos.Parent = gate.Crucifix.Glow
+
+		local alignOri = Instance.new("AlignOrientation")
+		alignOri.Attachment0 = attach2
+		alignOri.Attachment1 = attach1
+		alignOri.RigidityEnabled = true
+		alignOri.Responsiveness = 200
+		alignOri.MaxTorque = math.huge
+		alignOri.Parent = gate.Crucifix.Glow
 	end
 
-	-- Play sound
-	local sound = gate.Crucifix.Glow:FindFirstChild("Sound")
-	if sound then
-		sound.SoundId = "rbxassetid://6555668806"
-		sound.TimePosition = 0
-		sound:Play()
+	-- Phát âm thanh
+	local glowSound = gate.Crucifix.Glow:FindFirstChild("Sound")
+	if glowSound then
+		glowSound.SoundId = "rbxassetid://6555668806"
+		glowSound.TimePosition = 0
+		glowSound:Play()
 	end
 
 	-- Tween entity bay lên trời
@@ -174,7 +186,7 @@ function hell(oldentity)
 		end
 	end
 
-	-- Hiệu ứng kết thúc
+	-- Hiệu ứng đóng portal
 	spawn(function()
 		task.wait(5)
 		camShake:ShakeOnce(3, 10, 0.7, 0.5)
