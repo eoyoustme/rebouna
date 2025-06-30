@@ -1,0 +1,203 @@
+-- made by PenguinManiack#2322
+
+--// Tweakable values
+_G.Uses = 5 -- Number of times the crucifix can be used
+_G.Range = 48 -- Original range, now largely unused as entity targeting is removed
+
+local Uses = _G.Uses -- Current uses, will be decremented
+
+local tweensv = game:GetService("TweenService")
+local Player = game.Players.LocalPlayer
+local Character = Player.Character or Player.CharacterAdded:Wait()
+local Hum = Character:WaitForChild("Humanoid")
+
+local CameraShaker = require(game.ReplicatedStorage.CameraShaker)
+local camara = workspace.CurrentCamera
+local camShake = CameraShaker.new(Enum.RenderPriority.Camera.Value, function(shakeCf)
+	camara.CFrame *= shakeCf
+end)
+camShake:Start() -- Start the camera shaker on tool load
+
+local ToolFunctions = {
+	OnClick = function() end, -- Function to execute when the tool is clicked/activated
+	OnEquip = function() end, -- Function to execute when the tool is equipped
+	OnUnequipped = function() end, -- Function to execute when the tool is unequipped
+}
+
+-- Load the main models (Crucifix and Repentance/Portal) from the given asset ID
+local MainModels = game:GetObjects("rbxassetid://12424097714")[1]
+MainModels.Parent = game.ReplicatedStorage -- Parent them to ReplicatedStorage for server/client access
+
+local Tool_obj = MainModels.Crucifix -- The crucifix tool model
+local ToolHandle = Tool_obj:WaitForChild("Handle", 5) -- The handle part of the tool
+local Portal = MainModels.Repentance -- The portal model
+
+ToolHandle.Anchored = false -- Ensure the tool handle is not anchored
+
+local Equipped = false -- Flag to track if the tool is currently equipped
+
+--// Tool Events
+
+-- OnClick function: This is now the primary activation point for the crucifix effects.
+ToolFunctions.OnClick = function()
+	-- Check if the tool is equipped and has uses left
+	if Equipped and Uses > 0 then
+		camShake:ShakeOnce(10, 30, 0.7, 0.5) -- Initial camera shake upon activation
+
+		local Haw = ToolHandle:Clone() -- Clone the tool handle (visual effect, not functional)
+		Haw.Parent = workspace
+		Haw.CFrame = Character.HumanoidRootPart.CFrame -- Position it near the player
+		Haw.Anchored = true -- Anchor the cloned visual effect
+		game:GetService("Debris"):AddItem(Haw, 1) -- Clean up the cloned handle after 1 second
+
+		triggerCrucifixEffects(Player.Character.HumanoidRootPart.Position) -- Trigger the visual/audio effects at player's position
+
+		Uses -= 1 -- Decrement the uses count
+
+		if Uses == 0 then
+			Equipped = false -- Mark as unequipped if no uses left
+			Tool_obj:Destroy() -- Destroy the tool if all uses are expended
+		else
+			Tool_obj.Parent = Player.Backpack -- Move tool back to backpack if uses remain
+			Equipped = false -- Mark as unequipped to prevent repeated activations
+		end
+	end
+end
+
+-- OnEquip function: Handles actions when the tool is equipped.
+ToolFunctions.OnEquip = function()
+	Equipped = true -- Set equipped flag to true
+	Player:SetAttribute("Hidden", true) -- Set player attribute (original behavior)
+	-- The loop that checked for entities has been removed from OnEquip.
+	-- Activation is now solely via OnClick.
+end
+
+-- OnUnequipped function: Handles actions when the tool is unequipped.
+ToolFunctions.OnUnequipped = function()
+	Equipped = false -- Set equipped flag to false
+	Player:SetAttribute("Hidden", false) -- Reset player attribute (original behavior)
+end
+
+-- Connect tool events to their respective functions
+Tool_obj.Equipped:Connect(function()
+	ToolFunctions.OnEquip()
+end)
+
+Tool_obj.Activated:Connect(function()
+	ToolFunctions.OnClick()
+end)
+
+Tool_obj.Unequipped:Connect(function()
+	ToolFunctions.OnUnequipped()
+end)
+
+-- This function has been removed as entity checking is no longer desired.
+--[[
+function entity_check()
+	local closestDistance, closestEntity = math.huge, nil
+	for _, model in ipairs(workspace:GetDescendants()) do
+		if model:IsA("Model") and model:GetAttribute("IsCustomEntity") and model.PrimaryPart then
+			local dist = Player:DistanceFromCharacter(model.PrimaryPart.Position)
+			if dist < closestDistance then
+				closestDistance = dist
+				closestEntity = model
+			end
+		end
+	end
+	return closestEntity, closestDistance
+end
+]]
+
+-- New function to trigger only the visual and audio effects of the crucifix,
+-- without involving an entity.
+function triggerCrucifixEffects(position)
+	local gate = Portal:Clone() -- Clone the portal model
+	gate.Parent = workspace
+	gate:SetPrimaryPartCFrame(CFrame.new(position)) -- Position the portal at the given location (e.g., player's position)
+
+	local pentagram = gate.Pentagram -- Reference to the pentagram part for rotation
+
+	-- Xoay portal liên tục (Continuously rotate the portal)
+	local gate_spin = game:GetService("RunService").Heartbeat:Connect(function()
+		-- Rotate the various parts of the pentagram
+		pentagram.RingAddonA.Orientation += Vector3.new(0, 2, 0)
+		pentagram.RingAddonB.Orientation += Vector3.new(0, -2, 0)
+		pentagram.RingAddonC.Orientation += Vector3.new(0, 1.6, 0)
+		pentagram.Base.Orientation += Vector3.new(0, -1, 0)
+	end)
+
+	-- Gắn crucifix vào tay người chơi (Attach crucifix glow to player's hand)
+	local RightHand = Character:FindFirstChild("RightHand") or Character:FindFirstChild("Right Arm")
+	if RightHand then
+		local attach1 = Instance.new("Attachment", RightHand)
+		local attach2 = Instance.new("Attachment", gate.Crucifix.Glow)
+
+		-- Use AlignPosition to keep the glow attached to the hand
+		local alignPos = Instance.new("AlignPosition")
+		alignPos.Attachment0 = attach2
+		alignPos.Attachment1 = attach1
+		alignPos.RigidityEnabled = true
+		alignPos.Responsiveness = 200
+		alignPos.MaxForce = math.huge
+		alignPos.Parent = gate.Crucifix.Glow
+
+		-- Use AlignOrientation to keep the glow oriented with the hand
+		local alignOri = Instance.new("AlignOrientation")
+		alignOri.Attachment0 = attach2
+		alignOri.Attachment1 = attach1
+		alignOri.RigidityEnabled = true
+		alignOri.Responsiveness = 200
+		alignOri.MaxTorque = math.huge
+		alignOri.Parent = gate.Crucifix.Glow
+	end
+
+	-- Âm thanh crucifix (Crucifix sound)
+	local glowSound = gate.Crucifix.Glow:FindFirstChild("Sound")
+	if glowSound then
+		glowSound.SoundId = "rbxassetid://6555668806" -- Set sound ID
+		glowSound.TimePosition = 0
+		glowSound:Play() -- Play the sound
+	end
+
+	-- Camera rung (Camera shake for the main effect)
+	camShake:ShakeOnce(10, 15, 4, 5)
+
+	-- Phát sáng mạnh (Strong glow before the main effect)
+	tweensv:Create(gate.Crucifix.Glow.Light, TweenInfo.new(0.2), {
+		Brightness = 12,
+		Range = 40
+	}):Play()
+
+	-- No entity to tween, so the "move" function for parts is removed.
+	-- The following section handles fading the portal's light/sound
+	-- and then destroying the portal.
+	spawn(function()
+		task.wait(3) -- Wait for some time after initial glow
+
+		-- Fade out the glow sound and light after some time
+		if glowSound then
+			tweensv:Create(glowSound, TweenInfo.new(0.5), { Volume = 0 }):Play()
+		end
+		if gate.Crucifix.Glow.Light then
+			tweensv:Create(gate.Crucifix.Glow.Light, TweenInfo.new(1), { Range = 0 }):Play()
+		end
+
+		task.wait(1.5) -- Wait for fade to complete
+
+		camShake:ShakeOnce(3, 10, 0.7, 0.5) -- Small camera shake at the end of the effect
+
+		-- Hiệu ứng bùng nổ ánh sáng (Light explosion effect)
+		gate.Crucifix.Glow.ExplodeParticle:Emit(50) -- Emit particles
+		tweensv:Create(gate.Crucifix.Glow, TweenInfo.new(1), {
+			Size = gate.Crucifix.Glow.Size * 4, -- Grow the glow
+			Transparency = 1 -- Make it transparent (fade out)
+		}):Play()
+
+		task.wait(5) -- Wait for the explosion effect to complete
+		gate:Destroy() -- Destroy the portal model
+		gate_spin:Disconnect() -- Disconnect the rotation loop
+	end)
+end
+
+-- Set the tool's initial parent to the player's backpack
+Tool_obj.Parent = Player.Backpack
