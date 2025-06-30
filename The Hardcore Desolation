@@ -1,0 +1,29 @@
+require(game.Players.LocalPlayer.PlayerGui.MainUI.Initiator.Main_Game).caption("The Hardcore Desolation v? has active ", true)
+wait(2)
+require(game.Players.LocalPlayer.PlayerGui.MainUI.Initiator.Main_Game).caption("Made by Seson Kc, Help model by Hungered", true)
+
+pcall(function()
+    loadstring(game:HttpGet("https://raw.githubusercontent.com/eoyoustme/rebouna/refs/heads/main/Sprint"))()
+    loadstring(game:HttpGet("https://raw.githubusercontent.com/eoyoustme/rebouna/refs/heads/main/seson%20man"))()
+end)
+
+local entityList = {
+    {url = "https://raw.githubusercontent.com/eoyoustme/rebouna/refs/heads/main/Ripper%20stupid2", delay = 150},
+    {url = "https://raw.githubusercontent.com/eoyoustme/rebouna/refs/heads/main/shockman", delay = 35},
+    {url = "https://raw.githubusercontent.com/eoyoustme/rebouna/refs/heads/main/DEER%20GOD12", delay = 320},
+    {url = "https://raw.githubusercontent.com/eoyoustme/rebouna/refs/heads/main/frostman", delay = 350},
+    {url = "https://raw.githubusercontent.com/eoyoustme/rebouna/refs/heads/main/A-90%20Hardcore%20me", delay = 90},
+}
+
+for _, entity in ipairs(entityList) do
+    coroutine.wrap(function()
+        while true do
+            wait(entity.delay)
+            game.ReplicatedStorage.GameData.LatestRoom.Changed:Wait()
+		        wait(3)
+            pcall(function()
+                loadstring(game:HttpGet(entity.url))()
+            end)
+        end
+    end)()
+end
