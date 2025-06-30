@@ -103,7 +103,8 @@ end)
 function entity_check()
 	local closestDistance, closestEntity = math.huge, nil
 	for _, model in ipairs(workspace:GetDescendants()) do
-		if model:IsA("Model") and model:GetAttribute("IsCustomEntity") and model.PrimaryPart then
+		-- Đã thêm kiểm tra để đảm bảo mô hình không phải là nhân vật của người chơi
+		if model:IsA("Model") and model:GetAttribute("IsCustomEntity") and model.PrimaryPart and model ~= Character then
 			local dist = Player:DistanceFromCharacter(model.PrimaryPart.Position)
 			if dist < closestDistance then
 				closestDistance = dist
