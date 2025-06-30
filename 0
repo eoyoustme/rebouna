@@ -2,7 +2,7 @@
 
 --// Tweakable values
 _G.Uses = 5
-_G.Range = 55
+_G.Range = 80
 
 local Uses = _G.Uses
 
@@ -187,7 +187,7 @@ function hell(oldentity)
 					Range = 40
 				}):Play()
 
-				tweensv:Create(part, TweenInfo.new(5, Enum.EasingStyle.Sine, Enum.EasingDirection.In), {
+				tweensv:Create(part, TweenInfo.new(3, Enum.EasingStyle.Sine, Enum.EasingDirection.In), {
 					Position = part.Position - Vector3.new(0, 80, 0)
 				}):Play()
 
