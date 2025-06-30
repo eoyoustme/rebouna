@@ -112,21 +112,6 @@ function hell(oldentity)
 	gate.Parent = workspace
 	local pentagram = gate.Pentagram
 
-	-- Giữ các Part của entity cố định
-	for _, part in pairs(entity:GetDescendants()) do
-		if part:IsA("BasePart") then
-			part.Anchored = true
-		end
-	end
-
-	-- Xoay portal liên tục
-	local gate_spin = game:GetService("RunService").Heartbeat:Connect(function()
-		pentagram.RingAddonA.Orientation += Vector3.new(0, 2, 0)
-		pentagram.RingAddonB.Orientation += Vector3.new(0, -2, 0)
-		pentagram.RingAddonC.Orientation += Vector3.new(0, 1.6, 0)
-		pentagram.Base.Orientation += Vector3.new(0, -1, 0)
-	end)
-
 	-- Gắn crucifix vào tay người chơi
 	local RightHand = Character:FindFirstChild("RightHand") or Character:FindFirstChild("Right Arm")
 	if RightHand then
@@ -150,6 +135,65 @@ function hell(oldentity)
 		alignOri.Parent = gate.Crucifix.Glow
 	end
 
+	-- Camera rung
+	camShake:ShakeOnce(10, 15, 4, 5)
+
+	-- Xoay vòng tròn pentagram
+	local gate_spin = game:GetService("RunService").Heartbeat:Connect(function()
+		pentagram.RingAddonA.Orientation += Vector3.new(0, 2, 0)
+		pentagram.RingAddonB.Orientation += Vector3.new(0, -2, 0)
+		pentagram.RingAddonC.Orientation += Vector3.new(0, 1.6, 0)
+		pentagram.Base.Orientation += Vector3.new(0, -1, 0)
+	end)
+
+	-- Entity đứng yên
+	for _, part in pairs(entity:GetDescendants()) do
+		if part:IsA("BasePart") then
+			part.Anchored = true
+		end
+	end
+
+	-- Tạo Attachment ở Crucifix và Entity để dùng Beam
+	local crucifixAttachment = Instance.new("Attachment")
+	crucifixAttachment.Name = "CrucifixAttach"
+	crucifixAttachment.Parent = gate.Crucifix.Glow
+
+	local entityAttach = Instance.new("Attachment")
+	entityAttach.Name = "EntityAttach"
+	entityAttach.Position = Vector3.new(0, 2, 0)
+	entityAttach.Parent = entity.PrimaryPart
+
+	-- Tạo Beam (dây xích ánh sáng)
+	local beam = Instance.new("Beam")
+	beam.Attachment0 = crucifixAttachment
+	beam.Attachment1 = entityAttach
+	beam.FaceCamera = true
+	beam.Width0 = 0.25
+	beam.Width1 = 0.25
+	beam.LightEmission = 1
+	beam.Texture = "rbxassetid://130207098" -- texture dây xích
+	beam.TextureLength = 1
+	beam.TextureSpeed = 2
+	beam.Color = ColorSequence.new(Color3.fromRGB(255, 255, 255))
+	beam.Parent = gate.Crucifix.Glow
+
+	-- Particle nhỏ phía dưới crucifix
+	local particle = Instance.new("ParticleEmitter")
+	particle.Name = "CrucifixPullParticle"
+	particle.Rate = 0.3
+	particle.Speed = NumberRange.new(0)
+	particle.SpreadAngle = Vector2.new(0, 0)
+	particle.Size = NumberSequence.new(0.5)
+	particle.Texture = "rbxassetid://243098098" -- texture ánh sáng
+	particle.Lifetime = NumberRange.new(1)
+	particle.Parent = gate.Crucifix.Glow
+
+	-- Beam tồn tại 5 giây
+	task.delay(5, function()
+		if beam then beam:Destroy() end
+		if particle then particle.Enabled = false end
+	end)
+
 	-- Âm thanh crucifix
 	local glowSound = gate.Crucifix.Glow:FindFirstChild("Sound")
 	if glowSound then
@@ -158,27 +202,23 @@ function hell(oldentity)
 		glowSound:Play()
 	end
 
-	-- Camera rung
-	camShake:ShakeOnce(10, 15, 4, 5)
-
-	-- Tween entity lên trời
+	-- Hàm tween kéo entity lên
 	local function move(part)
-		task.wait(3) -- Đứng yên 1 giây
+		task.wait(1) -- chờ 1 giây
 
-		-- Phát sáng mạnh trước khi kéo
+		-- Hiệu ứng sáng mạnh
 		tweensv:Create(gate.Crucifix.Glow.Light, TweenInfo.new(0.2), {
 			Brightness = 12,
 			Range = 40
 		}):Play()
 
-		-- Kéo entity lên trời rất nhanh
-		tweensv:Create(part, TweenInfo.new(5, Enum.EasingStyle.Sine, Enum.EasingDirection.Out), {
+		-- Kéo lên nhanh
+		tweensv:Create(part, TweenInfo.new(0.5, Enum.EasingStyle.Sine, Enum.EasingDirection.Out), {
 			Position = part.Position + Vector3.new(0, 80, 0)
 		}):Play()
 
-		-- Fade ánh sáng / âm thanh sau 1.5s
+		-- Tắt sound, light sau đó
 		task.wait(1.5)
-
 		for _, v in pairs(entity:GetDescendants()) do
 			if v:IsA("Sound") then
 				tweensv:Create(v, TweenInfo.new(0.5), { Volume = 0 }):Play()
@@ -188,7 +228,6 @@ function hell(oldentity)
 		end
 	end
 
-	-- Tween toàn bộ part
 	for _, part in pairs(entity:GetDescendants()) do
 		if part:IsA("BasePart") then
 			spawn(function()
@@ -197,17 +236,15 @@ function hell(oldentity)
 		end
 	end
 
-	-- Portal kết thúc hiệu ứng
+	-- Kết thúc hiệu ứng, phá hủy Crucifix và portal
 	spawn(function()
 		task.wait(5)
-
 		camShake:ShakeOnce(3, 10, 0.7, 0.5)
-
-		-- Hiệu ứng bùng nổ ánh sáng
 		gate.Crucifix.Glow.ExplodeParticle:Emit(50)
+
 		tweensv:Create(gate.Crucifix.Glow, TweenInfo.new(1), {
 			Size = gate.Crucifix.Glow.Size * 4,
-			Transparency = 1
+			Transparency = 1,
 		}):Play()
 
 		task.wait(5)
@@ -215,7 +252,6 @@ function hell(oldentity)
 		gate_spin:Disconnect()
 	end)
 
-	-- Cleanup entity
 	task.wait(4)
 	entity:Destroy()
 end
