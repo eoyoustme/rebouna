@@ -2,7 +2,7 @@
 
 --// Tweakable values
 _G.Uses = 5
-_G.Range = 40
+_G.Range = 48
 
 local Uses = _G.Uses
 
@@ -153,44 +153,76 @@ function hell(oldentity)
 		end
 	end
 
-	-- Tạo Attachment ở Crucifix và Entity để dùng Beam
+	-- Crucifix Attachment
 	local crucifixAttachment = Instance.new("Attachment")
 	crucifixAttachment.Name = "CrucifixAttach"
 	crucifixAttachment.Parent = gate.Crucifix.Glow
 
-	local entityAttach = Instance.new("Attachment")
-	entityAttach.Name = "EntityAttach"
-	entityAttach.Position = Vector3.new(0, 2, 0)
-	entityAttach.Parent = entity.PrimaryPart
+	-- Entity Attachments
+	local topAttach = Instance.new("Attachment", entity.PrimaryPart)
+	topAttach.Position = Vector3.new(0, 2, 0)
 
-	-- Tạo Beam (dây xích ánh sáng)
-	local beam = Instance.new("Beam")
-	beam.Attachment0 = crucifixAttachment
-	beam.Attachment1 = entityAttach
-	beam.FaceCamera = true
-	beam.Width0 = 0.25
-	beam.Width1 = 0.25
-	beam.LightEmission = 1
-	beam.Texture = "rbxassetid://130207098" -- texture dây xích
-	beam.TextureLength = 1
-	beam.TextureSpeed = 2
-	beam.Color = ColorSequence.new(Color3.fromRGB(255, 255, 255))
-	beam.Parent = gate.Crucifix.Glow
+	local leftAttach = Instance.new("Attachment", entity.PrimaryPart)
+	leftAttach.Position = Vector3.new(-2, 1, 0)
 
-	-- Particle nhỏ phía dưới crucifix
+	local rightAttach = Instance.new("Attachment", entity.PrimaryPart)
+	rightAttach.Position = Vector3.new(2, 1, 0)
+
+	local backAttach = Instance.new("Attachment", entity.PrimaryPart)
+	backAttach.Position = Vector3.new(0, 1, -2)
+
+	-- Part ở dưới entity
+	local bottomPart = Instance.new("Part")
+	bottomPart.Size = Vector3.new(1, 1, 1)
+	bottomPart.Anchored = true
+	bottomPart.CanCollide = false
+	bottomPart.Transparency = 1
+	bottomPart.CFrame = entity.PrimaryPart.CFrame * CFrame.new(0, -2, 0)
+	bottomPart.Parent = workspace
+
+	local bottomAttach = Instance.new("Attachment", bottomPart)
+
+	-- Hàm tạo beam
+	local function createBeam(targetAttach)
+		local beam = Instance.new("Beam")
+		beam.Attachment0 = crucifixAttachment
+		beam.Attachment1 = targetAttach
+		beam.FaceCamera = true
+		beam.Width0 = 0.25
+		beam.Width1 = 0.25
+		beam.LightEmission = 1
+		beam.Texture = "rbxassetid://130207098"
+		beam.TextureLength = 1
+		beam.TextureSpeed = 2
+		beam.Color = ColorSequence.new(Color3.fromRGB(255, 255, 255))
+		beam.Parent = gate.Crucifix.Glow
+		return beam
+	end
+
+	local beams = {
+		createBeam(topAttach),
+		createBeam(bottomAttach),
+		createBeam(leftAttach),
+		createBeam(rightAttach),
+		createBeam(backAttach)
+	}
+
+	-- Particle nhỏ dưới crucifix
 	local particle = Instance.new("ParticleEmitter")
 	particle.Name = "CrucifixPullParticle"
 	particle.Rate = 0.3
 	particle.Speed = NumberRange.new(0)
 	particle.SpreadAngle = Vector2.new(0, 0)
 	particle.Size = NumberSequence.new(0.5)
-	particle.Texture = "rbxassetid://243098098" -- texture ánh sáng
+	particle.Texture = "rbxassetid://243098098"
 	particle.Lifetime = NumberRange.new(1)
 	particle.Parent = gate.Crucifix.Glow
 
-	-- Beam tồn tại 5 giây
+	-- Beam tự huỷ sau 5 giây
 	task.delay(5, function()
-		if beam then beam:Destroy() end
+		for _, b in pairs(beams) do
+			if b then b:Destroy() end
+		end
 		if particle then particle.Enabled = false end
 	end)
 
@@ -202,22 +234,19 @@ function hell(oldentity)
 		glowSound:Play()
 	end
 
-	-- Hàm tween kéo entity lên
+	-- Kéo entity lên trời
 	local function move(part)
-		task.wait(3) -- chờ 1 giây
+		task.wait(3)
 
-		-- Hiệu ứng sáng mạnh
 		tweensv:Create(gate.Crucifix.Glow.Light, TweenInfo.new(0.2), {
 			Brightness = 12,
 			Range = 40
 		}):Play()
 
-		-- Kéo lên nhanh
 		tweensv:Create(part, TweenInfo.new(5, Enum.EasingStyle.Sine, Enum.EasingDirection.Out), {
 			Position = part.Position + Vector3.new(0, 80, 0)
 		}):Play()
 
-		-- Tắt sound, light sau đó
 		task.wait(1.5)
 		for _, v in pairs(entity:GetDescendants()) do
 			if v:IsA("Sound") then
@@ -236,7 +265,7 @@ function hell(oldentity)
 		end
 	end
 
-	-- Kết thúc hiệu ứng, phá hủy Crucifix và portal
+	-- Kết thúc hiệu ứng
 	spawn(function()
 		task.wait(5)
 		camShake:ShakeOnce(3, 10, 0.7, 0.5)
@@ -249,6 +278,7 @@ function hell(oldentity)
 
 		task.wait(5)
 		gate:Destroy()
+		bottomPart:Destroy()
 		gate_spin:Disconnect()
 	end)
 
