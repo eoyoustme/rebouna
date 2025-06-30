@@ -1,0 +1,242 @@
+-- made by PenguinManiack#2322
+
+--// Tweakable values
+_G.Uses = 5 -- Số lần thánh giá có thể được sử dụng
+_G.Range = 48 -- Phạm vi phát hiện thực thể
+
+local Uses = _G.Uses -- Số lần sử dụng hiện tại, sẽ được giảm đi
+
+local tweensv = game:GetService("TweenService")
+local Player = game.Players.LocalPlayer
+local Character = Player.Character or Player.CharacterAdded:Wait()
+local Hum = Character:WaitForChild("Humanoid")
+
+local CameraShaker = require(game.ReplicatedStorage.CameraShaker)
+local camara = workspace.CurrentCamera
+local camShake = CameraShaker.new(Enum.RenderPriority.Camera.Value, function(shakeCf)
+	camara.CFrame *= shakeCf
+end)
+camShake:Start() -- Bắt đầu bộ rung camera khi công cụ được tải
+
+local ToolFunctions = {
+	OnClick = function() end, -- Chức năng thực thi khi công cụ được nhấp/kích hoạt
+	OnEquip = function() end, -- Chức năng thực thi khi công cụ được trang bị
+	OnUnequipped = function() end, -- Chức năng thực thi khi công cụ được bỏ trang bị
+}
+
+-- Tải các mô hình chính (Crucifix và Repentance/Portal) từ ID tài sản đã cho
+local MainModels = game:GetObjects("rbxassetid://12424097714")[1]
+MainModels.Parent = game.ReplicatedStorage -- Đặt chúng vào ReplicatedStorage để máy chủ/máy khách có thể truy cập
+
+local Tool_obj = MainModels.Crucifix -- Mô hình công cụ thánh giá
+local ToolHandle = Tool_obj:WaitForChild("Handle", 5) -- Phần tay cầm của công cụ
+local Portal = MainModels.Repentance -- Mô hình cổng
+
+ToolHandle.Anchored = false -- Đảm bảo tay cầm công cụ không bị neo
+
+local Equipped = false -- Cờ để theo dõi xem công cụ có đang được trang bị hay không
+
+--// Tool Events
+
+-- OnClick function: Đây là điểm kích hoạt chính cho các hiệu ứng của thánh giá.
+ToolFunctions.OnClick = function()
+	-- Kiểm tra xem công cụ có đang được trang bị và còn lượt sử dụng không
+	if Equipped and Uses > 0 then
+		camShake:ShakeOnce(10, 30, 0.7, 0.5) -- Rung camera ban đầu khi kích hoạt
+
+		local Haw = ToolHandle:Clone() -- Sao chép tay cầm công cụ (hiệu ứng hình ảnh, không chức năng)
+		Haw.Parent = workspace
+		Haw.CFrame = Character.HumanoidRootPart.CFrame -- Đặt vị trí gần người chơi
+		Haw.Anchored = true -- Neo hiệu ứng hình ảnh đã sao chép
+		game:GetService("Debris"):AddItem(Haw, 1) -- Dọn dẹp tay cầm đã sao chép sau 1 giây
+
+		local targetEntity, distance = entity_check() -- Kiểm tra thực thể trong phạm vi
+
+		if targetEntity and not targetEntity:GetAttribute("BeingSentToBrazil") and distance < _G.Range then
+			-- Nếu tìm thấy thực thể và nó chưa bị "gửi đến Brazil" và nằm trong phạm vi
+			targetEntity:SetAttribute("StopMovement", true) -- Dừng chuyển động của thực thể
+			targetEntity:SetAttribute("BeingSentToBrazil", true) -- Đánh dấu thực thể đang bị ảnh hưởng
+			triggerCrucifixEffects(Player.Character.HumanoidRootPart.Position, targetEntity) -- Kích hoạt hiệu ứng và truyền thực thể
+		else
+			-- Nếu không tìm thấy thực thể hoặc thực thể không đủ điều kiện, chỉ kích hoạt hiệu ứng mà không ảnh hưởng đến thực thể
+			triggerCrucifixEffects(Player.Character.HumanoidRootPart.Position, nil)
+		end
+
+		Uses -= 1 -- Giảm số lượt sử dụng
+
+		if Uses == 0 then
+			Equipped = false -- Đánh dấu là đã bỏ trang bị nếu không còn lượt sử dụng
+			Tool_obj:Destroy() -- Hủy công cụ nếu đã hết lượt sử dụng
+		else
+			Tool_obj.Parent = Player.Backpack -- Di chuyển công cụ về balo nếu còn lượt sử dụng
+			Equipped = false -- Đánh dấu là đã bỏ trang bị để ngăn kích hoạt lặp lại ngay lập tức
+		end
+	end
+end
+
+-- OnEquip function: Xử lý các hành động khi công cụ được trang bị.
+ToolFunctions.OnEquip = function()
+	Equipped = true -- Đặt cờ trang bị thành true
+	Player:SetAttribute("Hidden", true) -- Đặt thuộc tính người chơi (hành vi ban đầu)
+end
+
+-- OnUnequipped function: Xử lý các hành động khi công cụ được bỏ trang bị.
+ToolFunctions.OnUnequipped = function()
+	Equipped = false -- Đặt cờ trang bị thành false
+	Player:SetAttribute("Hidden", false) -- Đặt lại thuộc tính người chơi (hành vi ban đầu)
+end
+
+-- Kết nối các sự kiện công cụ với các chức năng tương ứng
+Tool_obj.Equipped:Connect(function()
+	ToolFunctions.OnEquip()
+end)
+
+Tool_obj.Activated:Connect(function()
+	ToolFunctions.OnClick()
+end)
+
+Tool_obj.Unequipped:Connect(function()
+	ToolFunctions.OnUnequipped()
+end)
+
+-- Chức năng kiểm tra thực thể: Tìm thực thể tùy chỉnh gần nhất trong không gian làm việc.
+function entity_check()
+	local closestDistance, closestEntity = math.huge, nil
+	for _, model in ipairs(workspace:GetDescendants()) do
+		if model:IsA("Model") and model:GetAttribute("IsCustomEntity") and model.PrimaryPart then
+			local dist = Player:DistanceFromCharacter(model.PrimaryPart.Position)
+			if dist < closestDistance then
+				closestDistance = dist
+				closestEntity = model
+			end
+		end
+	end
+	return closestEntity, closestDistance
+end
+
+-- Chức năng mới để kích hoạt các hiệu ứng hình ảnh và âm thanh của thánh giá,
+-- có thể bao gồm việc kéo thực thể xuống.
+function triggerCrucifixEffects(position, targetEntity)
+	local gate = Portal:Clone() -- Sao chép mô hình cổng
+	gate.Parent = workspace
+	gate:SetPrimaryPartCFrame(CFrame.new(position)) -- Đặt cổng tại vị trí đã cho (ví dụ: vị trí của người chơi)
+
+	local pentagram = gate.Pentagram -- Tham chiếu đến phần pentagram để quay
+
+	-- Xoay portal liên tục
+	local gate_spin = game:GetService("RunService").Heartbeat:Connect(function()
+		-- Quay các phần khác nhau của pentagram
+		pentagram.RingAddonA.Orientation += Vector3.new(0, 2, 0)
+		pentagram.RingAddonB.Orientation += Vector3.new(0, -2, 0)
+		pentagram.RingAddonC.Orientation += Vector3.new(0, 1.6, 0)
+		pentagram.Base.Orientation += Vector3.new(0, -1, 0)
+	end)
+
+	-- Gắn ánh sáng thánh giá vào tay người chơi
+	local RightHand = Character:FindFirstChild("RightHand") or Character:FindFirstChild("Right Arm")
+	if RightHand then
+		local attach1 = Instance.new("Attachment", RightHand)
+		local attach2 = Instance.new("Attachment", gate.Crucifix.Glow)
+
+		-- Sử dụng AlignPosition để giữ ánh sáng gắn vào tay
+		local alignPos = Instance.new("AlignPosition")
+		alignPos.Attachment0 = attach2
+		alignPos.Attachment1 = attach1
+		alignPos.RigidityEnabled = true
+		alignPos.Responsiveness = 200
+		alignPos.MaxForce = math.huge
+		alignPos.Parent = gate.Crucifix.Glow
+
+		-- Sử dụng AlignOrientation để giữ ánh sáng hướng theo tay
+		local alignOri = Instance.new("AlignOrientation")
+		alignOri.Attachment0 = attach2
+		alignOri.Attachment1 = attach1
+		alignOri.RigidityEnabled = true
+		alignOri.Responsiveness = 200
+		alignOri.MaxTorque = math.huge
+		alignOri.Parent = gate.Crucifix.Glow
+	end
+
+	-- Âm thanh thánh giá
+	local glowSound = gate.Crucifix.Glow:FindFirstChild("Sound")
+	if glowSound then
+		glowSound.SoundId = "rbxassetid://6555668806" -- Đặt ID âm thanh
+		glowSound.TimePosition = 0
+		glowSound:Play() -- Phát âm thanh
+	end
+
+	-- Rung camera cho hiệu ứng chính
+	camShake:ShakeOnce(10, 15, 4, 5)
+
+	-- Phát sáng mạnh trước hiệu ứng chính
+	tweensv:Create(gate.Crucifix.Glow.Light, TweenInfo.new(0.2), {
+		Brightness = 12,
+		Range = 40
+	}):Play()
+
+	-- Logic mới để xử lý thực thể (kéo xuống)
+	if targetEntity and targetEntity.PrimaryPart then
+		-- Neo các phần của thực thể để "xích" nó lại
+		for _, part in pairs(targetEntity:GetDescendants()) do
+			if part:IsA("BasePart") then
+				part.Anchored = true
+			end
+		end
+
+		spawn(function()
+			task.wait(3) -- Chờ 3 giây trước khi kéo xuống
+
+			-- Kéo thực thể xuống rất nhanh
+			local partsToTween = {}
+			for _, part in pairs(targetEntity:GetDescendants()) do
+				if part:IsA("BasePart") then
+					table.insert(partsToTween, part)
+				end
+			end
+
+			-- Tween từng phần của thực thể xuống
+			for _, part in ipairs(partsToTween) do
+				tweensv:Create(part, TweenInfo.new(5, Enum.EasingStyle.Sine, Enum.EasingDirection.In), { -- Sử dụng EasingDirection.In cho hiệu ứng chìm xuống
+					Position = part.Position - Vector3.new(0, 80, 0) -- Kéo xuống
+				}):Play()
+			end
+
+			task.wait(1.5) -- Chờ một khoảng thời gian sau khi bắt đầu kéo
+
+			-- Làm mờ âm thanh/ánh sáng cho thực thể (nếu có)
+			for _, v in pairs(targetEntity:GetDescendants()) do
+				if v:IsA("Sound") then
+					tweensv:Create(v, TweenInfo.new(0.5), { Volume = 0 }):Play()
+				elseif v:IsA("Light") then
+					tweensv:Create(v, TweenInfo.new(1), { Range = 0 }):Play()
+				end
+			end
+
+			task.wait(4) -- Đợi cho tween hoàn thành
+			targetEntity:Destroy() -- Hủy thực thể sau khi bị kéo xuống
+		end)
+	end
+
+	spawn(function()
+		-- Thời gian chờ dọn dẹp phụ thuộc vào việc có thực thể bị kéo xuống hay không
+		local cleanupWaitTime = (targetEntity and targetEntity.PrimaryPart) and 5 or 3
+
+		task.wait(cleanupWaitTime)
+
+		camShake:ShakeOnce(3, 10, 0.7, 0.5) -- Rung camera nhỏ ở cuối hiệu ứng
+
+		-- Hiệu ứng bùng nổ ánh sáng
+		gate.Crucifix.Glow.ExplodeParticle:Emit(50) -- Phát ra hạt
+		tweensv:Create(gate.Crucifix.Glow, TweenInfo.new(1), {
+			Size = gate.Crucifix.Glow.Size * 4, -- Làm cho ánh sáng lớn hơn
+			Transparency = 1 -- Làm cho nó trong suốt (mờ dần)
+		}):Play()
+
+		task.wait(5) -- Chờ hiệu ứng nổ hoàn thành
+		gate:Destroy() -- Hủy mô hình cổng
+		gate_spin:Disconnect() -- Ngắt kết nối vòng lặp quay
+	end)
+end
+
+-- Đặt công cụ vào balo của người chơi ban đầu
+Tool_obj.Parent = Player.Backpack
