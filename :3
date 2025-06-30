@@ -1,0 +1,240 @@
+-- made by PenguinManiack#2322
+
+--// Tweakable values
+_G.Uses = 5
+_G.Range = 55
+
+local Uses = _G.Uses
+
+local tweensv = game:GetService("TweenService")
+local Player = game.Players.LocalPlayer
+local Character = Player.Character or Player.CharacterAdded:Wait()
+local Hum = Character:WaitForChild("Humanoid")
+
+local CameraShaker = require(game.ReplicatedStorage.CameraShaker)
+local camara = workspace.CurrentCamera
+local camShake = CameraShaker.new(Enum.RenderPriority.Camera.Value, function(shakeCf)
+	camara.CFrame *= shakeCf
+end)
+camShake:Start()
+
+local ToolFunctions = {
+	OnClick = function() end,
+	OnEquip = function() end,
+	OnUnequipped = function() end,
+}
+
+local MainModels = game:GetObjects("rbxassetid://12424097714")[1]
+MainModels.Parent = game.ReplicatedStorage
+
+local Tool_obj = MainModels.Crucifix
+local ToolHandle = Tool_obj:WaitForChild("Handle", 5)
+local Portal = MainModels.Repentance
+
+ToolHandle.Anchored = false
+
+local Equipped = false
+
+--// Tool Events
+ToolFunctions.OnClick = function() end
+
+ToolFunctions.OnEquip = function()
+	Equipped = true
+
+	spawn(function()
+		repeat
+			task.wait(0.1)
+			local target, distance = entity_check()
+			if target and not target:GetAttribute("BeingSentToBrazil") and distance < _G.Range and Equipped then
+				camShake:ShakeOnce(10, 30, 0.7, 0.5)
+
+				local Haw = ToolHandle:Clone()
+				Haw.Parent = workspace
+
+				if Uses == 1 then
+					Equipped = false
+					Tool_obj:Destroy()
+				else
+					Tool_obj.Parent = Player.Backpack
+					Uses -= 1
+					Equipped = false
+				end
+
+				target:SetAttribute("StopMovement", true)
+				target:SetAttribute("BeingSentToBrazil", true)
+
+				hell(target)
+			end
+		until not Equipped
+	end)
+
+	Player:SetAttribute("Hidden", true)
+end
+
+ToolFunctions.OnUnequipped = function()
+	Equipped = false
+	Player:SetAttribute("Hidden", false)
+end
+
+Tool_obj.Equipped:Connect(function()
+	ToolFunctions.OnEquip()
+end)
+
+Tool_obj.Activated:Connect(function()
+	ToolFunctions.OnClick()
+end)
+
+Tool_obj.Unequipped:Connect(function()
+	ToolFunctions.OnUnequipped()
+end)
+
+function entity_check()
+	local closestDistance, closestEntity = math.huge, nil
+	for _, model in ipairs(workspace:GetDescendants()) do
+		if model:IsA("Model") and model:GetAttribute("IsCustomEntity") and model.PrimaryPart then
+			local dist = Player:DistanceFromCharacter(model.PrimaryPart.Position)
+			if dist < closestDistance then
+				closestDistance = dist
+				closestEntity = model
+			end
+		end
+	end
+	return closestEntity, closestDistance
+end
+
+function hell(oldentity)
+	local entity = oldentity:Clone()
+	entity.Parent = workspace
+	entity.Name = "Fake" .. oldentity.Name
+	oldentity:Destroy()
+
+	local gate = Portal:Clone()
+	gate.Parent = workspace
+	local pentagram = gate.Pentagram
+
+	for _, part in pairs(entity:GetDescendants()) do
+		if part:IsA("BasePart") then
+			part.Anchored = true
+		end
+	end
+
+	local gate_spin = game:GetService("RunService").Heartbeat:Connect(function()
+		pentagram.RingAddonA.Orientation += Vector3.new(0, 2, 0)
+		pentagram.RingAddonB.Orientation += Vector3.new(0, -2, 0)
+		pentagram.RingAddonC.Orientation += Vector3.new(0, 1.6, 0)
+		pentagram.Base.Orientation += Vector3.new(0, -1, 0)
+	end)
+
+	local RightHand = Character:FindFirstChild("RightHand") or Character:FindFirstChild("Right Arm")
+	if RightHand then
+		local attach1 = Instance.new("Attachment", RightHand)
+		local attach2 = Instance.new("Attachment", gate.Crucifix.Glow)
+
+		local alignPos = Instance.new("AlignPosition")
+		alignPos.Attachment0 = attach2
+		alignPos.Attachment1 = attach1
+		alignPos.RigidityEnabled = true
+		alignPos.Responsiveness = 200
+		alignPos.MaxForce = math.huge
+		alignPos.Parent = gate.Crucifix.Glow
+
+		local alignOri = Instance.new("AlignOrientation")
+		alignOri.Attachment0 = attach2
+		alignOri.Attachment1 = attach1
+		alignOri.RigidityEnabled = true
+		alignOri.Responsiveness = 200
+		alignOri.MaxTorque = math.huge
+		alignOri.Parent = gate.Crucifix.Glow
+	end
+
+	local glowSound = gate.Crucifix.Glow:FindFirstChild("Sound")
+	if glowSound then
+		glowSound.SoundId = "rbxassetid://6555668806"
+		glowSound.TimePosition = 0
+		glowSound:Play()
+	end
+
+	camShake:ShakeOnce(10, 15, 4, 5)
+
+	-- Tạo Part "Mặt trăng" ở dưới đất
+	local moonAnchor = Instance.new("Part")
+	moonAnchor.Name = "MoonAnchor"
+	moonAnchor.Size = Vector3.new(4, 1, 4)
+	moonAnchor.Anchored = true
+	moonAnchor.CanCollide = false
+	moonAnchor.Position = entity:GetPrimaryPartCFrame().p - Vector3.new(0, 5, 0)
+	moonAnchor.Material = Enum.Material.SmoothPlastic
+	moonAnchor.Parent = workspace
+
+	local decal = Instance.new("Decal", moonAnchor)
+	decal.Texture = "rbxassetid://10670806658" -- texture mặt trăng
+	decal.Face = Enum.NormalId.Top
+
+	local moonAttachment1 = Instance.new("Attachment", moonAnchor)
+	moonAttachment1.Position = Vector3.new(1, 0.5, 1)
+	local moonAttachment2 = Instance.new("Attachment", moonAnchor)
+	moonAttachment2.Position = Vector3.new(-1, 0.5, -1)
+
+	local entityAttachment = Instance.new("Attachment", entity.PrimaryPart)
+
+	for _, part in pairs(entity:GetDescendants()) do
+		if part:IsA("BasePart") then
+			task.spawn(function()
+				task.wait(3)
+
+				tweensv:Create(gate.Crucifix.Glow.Light, TweenInfo.new(0.2), {
+					Brightness = 12,
+					Range = 40
+				}):Play()
+
+				tweensv:Create(part, TweenInfo.new(5, Enum.EasingStyle.Sine, Enum.EasingDirection.In), {
+					Position = part.Position - Vector3.new(0, 80, 0)
+				}):Play()
+
+				task.wait(1.5)
+				for _, v in pairs(entity:GetDescendants()) do
+					if v:IsA("Sound") then
+						tweensv:Create(v, TweenInfo.new(0.5), { Volume = 0 }):Play()
+					elseif v:IsA("Light") then
+						tweensv:Create(v, TweenInfo.new(1), { Range = 0 }):Play()
+					end
+				end
+			end)
+		end
+	end
+
+	-- Tạo Beam (dây xích)
+	for _, attach in pairs({moonAttachment1, moonAttachment2}) do
+		local beam = Instance.new("Beam")
+		beam.Attachment0 = attach
+		beam.Attachment1 = entityAttachment
+		beam.Width0 = 0.2
+		beam.Width1 = 0.2
+		beam.Texture = "rbxassetid://7204109726" -- dây xích
+		beam.TextureLength = 1
+		beam.TextureSpeed = 1
+		beam.FaceCamera = Enum.FaceCamera.Always
+		beam.Parent = attach
+	end
+
+	task.spawn(function()
+		task.wait(5)
+		camShake:ShakeOnce(3, 10, 0.7, 0.5)
+		gate.Crucifix.Glow.ExplodeParticle:Emit(50)
+
+		tweensv:Create(gate.Crucifix.Glow, TweenInfo.new(1), {
+			Size = gate.Crucifix.Glow.Size * 4,
+			Transparency = 1
+		}):Play()
+
+		task.wait(5)
+		gate:Destroy()
+		moonAnchor:Destroy()
+		gate_spin:Disconnect()
+	end)
+
+	task.wait(4)
+	entity:Destroy()
+end
+
+Tool_obj.Parent = Player.Backpack
