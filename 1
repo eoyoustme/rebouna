@@ -6,22 +6,18 @@ _G.Range = 50.5
 
 local Uses = _G.Uses
 
---// Define stuff
 local tweensv = game:GetService("TweenService")
 local Player = game.Players.LocalPlayer
 local Character = Player.Character
-local Hum = Character.Humanoid
-
-local LatestRoom = game:GetService("ReplicatedStorage").GameData.LatestRoom
+local Hum = Character:WaitForChild("Humanoid")
 
 local CameraShaker = require(game.ReplicatedStorage.CameraShaker)
-local camara = game.Workspace.CurrentCamera
+local camara = workspace.CurrentCamera
 local camShake = CameraShaker.new(Enum.RenderPriority.Camera.Value, function(shakeCf)
-	camara.CFrame = camara.CFrame * shakeCf
+	camara.CFrame *= shakeCf
 end)
 camShake:Start()
 
---// Main code
 local ToolFunctions = {
 	OnClick = function() end,
 	OnEquip = function() end,
@@ -37,10 +33,9 @@ local Portal = MainModels.Repentance
 
 ToolHandle.Anchored = false
 
-local Cooldown = false
 local Equipped = false
 
---// Tool events
+--// Tool Events
 ToolFunctions.OnClick = function() end
 
 ToolFunctions.OnEquip = function()
@@ -48,11 +43,9 @@ ToolFunctions.OnEquip = function()
 
 	spawn(function()
 		repeat
-			task.wait(.1)
-			local thing, _D = entity_check()
-
-			if thing and not thing:GetAttribute("BeingSentToBrazil") and _D < _G.Range and Equipped then
-				camShake:Start()
+			task.wait(0.1)
+			local target, distance = entity_check()
+			if target and not target:GetAttribute("BeingSentToBrazil") and distance < _G.Range and Equipped then
 				camShake:ShakeOnce(10, 30, 0.7, 0.5)
 
 				local Haw = ToolHandle:Clone()
@@ -63,16 +56,16 @@ ToolFunctions.OnEquip = function()
 					Tool_obj:Destroy()
 				else
 					Tool_obj.Parent = Player.Backpack
-					Equipped = false
 					Uses -= 1
+					Equipped = false
 				end
 
-				thing:SetAttribute("StopMovement", true)
-				thing:SetAttribute("BeingSentToBrazil", true)
+				target:SetAttribute("StopMovement", true)
+				target:SetAttribute("BeingSentToBrazil", true)
 
-				hell(thing)
+				hell(target)
 			end
-		until Equipped == false
+		until not Equipped
 	end)
 
 	Player:SetAttribute("Hidden", true)
@@ -96,17 +89,17 @@ Tool_obj.Unequipped:Connect(function()
 end)
 
 function entity_check()
-	local closestDistance, closestObject = math.huge, nil
-	for _, part in ipairs(workspace:GetDescendants()) do
-		if part:IsA("Model") and part:GetAttribute("IsCustomEntity") and part.PrimaryPart then
-			local distance = game.Players.LocalPlayer:DistanceFromCharacter(part.PrimaryPart.Position)
-			if distance < closestDistance then
-				closestDistance = distance
-				closestObject = part
+	local closestDistance, closestEntity = math.huge, nil
+	for _, model in ipairs(workspace:GetDescendants()) do
+		if model:IsA("Model") and model:GetAttribute("IsCustomEntity") and model.PrimaryPart then
+			local dist = Player:DistanceFromCharacter(model.PrimaryPart.Position)
+			if dist < closestDistance then
+				closestDistance = dist
+				closestEntity = model
 			end
 		end
 	end
-	return closestObject, closestDistance
+	return closestEntity, closestDistance
 end
 
 function hell(oldentity)
@@ -115,25 +108,15 @@ function hell(oldentity)
 	entity.Name = "Fake" .. oldentity.Name
 	oldentity:Destroy()
 
-	local primary = entity.PrimaryPart or entity:FindFirstChildOfClass("Part")
-
-	local params = RaycastParams.new()
-	params.FilterType = Enum.RaycastFilterType.Blacklist
-	params.FilterDescendantsInstances = { Character, entity }
-
-	local ray = workspace:Raycast(primary.Position, Vector3.new(0, -1, 0) * 20, params)
+	for _, part in pairs(entity:GetDescendants()) do
+		if part:IsA("BasePart") then
+			part.Anchored = true
+		end
+	end
 
 	local gate = Portal:Clone()
 	gate.Parent = workspace
 	local pentagram = gate.Pentagram
-
-	if ray then
-		local part = Instance.new("Part")
-		part.Anchored = true
-		part.Position = ray.Position + Vector3.new(0, 1, 0)
-		gate:PivotTo(part.CFrame * CFrame.new(0, -0.5, 0))
-		part:Destroy()
-	end
 
 	local gate_spin = game:GetService("RunService").Heartbeat:Connect(function()
 		pentagram.RingAddonA.Orientation += Vector3.new(0, 2, 0)
@@ -142,83 +125,66 @@ function hell(oldentity)
 		pentagram.Base.Orientation += Vector3.new(0, -1, 0)
 	end)
 
-	for _, v in pairs(entity:GetDescendants()) do
-		if v:IsA("BasePart") then
-			v.Anchored = true
-		end
-	end
-
-	-- Gắn Crucifix vào tay người chơi
+	-- Gắn Crucifix vào tay người chơi (không tween CFrame)
 	local RightHand = Character:FindFirstChild("RightHand") or Character:FindFirstChild("Right Arm")
 	if RightHand then
+		gate.Crucifix.Glow.CFrame = RightHand.CFrame
+
 		local weld = Instance.new("WeldConstraint")
 		weld.Part0 = gate.Crucifix.Glow
 		weld.Part1 = RightHand
 		weld.Parent = gate.Crucifix.Glow
-		gate.Crucifix.Glow.CFrame = RightHand.CFrame
 	end
 
-	gate.Crucifix.Glow.Sound.SoundId = "rbxassetid://6555668806"
-	gate.Crucifix.Glow.SoundFail.SoundId = "rbxassetid://6555668806"
-	gate.Crucifix.Glow.Sound:Play()
+	-- Play sound
+	local sound = gate.Crucifix.Glow:FindFirstChild("Sound")
+	if sound then
+		sound.SoundId = "rbxassetid://6555668806"
+		sound.TimePosition = 0
+		sound:Play()
+	end
 
-	camShake:ShakeOnce(10, 15, 4, 5)
-
+	-- Tween entity bay lên trời
 	local function move(part)
-		tweensv:Create(gate.Entity, TweenInfo.new(3, Enum.EasingStyle.Quad, Enum.EasingDirection.InOut), {
-			Position = gate.Entity.Position + Vector3.new(0, 5, 0),
-		}):Play()
-
 		tweensv:Create(part, TweenInfo.new(3, Enum.EasingStyle.Quad, Enum.EasingDirection.InOut), {
-			Position = part.Position + Vector3.new(0, 5, 0),
-		}):Play()
-
-		tweensv:Create(pentagram.Base.LightAttach.Light, TweenInfo.new(3, Enum.EasingStyle.Quad, Enum.EasingDirection.InOut), {
-			Range = 60,
-			Brightness = 5
+			Position = part.Position + Vector3.new(0, 5, 0)
 		}):Play()
 
 		task.wait(3)
 
 		tweensv:Create(part, TweenInfo.new(2, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut), {
-			Position = part.Position + Vector3.new(0, 50, 0),
+			Position = part.Position + Vector3.new(0, 50, 0)
 		}):Play()
 
-		tweensv:Create(gate.Entity, TweenInfo.new(2, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut), {
-			Position = gate.Entity.Position + Vector3.new(0, 50, 0),
-		}):Play()
-
+		-- Fade sounds/lights
 		for _, v in pairs(entity:GetDescendants()) do
 			if v:IsA("Sound") then
-				tweensv:Create(v, TweenInfo.new(.5, Enum.EasingStyle.Quad, Enum.EasingDirection.InOut), {
-					Volume = 0,
-				}):Play()
+				tweensv:Create(v, TweenInfo.new(0.5), { Volume = 0 }):Play()
 			elseif v:IsA("Light") then
-				tweensv:Create(v, TweenInfo.new(3, Enum.EasingStyle.Quad, Enum.EasingDirection.InOut), {
-					Range = 0,
-				}):Play()
+				tweensv:Create(v, TweenInfo.new(3), { Range = 0 }):Play()
 			end
 		end
 	end
 
-	for _, v in pairs(entity:GetDescendants()) do
-		if v:IsA("BasePart") then
+	for _, part in pairs(entity:GetDescendants()) do
+		if part:IsA("BasePart") then
 			spawn(function()
-				move(v)
+				move(part)
 			end)
 		end
 	end
 
+	-- Hiệu ứng kết thúc
 	spawn(function()
 		task.wait(5)
 		camShake:ShakeOnce(3, 10, 0.7, 0.5)
 		gate.Crucifix.Glow.ExplodeParticle:Emit(50)
-		tweensv:Create(gate.Crucifix.Glow, TweenInfo.new(1, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+
+		tweensv:Create(gate.Crucifix.Glow, TweenInfo.new(1), {
 			Size = gate.Crucifix.Glow.Size * 4,
+			Transparency = 1
 		}):Play()
-		tweensv:Create(gate.Crucifix.Glow, TweenInfo.new(1.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
-			Transparency = 1,
-		}):Play()
+
 		task.wait(5)
 		gate:Destroy()
 		gate_spin:Disconnect()
