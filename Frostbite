@@ -76,6 +76,18 @@ local entity = s:FindFirstChildWhichIsA("BasePart")
 entity.CFrame = GetRoom():WaitForChild("RoomEntrance").CFrame * CFrame.new(0, 5, -15)
 entity.Part.CFrame = entity.CFrame
 
+-- 💡 Thêm ánh sáng mạnh lúc xuất hiện
+local pointLight = Instance.new("PointLight")
+pointLight.Color = Color3.new(1, 1, 1)
+pointLight.Range = 60
+pointLight.Brightness = 9999
+pointLight.Parent = entity
+
+-- Làm giảm độ sáng dần trong 6 giây
+tweenservice:Create(pointLight, TweenInfo.new(8), {
+    Brightness = 0
+}):Play()
+
 -- 🎵 Âm thanh xuất hiện
 local sound = Instance.new("Sound")
 sound.SoundId = "rbxassetid://137044859218769"
