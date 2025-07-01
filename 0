@@ -2,7 +2,7 @@
 
 --// Tweakable values
 _G.Uses = 5
-_G.Range = 80
+_G.Range = 45
 
 local Uses = _G.Uses
 
