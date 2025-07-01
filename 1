@@ -58,8 +58,10 @@ ToolFunctions.OnEquip = function()
 				end
 
 				-- Sau 2 giây rơi xuống đất
-				task.delay(2, function()
-					CrucifixClone.Anchored = false
+				task.delay(3, function()
+					CrucifixClone.Anchored = true
+                                       wait(3)
+                                        CrucifixClone.Anchored = false
 					CrucifixClone.CanCollide = true
 					CrucifixClone.Velocity = Vector3.new(0, -10, 0)
 				end)
