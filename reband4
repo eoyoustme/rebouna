@@ -44,7 +44,7 @@ local camShake = CameraShaker.new(Enum.RenderPriority.Camera.Value, function(sha
  camara.CFrame = camara.CFrame * shakeCf
 end)
 camShake:Start()
-camShake:ShakeOnce(90,70,0,4,2,12)
+camShake:ShakeOnce(900,700,0,4,2,12)
 local CameraShaker = require(game.ReplicatedStorage.CameraShaker)
 local camara = game.Workspace.CurrentCamera
 
@@ -54,7 +54,7 @@ end)
 
 camShake:Start()
 camShake:Shake(CameraShaker.Presets.Earthquake)
-local speed = math.random(125,155)
+local speed = math.random(255,305)
 local delay = {"2", "2.5", "1.5", "1", "2.1"}
 local fuck = delay[math.random(1, #delay)]
 wait(3.8)
