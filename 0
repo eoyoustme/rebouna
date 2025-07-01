@@ -46,6 +46,25 @@ ToolFunctions.OnEquip = function()
 			task.wait(0.1)
 			local target, distance = entity_check()
 			if target and not target:GetAttribute("BeingSentToBrazil") and distance < _G.Range and Equipped then
+				-- Crucifix Clone xuất hiện trên tay
+				local CrucifixClone = ToolHandle:Clone()
+				CrucifixClone.Anchored = true
+				CrucifixClone.CanCollide = false
+				CrucifixClone.Parent = workspace
+
+				local hand = Character:FindFirstChild("RightHand") or Character:FindFirstChild("Right Arm")
+				if hand then
+					CrucifixClone.CFrame = hand.CFrame * CFrame.new(0, -0.5, 0)
+				end
+
+				-- Sau 2 giây rơi xuống đất
+				task.delay(2, function()
+					CrucifixClone.Anchored = false
+					CrucifixClone.CanCollide = true
+					CrucifixClone.Velocity = Vector3.new(0, -10, 0)
+				end)
+
+				-- Camera Shake
 				camShake:ShakeOnce(10, 30, 0.7, 0.5)
 
 				local Haw = ToolHandle:Clone()
@@ -156,7 +175,7 @@ function hell(oldentity)
 
 	camShake:ShakeOnce(10, 15, 4, 5)
 
-	-- Tạo Part "Mặt trăng" ở dưới đất
+	-- Part mặt trăng
 	local moonAnchor = Instance.new("Part")
 	moonAnchor.Name = "MoonAnchor"
 	moonAnchor.Size = Vector3.new(4, 1, 4)
@@ -167,7 +186,7 @@ function hell(oldentity)
 	moonAnchor.Parent = workspace
 
 	local decal = Instance.new("Decal", moonAnchor)
-	decal.Texture = "rbxassetid://10670806658" -- texture mặt trăng
+	decal.Texture = "rbxassetid://10670806658"
 	decal.Face = Enum.NormalId.Top
 
 	local moonAttachment1 = Instance.new("Attachment", moonAnchor)
@@ -203,21 +222,20 @@ function hell(oldentity)
 		end
 	end
 
-	-- Tạo Beam (dây xích)
 	for _, attach in pairs({moonAttachment1, moonAttachment2}) do
 		local beam = Instance.new("Beam")
 		beam.Attachment0 = attach
 		beam.Attachment1 = entityAttachment
 		beam.Width0 = 0.2
 		beam.Width1 = 0.2
-		beam.Texture = "rbxassetid://7204109726" -- dây xích
+		beam.Texture = "rbxassetid://7204109726"
 		beam.TextureLength = 1
 		beam.TextureSpeed = 1
 		beam.FaceCamera = Enum.FaceCamera.Always
 		beam.Parent = attach
 	end
 
-	task.spawn(function()
+		task.spawn(function()
 		task.wait(5)
 		camShake:ShakeOnce(3, 10, 0.7, 0.5)
 		gate.Crucifix.Glow.ExplodeParticle:Emit(50)
@@ -237,4 +255,6 @@ function hell(oldentity)
 	entity:Destroy()
 end
 
+-- Đưa tool vào Backpack khi script chạy
 Tool_obj.Parent = Player.Backpack
+
