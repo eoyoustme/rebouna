@@ -54,7 +54,7 @@ end)
 
 camShake:Start()
 camShake:Shake(CameraShaker.Presets.Earthquake)
-local speed = math.random(255,305)
+local speed = math.random(100,200)
 local delay = {"2", "2.5", "1.5", "1", "2.1"}
 local fuck = delay[math.random(1, #delay)]
 wait(3.8)
