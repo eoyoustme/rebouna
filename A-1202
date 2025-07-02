@@ -45,9 +45,9 @@ local entity = spawner.Create({
 	},
 	Crucifixion = {
 		Enabled = true,
-		Range = 40,
-		Resist = false,
-		Break = true
+		Range = 41,
+		Resist = true,
+		Break = false
 	},
 	Death = {
 		Type = "Guiding", -- "Curious"
