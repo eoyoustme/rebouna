@@ -17,7 +17,7 @@ end)
 local entityList = {
     {url = "https://raw.githubusercontent.com/eoyoustme/rebouna/refs/heads/main/Cease6", delay = 175},
     {url = "https://raw.githubusercontent.com/eoyoustme/rebouna/refs/heads/main/Ripper2", delay = 150},
-    {url = "https://raw.githubusercontent.com/eoyoustme/rebouna/refs/heads/main/reband3", delay = 240},
+    {url = "https://raw.githubusercontent.com/eoyoustme/rebouna/refs/heads/main/reband3", delay = 20},
     {url = "https://raw.githubusercontent.com/eoyoustme/rebouna/refs/heads/main/Sinturaly", delay = 1000},
     {url = "https://raw.githubusercontent.com/eoyoustme/rebouna/refs/heads/main/Shocker", delay = 35},
     {url = "https://raw.githubusercontent.com/eoyoustme/rebouna/refs/heads/main/SIlence", delay = 300},
