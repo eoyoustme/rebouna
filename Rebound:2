@@ -79,7 +79,7 @@ function dragEntity(entityModel, pos, speed)
     tween:Play()
 
     -- Đợi cho tween hoàn thành
-    repeat task.wait(0.8) until entityConnections.movementNode == nil
+    repeat task.wait(0.3) until entityConnections.movementNode == nil
 end
 
 
