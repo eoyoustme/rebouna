@@ -122,7 +122,7 @@ end
 
 entity.Debug.OnEntitySpawned = function(entityModel)
     print("Entity has spawned:", entityModel)
-    wait(15)
+    wait(20)
     workspace.Rebound:Destroy()
 end
 
@@ -199,7 +199,7 @@ end
 
 entity.Debug.OnEntitySpawned = function(entityModel)
     print("Entity has spawned:", entityModel)
-    wait(15)
+    wait(20)
     workspace.Rebound2:Destroy()
 end
 
@@ -276,7 +276,7 @@ end
 
 entity.Debug.OnEntitySpawned = function(entityModel)
     print("Entity has spawned:", entityModel)
-    wait(15)
+    wait(20)
     workspace.Rebound3:Destroy()
 end
 
@@ -353,7 +353,7 @@ end
 
 entity.Debug.OnEntitySpawned = function(entityModel)
     print("Entity has spawned:", entityModel)
-    wait(15)
+    wait(20)
     workspace.Rebound4:Destroy()
 end
 
@@ -430,7 +430,7 @@ end
 
 entity.Debug.OnEntitySpawned = function(entityModel)
     print("Entity has spawned:", entityModel)
-    wait(15)
+    wait(20)
     workspace.Rebound5:Destroy()
 end
 
