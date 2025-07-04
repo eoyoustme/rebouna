@@ -52,18 +52,20 @@ function getPlayerRoot()
     return Char:FindFirstChild("HumanoidRootPart") or Char:FindFirstChild("Head")
 end
 
--- Tween movement function, thời gian cố định 3 giây
+-- Thay thế hàm di chuyển entity bằng tween với thời gian dựa trên khoảng cách
 function dragEntityTween(entityModel, pos)
-    local entityConnections = EntityConnections[entityModel]
+    local startPos = entityModel.PrimaryPart.Position
+    local distance = (pos - startPos).Magnitude
 
-    if entityConnections.movementNode then
-        entityConnections.movementNode:Disconnect()
-    end
+    local maxTime = 4
+    local minTime = 0.5
+    local k = 4  -- hằng số để tính thời gian
 
-    local tweenInfo = TweenInfo.new(1.5, Enum.EasingStyle.Linear)
-    local goalCFrame = CFrame.new(pos)
-    local tween = TS:Create(entityModel.PrimaryPart, tweenInfo, {CFrame = goalCFrame})
+    local time = math.clamp(k / distance, minTime, maxTime)
 
+    -- Tạo tween di chuyển PrimaryPart đến vị trí mới
+    local tweenInfo = TweenInfo.new(time, Enum.EasingStyle.Linear)
+    local tween = TS:Create(entityModel.PrimaryPart, tweenInfo, {CFrame = CFrame.new(pos)})
     tween:Play()
     tween.Completed:Wait()
 end
@@ -148,13 +150,14 @@ Spawner.runEntity = function(entityTable)
 
     for _, room in next, workspace.CurrentRooms:GetChildren() do
         local pathfindNodes = room:FindFirstChild("PathfindNodes")
-        local fakeNode = Instance.new("Part")
-        fakeNode.Name = "1"
-        fakeNode.CFrame = room:WaitForChild("RoomExit").CFrame - Vector3.new(0, room.RoomExit.Size.Y / 2, 0)
-    
+            local fakeNode = Instance.new("Part")
+            fakeNode.Name = "1"
+            fakeNode.CFrame = room:WaitForChild("RoomExit").CFrame - Vector3.new(0, room.RoomExit.Size.Y / 2, 0)
+        
         if pathfindNodes then
             pathfindNodes = {fakeNode}
         else
+
             pathfindNodes = {fakeNode}
         end
 
@@ -257,41 +260,104 @@ Spawner.runEntity = function(entityTable)
             
             -- Entered room
 
-            if floorRay ~= nil and floorRay:IsDescendantOf(workspace.CurrentRooms) then
-                local currentRoom = floorRay:FindFirstAncestorWhichIsA("Model")
-                if currentRoom and not enteredRooms[currentRoom] then
-                    enteredRooms[currentRoom] = true
-                    task.spawn(entityTable.Debug.OnEntityEnteredRoom, currentRoom)
+            if floorRay ~= nil and floorRay.Name == "Floor" then
+                for _, room in next, workspace.CurrentRooms:GetChildren() do
+                    if floorRay:IsDescendantOf(room) and not table.find(enteredRooms, room) then
+                        enteredRooms[#enteredRooms + 1] = room
+                        task.spawn(entityTable.Debug.OnEntityEnteredRoom, room)
+
+                        -- Break lights
+                        
+                        if entityTable.Config.BreakLights then
+                            ModuleScripts.ModuleEvents.shatter(room)
+                        end
+
+                        break
+                    end
+                end
+            end
+
+            -- Camera shaking
+            
+            local shakeConfig = entityTable.Config.CamShake
+            local shakeMag = (getPlayerRoot().Position - entityModel.PrimaryPart.Position).Magnitude
+
+            if shakeConfig[1] and shakeMag <= shakeConfig[3] then
+                local shakeRep = {}
+
+                for i, v in next, shakeConfig[2] do
+                    shakeRep[i] = v
+                end
+                shakeRep[1] = shakeConfig[2][1] / shakeConfig[3] * (shakeConfig[3] - shakeMag)
+
+                ModuleScripts.MainGame.camShaker.ShakeOnce(ModuleScripts.MainGame.camShaker, table.unpack(shakeRep))
+            end
+
+            -- Player in sight
+
+            if playerInSight then
+                -- Look at entity
+
+                local _, onScreen = WorldToViewportPoint(Camera, entityModel.PrimaryPart.Position)
+
+                if onScreen then
+                    task.spawn(entityTable.Debug.OnLookAtEntity)
+                end
+
+                -- Kill player
+
+                if entityTable.Config.CanKill and not Char:GetAttribute("IsDead") and not Char:GetAttribute("Invincible") and not Char:GetAttribute("Hiding") and (getPlayerRoot().Position - entityModel.PrimaryPart.Position).Magnitude <= entityTable.Config.KillRange then
+                                        task.spawn(function()
+                        if workspace:FindFirstChild("SeekMoving") or workspace.CurrentRooms:FindFirstChild("51") or workspace:FindFirstChild("Blink") then
+                            return
+                        end
+                        Char:SetAttribute("IsDead", true)
+
+                        -- Gọi hàm kill player (giả sử bạn có hàm riêng, nếu không có thì thay bằng đoạn xử lý chết)
+                        if entityTable.Config.KillPlayerFunction then
+                            entityTable.Config.KillPlayerFunction()
+                        else
+                            -- Ví dụ xử lý chết đơn giản
+                            Hum.Health = 0
+                        end
+
+                        task.spawn(entityTable.Debug.OnDeath)
+                    end)
                 end
             end
         end
     end)
 
-    -- Di chuyển entity theo từng node bằng tween 3 giây
-    local currentIndex = startNodeIndex
-    local step = entityTable.Config.BackwardsMovement and -1 or 1
+    -- Di chuyển entity theo nodes với tween
+    task.spawn(function()
+        local nodeCount = #nodes
+        local step = entityTable.Config.BackwardsMovement and -1 or 1
+        local index = entityTable.Config.BackwardsMovement and nodeCount or 1
+        
+        while entityModel.Parent do
+            local targetNode = nodes[index]
+            if targetNode == nil then
+                break
+            end
+            
+            local targetPos = targetNode.Position + Vector3.new(0, 3.5 + entityTable.Config.HeightOffset, 0)
+            dragEntityTween(entityModel, targetPos)
 
-    while entityModel.Parent and currentIndex >= 1 and currentIndex <= #nodes do
-        local targetNode = nodes[currentIndex]
-        local targetPos = targetNode.Position + Vector3.new(0, 3.5 + entityTable.Config.HeightOffset, 0)
+            index = index + step
+            if index < 1 or index > nodeCount then
+                if entityTable.Config.ReboundMovement then
+                    step = -step
+                    index = math.clamp(index, 1, nodeCount)
+                    task.spawn(entityTable.Debug.OnEntityFinishedRebound)
+                else
+                    break
+                end
+            end
+        end
 
-        task.spawn(entityTable.Debug.OnEntityStartMoving, targetNode)
-
-        dragEntityTween(entityModel, targetPos) -- Tween 3 giây
-
-        currentIndex = currentIndex + step
-    end
-
-    -- Entity đã di chuyển hết đường đi, gọi sự kiện kết thúc
-    task.spawn(entityTable.Debug.OnEntityFinishedRebound)
-
-    -- Ngắt kết nối
-    if entityConnections.movementTick then
-        entityConnections.movementTick:Disconnect()
-        entityConnections.movementTick = nil
-    end
-
-    entityModel:Destroy()
+        task.spawn(entityTable.Debug.OnEntityDespawned)
+        entityModel:Destroy()
+    end)
 end
 
 return Spawner
