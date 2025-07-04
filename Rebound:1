@@ -60,7 +60,7 @@ function dragEntityTween(entityModel, pos)
         entityConnections.movementNode:Disconnect()
     end
 
-    local tweenInfo = TweenInfo.new(3, Enum.EasingStyle.Linear)
+    local tweenInfo = TweenInfo.new(1.5, Enum.EasingStyle.Linear)
     local goalCFrame = CFrame.new(pos)
     local tween = TS:Create(entityModel.PrimaryPart, tweenInfo, {CFrame = goalCFrame})
 
