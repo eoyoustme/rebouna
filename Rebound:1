@@ -62,7 +62,7 @@ function dragEntity(entityModel, pos, speed)
     end
 
     -- Tạo Tween di chuyển
-    local tweenInfo = TweenInfo.new(3.2, Enum.EasingStyle.Linear)
+    local tweenInfo = TweenInfo.new(1.7, Enum.EasingStyle.Linear)
     local tween = TweenService:Create(entityModel.PrimaryPart, tweenInfo, {CFrame = CFrame.new(pos.X, pos.Y, pos.Z)})
 
     -- Kết nối sự kiện hoàn thành tween
@@ -200,8 +200,6 @@ local ItemName = entityModel
 ItemName.PrimaryPart = ItemName.RushNew
 
 ItemName.Rebound_Cue:Destroy()
-
-ItemName.PrimaryPart.Sound:Destroy()
 
 ItemName.PrimaryPart.Footsteps:Destroy()
 
