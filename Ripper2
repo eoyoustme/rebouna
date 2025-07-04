@@ -30,7 +30,7 @@ local get = true
 local entity = spawner.Create({
 	Entity = {
 		Name = "RipperMovings",
-		Asset = "rbxassetid://83459696723991",
+		Asset = "rbxassetid://81166787978473",
 		HeightOffset = 1
 	},
 	Lights = {
@@ -112,7 +112,7 @@ sound.SoundId = "rbxassetid://"
 sound.PlaybackSpeed = 0.8
 sound.Looped = false
 sound.Parent = workspace
-sound.Volume = 10
+sound.Volume = 0.1
 sound:Play()
 Debris:AddItem(sound, 10)
 
