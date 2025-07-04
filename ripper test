@@ -1,0 +1,225 @@
+-- GUI Setup
+local player = game.Players.LocalPlayer
+local playerGui = player:WaitForChild("PlayerGui")
+
+local screenGui = Instance.new("ScreenGui")
+screenGui.Name = "RandomImageGui"
+screenGui.Parent = playerGui
+screenGui.IgnoreGuiInset = true
+
+local red = Instance.new("ImageLabel")
+red.Size = UDim2.new(1, 0, 1, 0)
+red.BackgroundTransparency = 1
+red.Image = "rbxassetid://76637426417491"
+red.ImageTransparency = 1
+red.Parent = screenGui
+
+task.spawn(function()
+    while true do
+        red.Image = "rbxassetid://94547864377343"
+        wait(0)
+        red.Image = "rbxassetid://76637426417491"
+        wait(0)
+    end
+end)
+
+-- Spawn Entity
+local spawner = loadstring(game:HttpGet("https://raw.githubusercontent.com/RegularVynixu/Utilities/main/Doors/Entity%20Spawner/V2/Source.lua"))()
+local get = true
+
+local entity = spawner.Create({
+    Entity = {
+        Name = "RipperMovings",
+        Asset = "rbxassetid://83459696723991",
+        HeightOffset = 1
+    },
+    Lights = {
+        Flicker = { Enabled = false, Duration = 7 },
+        Shatter = false,
+        Repair = false
+    },
+    Earthquake = { Enabled = false },
+    CameraShake = {
+        Enabled = true,
+        Range = 100,
+        Values = {5, 3, 2, 2}
+    },
+    Movement = {
+        Speed = 125,
+        Delay = 6,
+        Reversed = false
+    },
+    Rebounding = {
+        Enabled = false,
+        Type = "Ambush",
+        Min = 2,
+        Max = 2,
+        Delay = 0
+    },
+    Damage = {
+        Enabled = true,
+        Range = 40,
+        Amount = 0.01
+    },
+    Crucifixion = {
+        Enabled = true,
+        Range = 100,
+        Resist = false,
+        Break = true
+    },
+    Death = {
+        Type = "Guiding",
+        Hints = {"You dead to Ripper", "Just hide when he appears"},
+        Cause = ""
+    }
+})
+
+-- Room Light Change
+local TweenService = game:GetService("TweenService")
+local TweenInfo = TweenInfo.new(5, Enum.EasingStyle.Linear, Enum.EasingDirection.Out)
+local color = {Color = Color3.new(1, 0, 0)}
+
+for _, v in pairs(workspace.CurrentRooms[game.ReplicatedStorage.GameData.LatestRoom.Value]:GetDescendants()) do
+    if v:IsA("Light") then
+        TweenService:Create(v, TweenInfo, color):Play()
+    elseif v.Parent.Name == "LightFixture" then
+        TweenService:Create(v.Parent, TweenInfo, color):Play()
+    end
+end
+
+-- Camera Shake & Color Correction
+local CameraShaker = require(game.ReplicatedStorage.CameraShaker)
+local camera = workspace.CurrentCamera
+local camShake = CameraShaker.new(Enum.RenderPriority.Camera.Value, function(shakeCf)
+    camera.CFrame = camera.CFrame * shakeCf
+end)
+camShake:Start()
+camShake:ShakeOnce(5, 5, 0, 5.5, 1, 0)
+camShake:Shake(CameraShaker.Presets.Earthquake)
+
+local Debris = game:GetService("Debris")
+local colorEffect = Instance.new("ColorCorrectionEffect", game.Lighting)
+TweenService:Create(colorEffect, TweenInfo.new(5), {
+    TintColor = Color3.fromRGB(255, 0, 0),
+    Saturation = -0.7,
+    Contrast = 0.2
+}):Play()
+
+local sound = Instance.new("Sound")
+sound.SoundId = "rbxassetid://<YOUR_ENTRY_SOUND_ID>"
+sound.PlaybackSpeed = 0.8
+sound.Looped = false
+sound.Parent = workspace
+sound.Volume = 10
+sound:Play()
+Debris:AddItem(sound, 10)
+
+-- OnDespawning logic (giữ nguyên)
+entity:SetCallback("OnDespawning", function()
+    camShake:Start()
+    camShake:ShakeOnce(10, 15, 0, 5.5, 1, 0)
+    camShake:Shake(CameraShaker.Presets.Earthquake)
+
+    workspace.CurrentRooms[game.ReplicatedStorage.GameData.LatestRoom.Value]:WaitForChild("Door").ClientOpen:FireServer()
+    for _, v in pairs(workspace:WaitForChild("RipperMovings"):GetDescendants()) do
+        if v:IsA("Sound") then v:Destroy() end
+    end
+
+    TweenService:Create(colorEffect, TweenInfo.new(10), {
+        TintColor = Color3.fromRGB(255,255,255),
+        Saturation = 0,
+        Contrast = 0
+    }):Play()
+    Debris:AddItem(colorEffect, 10)
+
+    if get then
+        -- Play door break sound + achievement
+        local function GitAud(url, fn)
+            writefile(fn..".mp3", game:HttpGet(url))
+            return (getcustomasset or getsynasset)(fn..".mp3")
+        end
+        local function CustomGitSound(link, vol, fn)
+            local sd = Instance.new("Sound", workspace)
+            sd.SoundId = GitAud(link, fn)
+            sd.Volume = vol
+            sd.Name = "DoorBreaker"
+            sd:Play()
+        end
+        CustomGitSound("https://github.com/Darker-TheDarkestGuy/DOORS/raw/refs/heads/main/.mp3?raw=true", 1, "DoorBreaker")
+
+        camShake:Start()
+        camShake:ShakeOnce(20, 5, 5, 3, 2, 1)
+
+        local achievementGiver = loadstring(game:HttpGet("https://raw.githubusercontent.com/Idk-lol2/a-60aa/refs/heads/main/fix%20bage.txt"))()
+        achievementGiver({
+            Title = "Torn Apart",
+            Desc = "Don't Leave Too Early.",
+            Reason = "Encounter Ripper",
+            Image = "rbxassetid://<YOUR_ACHIEVEMENT_IMAGE_ID>"
+        })
+    end
+end)
+
+-- 🎯 **THAY PHẦN JUMPSCARE**
+entity:SetCallback("OnDamagePlayer", function(newHealth)
+    if newHealth == 0 then return end
+
+    local camera = workspace.CurrentCamera
+
+    -- Jumpscare GUI
+    local jsGui = Instance.new("ScreenGui")
+    jsGui.Name = "RipperJumpscare"
+    jsGui.Parent = playerGui
+    jsGui.IgnoreGuiInset = true
+    jsGui.ResetOnSpawn = false
+
+    local img = Instance.new("ImageLabel", jsGui)
+    img.Size = UDim2.new(1,0,1,0)
+    img.Position = UDim2.new(0,0,0,0)
+    img.BackgroundTransparency = 1
+    img.Image = "rbxassetid://<RIPPER_FACE_ID>"
+    img.ImageTransparency = 1
+    img.ZIndex = 999
+
+    -- Scream sound
+    local sc = Instance.new("Sound", workspace)
+    sc.SoundId = "rbxassetid://<RIPPER_SOUND_ID>"
+    sc.Volume = 5
+    sc:Play()
+
+    -- Fade in img
+    TweenService:Create(img, TweenInfo.new(0.1), {ImageTransparency = 0}):Play()
+
+    -- Camera shake
+    local elapsed = 0
+    local shakeTime = 0.5
+    local conn
+    conn = game:GetService("RunService").RenderStepped:Connect(function(dt)
+        if elapsed < shakeTime then
+            camera.CFrame *= CFrame.new(
+                (math.random()-0.5)*0.3,
+                (math.random()-0.5)*0.3,
+                (math.random()-0.5)*0.3
+            )
+            elapsed += dt
+        else
+            conn:Disconnect()
+        end
+    end)
+
+    -- Delay kill
+    task.delay(0.6, function()
+        if player.Character and player.Character:FindFirstChild("Humanoid") then
+            player.Character.Humanoid.Health = 0
+        end
+    end)
+
+    -- Cleanup
+    task.delay(2, function()
+        jsGui:Destroy()
+        sc:Destroy()
+    end)
+end)
+
+-- Start the entity
+entity:Run()
