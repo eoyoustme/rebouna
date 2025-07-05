@@ -172,7 +172,7 @@ entity:SetCallback("OnDamagePlayer", function(newHealth)
 
         -- Setup jumpscare
         C.Anchored = true
-        lockOn.Anchored = false
+        lockOn.Anchored = true
         lockOn.CanCollide = true
         lockOn.CFrame = lockOn.CFrame * CFrame.new(0, 1, 0)
 
