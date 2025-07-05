@@ -62,7 +62,7 @@ function dragEntity(entityModel, pos, speed)
     end
 
     -- Tạo Tween di chuyển
-    local tweenInfo = TweenInfo.new(1, Enum.EasingStyle.Linear)
+    local tweenInfo = TweenInfo.new(1.8, Enum.EasingStyle.Linear)
     local tween = TweenService:Create(entityModel.PrimaryPart, tweenInfo, {CFrame = CFrame.new(pos.X, pos.Y, pos.Z)})
 
     -- Kết nối sự kiện hoàn thành tween
@@ -205,7 +205,7 @@ ItemName.PrimaryPart.Footsteps:Destroy()
 
 ItemName.PrimaryPart.Idle:Destroy()
     local spawn = Instance.new("Sound")
-wait(3)
+wait(4)
 spawn.Parent = entityModel.PrimaryPart
 spawn.Name = "ReboundSpawn"
 spawn.SoundId = "rbxassetid://9114221327"
