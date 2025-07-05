@@ -1,0 +1,127 @@
+-- Xóa GUI cũ nếu có
+pcall(function()
+    game.CoreGui:FindFirstChild("DarkDepthGui"):Destroy()
+    game.CoreGui:FindFirstChild("DarkDepthBigSquareGui"):Destroy()
+end)
+
+local CoreGui = game:GetService("CoreGui")
+local Lighting = game:GetService("Lighting")
+
+local gui = Instance.new("ScreenGui")
+gui.Name = "DarkDepthGui"
+gui.ResetOnSpawn = false
+gui.Parent = CoreGui
+
+local darkDepth = false
+
+-- Tạo nút giữa màn hình
+local function createButton(name, yOffset, text)
+    local btn = Instance.new("TextButton")
+    btn.Name = name
+    btn.Size = UDim2.new(0, 200, 0, 50)
+    btn.Position = UDim2.new(0.5, -100, 0.5, yOffset)
+    btn.BackgroundColor3 = Color3.new(1, 1, 1)
+    btn.TextColor3 = Color3.new(0, 0, 0)
+    btn.TextSize = 20
+    btn.Font = Enum.Font.SourceSansBold
+    btn.Text = text
+    btn.ZIndex = 2 -- cao hơn hình vuông
+    btn.Parent = gui
+    return btn
+end
+
+local darkDepthBtn = createButton("DarkDepthButton", -60, "DarkDepth: false")
+local startBtn     = createButton("StartButton", 0, "Start")
+local cancelBtn    = createButton("CancelButton", 60, "Cancel")
+
+startBtn.Visible = false
+
+-- Tạo hình vuông trắng dưới các nút (xuất hiện lúc đầu)
+local square = Instance.new("Frame")
+square.Size = UDim2.new(0.5, 0, 0.5, 0)
+square.Position = UDim2.new(0.25, 0, 0.25, 0)
+square.BackgroundColor3 = Color3.new(1, 1, 1) -- màu trắng
+square.ZIndex = 1 -- thấp hơn nút để không che
+square.Visible = true -- xuất hiện lúc load script
+square.Parent = gui
+
+-- Hàm tải nhạc từ GitHub và tạo Sound
+local function getGitSoundId(GithubSoundPath, AssetName)
+    if not isfile(AssetName..".mp3") then 
+        writefile(AssetName..".mp3", game:HttpGet(GithubSoundPath)) 
+    end
+    local sound = Instance.new("Sound")
+    sound.SoundId = getcustomasset(AssetName..".mp3", true)
+    return sound 
+end
+
+local CustomMusic = nil
+
+local function updateDarkDepth()
+    darkDepthBtn.Text = "DarkDepth: " .. tostring(darkDepth)
+    if darkDepth then
+        darkDepthBtn.BackgroundColor3 = Color3.new(0, 0, 0)
+        darkDepthBtn.TextColor3 = Color3.new(1, 1, 1)
+        startBtn.Visible = true
+        square.Visible = true -- vẫn hiện hình vuông trắng khi bật darkDepth
+    else
+        darkDepthBtn.BackgroundColor3 = Color3.new(1, 1, 1)
+        darkDepthBtn.TextColor3 = Color3.new(0, 0, 0)
+        startBtn.Visible = false
+        square.Visible = true -- vẫn giữ hình vuông trắng dù chưa bật darkDepth
+    end
+end
+
+darkDepthBtn.MouseButton1Click:Connect(function()
+    darkDepth = not darkDepth
+    updateDarkDepth()
+end)
+
+startBtn.MouseButton1Click:Connect(function()
+    if darkDepth then
+        gui.Enabled = false
+
+        -- Bật sương mù đen
+        Lighting.FogStart = 0
+        Lighting.FogEnd = 20
+        Lighting.FogColor = Color3.new(0, 0, 0)
+
+        -- Phát nhạc nền
+        if not CustomMusic then
+            CustomMusic = getGitSoundId("https://github.com/nervehammer1/throwawaystuff/raw/refs/heads/main/NightmareAmbient.mp3", "NightmareModeAmbient")
+            CustomMusic.Parent = game.Workspace
+            CustomMusic.Looped = true
+            CustomMusic.Volume = 5
+        end
+        CustomMusic:Play()
+
+  
+                    loadstring(game:HttpGet("https://raw.githubusercontent.com/eoyoustme/rebouna/main/Doors%20"
+        -- Cancel khi bấm sẽ xóa GUI lớn, dừng nhạc, reset fog, xóa gui chính
+        cancelBtn.MouseButton1Click:Connect(function()
+            bigSquareGui:Destroy()
+            gui:Destroy()
+            if CustomMusic then
+                CustomMusic:Stop()
+                CustomMusic:Destroy()
+                CustomMusic = nil
+            end
+            Lighting.FogStart = 0
+            Lighting.FogEnd = 100000
+        end)
+    end
+end)
+
+cancelBtn.MouseButton1Click:Connect(function()
+    gui:Destroy()
+    square.Visible = false
+    if CustomMusic then
+        CustomMusic:Stop()
+        CustomMusic:Destroy()
+        CustomMusic = nil
+    end
+    Lighting.FogStart = 0
+    Lighting.FogEnd = 100000
+end)
+
+updateDarkDepth()
