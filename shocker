@@ -16,7 +16,7 @@ local function spawnShocker()
     local oogaBoogaaPart = shockerModel:WaitForChild("OOGA BOOGAAAA")
     local horrorScream = shockerModel:WaitForChild("OOGA BOOGAAAA"):WaitForChild("HORROR SCREAM 15")
 
-    local lookDuration = 1
+    local lookDuration = 1.5
     local startTime = tick()
     local playerLookingAtShocker = true
 
