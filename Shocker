@@ -62,7 +62,7 @@ local function spawnShocker()
 
                 -- Tween lao tới player
                 local targetPos = character.HumanoidRootPart.Position + Vector3.new(0, 2, 0)
-                local tweenInfo = TweenInfo.new(1, Enum.EasingStyle.Exponential, Enum.EasingDirection.Out)
+                local tweenInfo = TweenInfo.new(1.2, Enum.EasingStyle.Exponential, Enum.EasingDirection.Out)
                 local tween = TweenService:Create(oogaBoogaaPart, tweenInfo, {Position = targetPos})
                 tween:Play()
 
