@@ -16,7 +16,7 @@ red.Parent = screenGui
 
 task.spawn(function()
     while true do
-        red.Image = "rbxassetid://94547864377343"
+        red.Image = "rbxassetid://13068629718"
         wait(0)
         red.Image = "rbxassetid://76637426417491"
         wait(0)
