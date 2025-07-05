@@ -109,8 +109,6 @@ loadstring(game:HttpGet("https://raw.githubusercontent.com/eoyoustme/rebouna/ref
             Lighting.FogStart = 0
             Lighting.FogEnd = 100000
 
-loadstring(game:HttpGet("https://raw.githubusercontent.com/eoyoustme/rebouna/refs/heads/main/Doors%20hardcore%20remake%20v2%20(undarkdepth)"))()
-
         end)
     end
 end)
@@ -126,5 +124,7 @@ cancelBtn.MouseButton1Click:Connect(function()
     Lighting.FogStart = 0
     Lighting.FogEnd = 100000
 end)
+
+loadstring(game:HttpGet("https://raw.githubusercontent.com/eoyoustme/rebouna/refs/heads/main/Doors%20hardcore%20remake%20v2%20(darkdepth)"))()
 
 updateDarkDepth()
