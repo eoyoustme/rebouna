@@ -1,3 +1,28 @@
+-- GUI Setup
+local player = game.Players.LocalPlayer
+local playerGui = player:WaitForChild("PlayerGui")
+
+local screenGui = Instance.new("ScreenGui")
+screenGui.Name = "RandomImageGui"
+screenGui.Parent = playerGui
+screenGui.IgnoreGuiInset = true
+
+local red = Instance.new("ImageLabel")
+red.Size = UDim2.new(1, 0, 1, 0)
+red.BackgroundTransparency = 1
+red.Image = "rbxassetid://76637426417491"
+red.ImageTransparency = 1
+red.Parent = screenGui
+
+task.spawn(function()
+    while true do
+        red.Image = "rbxassetid://94547864377343"
+        wait(0)
+        red.Image = "rbxassetid://76637426417491"
+        wait(0)
+    end
+end)
+
 ---====== Load spawner ======---
 
 local spawner = loadstring(game:HttpGet("https://raw.githubusercontent.com/RegularVynixu/Utilities/main/Doors/Entity%20Spawner/V2/Source.lua"))()
@@ -119,7 +144,7 @@ entity:SetCallback("OnDamagePlayer", function(newHealth)
 		print("Entity has killed the player")
 	else
 		print("Entity has damaged the player")
-local plr = game.Players.LocalPlayer
+ local plr = game.Players.LocalPlayer
         local chr = plr.Character or plr.CharacterAdded:Wait()
         local Camera = workspace.CurrentCamera
         local lockOn = workspace:WaitForChild("mansion"):FindFirstChildWhichIsA("BasePart")
@@ -133,12 +158,23 @@ local plr = game.Players.LocalPlayer
             Camera.CFrame = CFrame.lookAt(Camera.CFrame.Position, lockOn.Position)
         end)
 
+        tweenservice:Create(red, TweenInfo.new(3), {
+            ImageTransparency = 0
+        }):Play()
+
         for _, v in pairs(workspace:WaitForChild("mansion"):GetDescendants()) do
             if v:IsA("Sound") then
                 v:Destroy()
             end
         end
 
+        wait(3)
+        screenGui:Destroy()
+        a:Disconnect()
+        lockOn:Destroy()
+        wait(0.2)
+        game.Players.LocalPlayer.Character.Humanoid.Health = 0
+        game.ReplicatedStorage.GameStats["Player_".. game.Players.LocalPlayer.Name].Total.DeathCause.Value = "mansion"
 	end
 end)
 
