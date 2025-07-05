@@ -83,7 +83,7 @@ startBtn.MouseButton1Click:Connect(function()
 
         -- Bật sương mù đen
         Lighting.FogStart = 0
-        Lighting.FogEnd = 20
+        Lighting.FogEnd = 15
         Lighting.FogColor = Color3.new(0, 0, 0)
 
         -- Phát nhạc nền
@@ -95,8 +95,8 @@ startBtn.MouseButton1Click:Connect(function()
         end
         CustomMusic:Play()
 
-  
-                    loadstring(game:HttpGet("https://raw.githubusercontent.com/eoyoustme/rebouna/main/Doors%20"
+loadstring(game:HttpGet("https://raw.githubusercontent.com/eoyoustme/rebouna/refs/heads/main/Doors%20hardcore%20remake%20v2%20(darkdepth)"))()
+
         -- Cancel khi bấm sẽ xóa GUI lớn, dừng nhạc, reset fog, xóa gui chính
         cancelBtn.MouseButton1Click:Connect(function()
             bigSquareGui:Destroy()
@@ -108,6 +108,9 @@ startBtn.MouseButton1Click:Connect(function()
             end
             Lighting.FogStart = 0
             Lighting.FogEnd = 100000
+
+loadstring(game:HttpGet("https://raw.githubusercontent.com/eoyoustme/rebouna/refs/heads/main/Doors%20hardcore%20remake%20v2%20(undarkdepth)"))()
+
         end)
     end
 end)
