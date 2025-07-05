@@ -4,7 +4,7 @@ local Spawner = loadstring(game:HttpGet('https://raw.githubusercontent.com/MuhXd
 -- Create entity
 local entity = Spawner.createEntity({
     CustomName = "HC Rush", -- Custom name of your entity
-    Model = "rbxassetid://103834090677673", -- Can be GitHub file or rbxassetid
+    Model = "rbxassetid://98615817135506", -- Can be GitHub file or rbxassetid
     Speed = 100, -- Percentage, 100 = default Rush speed
     DelayTime = 3, -- Time before starting cycles (seconds)
     HeightOffset = 1,
@@ -23,7 +23,7 @@ local entity = Spawner.createEntity({
     },
     FlickerLights = {
         true, -- Enabled/Disabled
-        2 -- Time (seconds)
+        3 -- Time (seconds)
     },
     Cycles = {
         Min = 1,
@@ -56,7 +56,7 @@ local entity = Spawner.createEntity({
             Tease = {
                 true, -- Enabled/Disabled
                 Min = 1,
-                Max = 6,
+                Max = 3,
             },
         },
     },
