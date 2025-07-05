@@ -11,13 +11,13 @@ pcall(function()
     loadstring(game:HttpGet("https://raw.githubusercontent.com/eoyoustme/rebouna/refs/heads/main/red%20light"))()
     loadstring(game:HttpGet("https://pastebin.com/raw/HUNQ8vN5"))()
     loadstring(game:HttpGet("https://pastebin.com/raw/9xxyx9Ue"))()
-    loadstring(game:HttpGet("https://raw.githubusercontent.com/eoyoustme/rebouna/refs/heads/main/Deer%20sence2"))()
+    loadstring(game:HttpGet("https://raw.githubusercontent.com/eoyoustme/rebouna/refs/heads/main/seson%20man"))()
 end)
 
 local entityList = {
     {url = "https://raw.githubusercontent.com/eoyoustme/rebouna/refs/heads/main/Cease6", delay = 175},
     {url = "https://raw.githubusercontent.com/eoyoustme/rebouna/refs/heads/main/Ripper2", delay = 150},
-    {url = "https://raw.githubusercontent.com/eoyoustme/rebouna/refs/heads/main/reband3", delay = 170},
+    {url = "https://raw.githubusercontent.com/eoyoustme/rebouna/refs/heads/main/Reband1", delay = 240},
     {url = "https://raw.githubusercontent.com/eoyoustme/rebouna/refs/heads/main/Sinturaly", delay = 1000},
     {url = "https://raw.githubusercontent.com/eoyoustme/rebouna/refs/heads/main/Shocker", delay = 35},
     {url = "https://raw.githubusercontent.com/eoyoustme/rebouna/refs/heads/main/SIlence", delay = 300},
