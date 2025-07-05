@@ -11,7 +11,7 @@ local red = Instance.new("ImageLabel")
 red.Size = UDim2.new(1, 0, 1, 0)
 red.BackgroundTransparency = 1
 red.Image = "rbxassetid://76637426417491"
-red.ImageTransparency = 0
+red.ImageTransparency = 1
 red.Parent = screenGui
 
 task.spawn(function()
