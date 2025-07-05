@@ -25,7 +25,7 @@ local function createButton(name, yOffset, text)
     btn.TextSize = 20
     btn.Font = Enum.Font.SourceSansBold
     btn.Text = text
-    btn.ZIndex = 2 -- cao hơn hình vuông
+    btn.ZIndex = 2
     btn.Parent = gui
     return btn
 end
@@ -36,16 +36,15 @@ local cancelBtn    = createButton("CancelButton", 60, "Cancel")
 
 startBtn.Visible = false
 
--- Tạo hình vuông trắng dưới các nút (xuất hiện lúc đầu)
 local square = Instance.new("Frame")
 square.Size = UDim2.new(0.5, 0, 0.5, 0)
 square.Position = UDim2.new(0.25, 0, 0.25, 0)
-square.BackgroundColor3 = Color3.new(1, 1, 1) -- màu trắng
-square.ZIndex = 1 -- thấp hơn nút để không che
-square.Visible = true -- xuất hiện lúc load script
+square.BackgroundColor3 = Color3.new(1, 1, 1)
+square.ZIndex = 1
+square.Visible = true
 square.Parent = gui
 
--- Hàm tải nhạc từ GitHub và tạo Sound
+-- Hàm tải nhạc
 local function getGitSoundId(GithubSoundPath, AssetName)
     if not isfile(AssetName..".mp3") then 
         writefile(AssetName..".mp3", game:HttpGet(GithubSoundPath)) 
@@ -63,12 +62,12 @@ local function updateDarkDepth()
         darkDepthBtn.BackgroundColor3 = Color3.new(0, 0, 0)
         darkDepthBtn.TextColor3 = Color3.new(1, 1, 1)
         startBtn.Visible = true
-        square.Visible = true -- vẫn hiện hình vuông trắng khi bật darkDepth
+        square.Visible = true
     else
         darkDepthBtn.BackgroundColor3 = Color3.new(1, 1, 1)
         darkDepthBtn.TextColor3 = Color3.new(0, 0, 0)
         startBtn.Visible = false
-        square.Visible = true -- vẫn giữ hình vuông trắng dù chưa bật darkDepth
+        square.Visible = true
     end
 end
 
@@ -77,16 +76,15 @@ darkDepthBtn.MouseButton1Click:Connect(function()
     updateDarkDepth()
 end)
 
+-- START BUTTON
 startBtn.MouseButton1Click:Connect(function()
     if darkDepth then
         gui.Enabled = false
 
-        -- Bật sương mù đen
         Lighting.FogStart = 0
         Lighting.FogEnd = 15
         Lighting.FogColor = Color3.new(0, 0, 0)
 
-        -- Phát nhạc nền
         if not CustomMusic then
             CustomMusic = getGitSoundId("https://github.com/nervehammer1/throwawaystuff/raw/refs/heads/main/NightmareAmbient.mp3", "NightmareModeAmbient")
             CustomMusic.Parent = game.Workspace
@@ -95,11 +93,10 @@ startBtn.MouseButton1Click:Connect(function()
         end
         CustomMusic:Play()
 
-loadstring(game:HttpGet("https://raw.githubusercontent.com/eoyoustme/rebouna/refs/heads/main/Doors%20hardcore%20remake%20v2%20(darkdepth)"))()
+        -- 👉 CHẠY SCRIPT DÀNH CHO START
+        loadstring(game:HttpGet("https://raw.githubusercontent.com/eoyoustme/rebouna/refs/heads/main/Doors%20hardcore%20remake%20v2%20(darkdepth)"))()
 
-        -- Cancel khi bấm sẽ xóa GUI lớn, dừng nhạc, reset fog, xóa gui chính
         cancelBtn.MouseButton1Click:Connect(function()
-            bigSquareGui:Destroy()
             gui:Destroy()
             if CustomMusic then
                 CustomMusic:Stop()
@@ -108,11 +105,11 @@ loadstring(game:HttpGet("https://raw.githubusercontent.com/eoyoustme/rebouna/ref
             end
             Lighting.FogStart = 0
             Lighting.FogEnd = 100000
-
         end)
     end
 end)
 
+-- CANCEL BUTTON
 cancelBtn.MouseButton1Click:Connect(function()
     gui:Destroy()
     square.Visible = false
@@ -123,8 +120,11 @@ cancelBtn.MouseButton1Click:Connect(function()
     end
     Lighting.FogStart = 0
     Lighting.FogEnd = 100000
+
+    -- 👉 CHẠY SCRIPT DÀNH CHO CANCEL
+    loadstring(game:HttpGet("https://raw.githubusercontent.com/eoyoustme/rebouna/refs/heads/main/Doors%20hardcore%20remake%20v2%20(undarkdepth)"))()
 end)
 
-loadstring(game:HttpGet("https://raw.githubusercontent.com/eoyoustme/rebouna/refs/heads/main/Doors%20hardcore%20remake%20v2%20(darkdepth)"))()
-
+-- KHÔNG CHẠY GÌ Ở ĐÂY
+-- updateDarkDepth nên vẫn giữ
 updateDarkDepth()
