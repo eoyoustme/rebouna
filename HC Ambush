@@ -14,7 +14,7 @@ end
 local entity = spawner.Create({
     Entity = {
         Name = "HC Ambush",
-        Asset = "rbxassetid://125174726187863",
+        Asset = "rbxassetid://133679815726230",
         HeightOffset = 0
     },
     Lights = {
@@ -43,7 +43,7 @@ local entity = spawner.Create({
         Type = "Ambush", -- "Blitz"
         Min = 3,
         Max = 3,
-        Delay = 1.2
+        Delay = 0.6
     },
     Damage = {
         Enabled = true,
