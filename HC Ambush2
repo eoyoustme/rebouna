@@ -209,7 +209,7 @@ task.spawn(function()
 end)
 
 -- Jumpscare zoom effect
-game.TweenService:Create(Face, TweenInfo.new(1, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+game.TweenService:Create(Face, TweenInfo.new(1.656, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
 	Size = UDim2.new(2.5, 0, 2.5, 0),
 	ImageTransparency = 0
 }):Play()
@@ -228,7 +228,7 @@ end)
 
 -- Play sound and cleanup
 scare:Play()
-task.wait(1)
+task.wait(1.656)
 JumpscareGui:Destroy()
     else
         print("Entity has damaged the player")
