@@ -163,21 +163,21 @@ Face.Parent = Background
 -- Sound setup
 local scare = Instance.new("Sound")
 scare.Name = "MyEarsBurn"
-scare.SoundId = "rbxassetid://"
+scare.SoundId = "rbxassetid://5351101493"
 scare.PlaybackSpeed = 3
 scare.Volume = 999
 scare.Parent = JumpscareGui
 
 local shift = Instance.new("PitchShiftSoundEffect")
-shift.Octave = 0.5
+shift.Octave = 1
 shift.Parent = scare
 
 local distort = Instance.new("DistortionSoundEffect")
-distort.Level = 1
+distort.Level = 0.6
 distort.Parent = scare
 
 local distort2 = Instance.new("DistortionSoundEffect")
-distort2.Level = 1
+distort2.Level = 0.6
 distort2.Parent = scare
 
 local eq = Instance.new("EqualizerSoundEffect")
@@ -198,7 +198,7 @@ end)
 
 -- Flashing overlay effect (alternate between 2 images)
 local overlayImages = {
-	"rbxassetid://184251462", -- Hình overlay 1
+	"rbxassetid://211780776", -- Hình overlay 1
 	"rbxassetid://236542974"  -- Hình overlay 2
 }
 
