@@ -10,7 +10,7 @@ local function spawnShocker()
     shockerModel.PrimaryPart = shockerModel:FindFirstChild("HumanoidRootPart") or shockerModel:FindFirstChildWhichIsA("Part")
     
     local camera = Workspace.CurrentCamera
-    shockerModel:SetPrimaryPartCFrame(camera.CFrame * CFrame.new(0, 0, -7))
+    shockerModel:SetPrimaryPartCFrame(camera.CFrame * CFrame.new(0, 0, -9))
     shockerModel.Parent = Workspace
 
     local oogaBoogaaPart = shockerModel:WaitForChild("OOGA BOOGAAAA")
