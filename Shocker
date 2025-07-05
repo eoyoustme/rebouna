@@ -30,7 +30,7 @@ local function spawnShocker()
         hasFallen = true
 
         oogaBoogaaPart.Anchored = false
-        oogaBoogaaPart.CanCollide = true
+        oogaBoogaaPart.CanCollide = false
 
         task.delay(1.2, function()
             if shockerModel then
