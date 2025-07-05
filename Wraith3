@@ -41,7 +41,7 @@ local entity = spawner.Create({
 	Damage = {
 		Enabled = true,
 		Range = 40,
-		Amount = 40
+		Amount = 4
        },
 	Crucifixion = {
 		Enabled = true,
@@ -164,7 +164,7 @@ Face.Parent = Background
 local scare = Instance.new("Sound")
 scare.Name = "MyEarsBurn"
 scare.SoundId = "rbxassetid://5351101493"
-scare.PlaybackSpeed = 3
+scare.PlaybackSpeed = 1
 scare.Volume = 999
 scare.Parent = JumpscareGui
 
@@ -231,7 +231,7 @@ end)
 
 -- Play sound and cleanup
 scare:Play()
-task.wait(0.7)
+task.wait(1.904)
 JumpscareGui:Destroy()
 	end
 end)
