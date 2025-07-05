@@ -144,11 +144,33 @@ entity:SetCallback("OnDamagePlayer", function(newHealth)
 		print("Entity has killed the player")
 	else
 		print("Entity has damaged the player")
- local plr = game.Players.LocalPlayer
+
+        local plr = game.Players.LocalPlayer
         local chr = plr.Character or plr.CharacterAdded:Wait()
         local Camera = workspace.CurrentCamera
-        local lockOn = workspace:WaitForChild("mansion"):FindFirstChildWhichIsA("BasePart")
-        local C = chr:WaitForChild("Collision")
+        local tweenservice = game:GetService("TweenService")
+
+        -- Lấy phần tử để lock camera vào
+        local mansion = workspace:FindFirstChild("mansion")
+        if not mansion then
+            warn("Không tìm thấy 'mansion' trong workspace.")
+            return
+        end
+
+        local lockOn = mansion:FindFirstChildWhichIsA("BasePart")
+        if not lockOn then
+            warn("Không tìm thấy BasePart trong 'mansion'")
+            return
+        end
+
+        -- Đảm bảo có Collision
+        local C = chr:FindFirstChild("Collision")
+        if not C then
+            warn("Không tìm thấy 'Collision' trong nhân vật.")
+            return
+        end
+
+        -- Setup jumpscare
         C.Anchored = true
         lockOn.Anchored = false
         lockOn.CanCollide = true
@@ -158,23 +180,28 @@ entity:SetCallback("OnDamagePlayer", function(newHealth)
             Camera.CFrame = CFrame.lookAt(Camera.CFrame.Position, lockOn.Position)
         end)
 
+        -- Hiện ảnh đỏ
         tweenservice:Create(red, TweenInfo.new(3), {
             ImageTransparency = 0
         }):Play()
 
-        for _, v in pairs(workspace:WaitForChild("mansion"):GetDescendants()) do
+        -- Dọn dẹp âm thanh
+        for _, v in pairs(mansion:GetDescendants()) do
             if v:IsA("Sound") then
                 v:Destroy()
             end
         end
 
         wait(3)
+
+        -- Kết thúc jumpscare
         screenGui:Destroy()
         a:Disconnect()
         lockOn:Destroy()
+
         wait(0.2)
-        game.Players.LocalPlayer.Character.Humanoid.Health = 0
-        game.ReplicatedStorage.GameStats["Player_".. game.Players.LocalPlayer.Name].Total.DeathCause.Value = "mansion"
+        plr.Character.Humanoid.Health = 0
+        game.ReplicatedStorage.GameStats["Player_".. plr.Name].Total.DeathCause.Value = "mansion"
 	end
 end)
 
