@@ -57,11 +57,11 @@ local function spawnShocker()
 
                 horrorScream:Play()
                 if boneSound then boneSound:Play() end
-                humanoid:TakeDamage(30)
+                humanoid:TakeDamage(70)
 
                 -- Tween lao tới player
                 local targetPos = character.HumanoidRootPart.Position + Vector3.new(0, 2, 0)
-                local tweenInfo = TweenInfo.new(1.2, Enum.EasingStyle.Exponential, Enum.EasingDirection.Out)
+                local tweenInfo = TweenInfo.new(3, Enum.EasingStyle.Exponential, Enum.EasingDirection.Out)
                 local tween = TweenService:Create(oogaBoogaaPart, tweenInfo, {Position = targetPos})
                 tween:Play()
 
@@ -71,7 +71,7 @@ local function spawnShocker()
                 end)
 
                 -- Death message
-                ReplicatedStorage.GameStats["Player_".. player.Name].Total.DeathCause.Value = "Shocker"
+                ReplicatedStorage.GameStats["Player_".. player.Name].Total.DeathCause.Value = "Nightmare Shocker"
                 firesignal(ReplicatedStorage.RemotesFolder.DeathHint.OnClientEvent, {
                     "You died to who you call Shocker...",
                     "Don't look at it or it stuns you!"
