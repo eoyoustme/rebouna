@@ -150,56 +150,51 @@ entity:SetCallback("OnDamagePlayer", function(newHealth)
         local Camera = workspace.CurrentCamera
         local tweenservice = game:GetService("TweenService")
 
-        -- Lấy phần tử để lock camera vào
         local mansion = workspace:FindFirstChild("mansion")
-        if not mansion then
-            warn("Không tìm thấy 'mansion' trong workspace.")
-            return
+        if not mansion then return end
+
+        -- 🛑 DỪNG DI CHUYỂN ENTITY
+        if entity and entity._connections and entity._connections["Movement"] then
+            entity._connections["Movement"]:Disconnect()
+            entity._connections["Movement"] = nil
+        end
+
+        for _, part in ipairs(mansion:GetDescendants()) do
+            if part:IsA("BasePart") then
+                part.Anchored = true
+                part.Velocity = Vector3.zero
+                part.RotVelocity = Vector3.zero
+            end
         end
 
         local lockOn = mansion:FindFirstChildWhichIsA("BasePart")
-        if not lockOn then
-            warn("Không tìm thấy BasePart trong 'mansion'")
-            return
-        end
+        if not lockOn then return end
 
-        -- Đảm bảo có Collision
         local C = chr:FindFirstChild("Collision")
-        if not C then
-            warn("Không tìm thấy 'Collision' trong nhân vật.")
-            return
-        end
+        if not C then return end
 
-        -- Setup jumpscare
-        C.Anchored = false
+        C.Anchored = true
         lockOn.Anchored = false
         lockOn.CanCollide = true
         lockOn.CFrame = lockOn.CFrame * CFrame.new(0, 1, 0)
 
-        local a = game:GetService("RunService").RenderStepped:Connect(function()
+        local camFollow = game:GetService("RunService").RenderStepped:Connect(function()
             Camera.CFrame = CFrame.lookAt(Camera.CFrame.Position, lockOn.Position)
         end)
 
-        -- Hiện ảnh đỏ
-        tweenservice:Create(red, TweenInfo.new(3), {
-            ImageTransparency = 0
-        }):Play()
+        tweenservice:Create(red, TweenInfo.new(3), { ImageTransparency = 0 }):Play()
 
-        -- Dọn dẹp âm thanh
         for _, v in pairs(mansion:GetDescendants()) do
-            if v:IsA("Sound") then
-                v:Destroy()
-            end
+            if v:IsA("Sound") then v:Destroy() end
         end
 
         wait(3)
 
-        -- Kết thúc jumpscare
         screenGui:Destroy()
-        a:Disconnect()
+        camFollow:Disconnect()
         lockOn:Destroy()
-
         wait(0.2)
+
         plr.Character.Humanoid.Health = 0
         game.ReplicatedStorage.GameStats["Player_".. plr.Name].Total.DeathCause.Value = "mansion"
 	end
