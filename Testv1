@@ -1,12 +1,12 @@
--- Github Sounds
-function GetGitSound(GithubSnd,SoundName)
-	local url=GithubSnd
-	if not isfile(SoundName..".mp3") then
-		writefile(SoundName..".mp3", game:HttpGet(url))
-	end
-	local sound=Instance.new("Sound")
-	sound.SoundId=(getcustomasset or getsynasset)(SoundName..".mp3")
-	return sound
+-- Github Sounds function GetGitSound(GithubSnd,SoundName)
+local function GetGitSound(GithubSnd,SoundName)
+    local url=GithubSnd
+    if not isfile(SoundName..".mp3") then
+        writefile(SoundName..".mp3", game:HttpGet(url))
+    end
+    local sound=Instance.new("Sound")
+    sound.SoundId=(getcustomasset or getsynasset)(SoundName..".mp3")
+    return sound
 end
 
 -- Services
@@ -24,331 +24,307 @@ local Hum = Char:WaitForChild("Humanoid")
 local Camera = workspace.CurrentCamera
 
 local StaticRushSpeed = 60
-
 local FindPartOnRayWithIgnoreList = workspace.FindPartOnRayWithIgnoreList
 local WorldToViewportPoint = Camera.WorldToViewportPoint
 
 local SelfModules = {
-	DefaultConfig = loadstring(game:HttpGet("https://raw.githubusercontent.com/DripCapybara/Test/refs/heads/main/Doors/Backup/DefaultConfig.lua"))(),
-	Functions = loadstring(game:HttpGet("https://raw.githubusercontent.com/RegularVynixu/Utilities/main/Functions.lua"))(),
+    DefaultConfig = loadstring(game:HttpGet("https://raw.githubusercontent.com/DripCapybara/Test/refs/heads/main/Doors/Backup/DefaultConfig.lua"))(),
+    Functions = loadstring(game:HttpGet("https://raw.githubusercontent.com/RegularVynixu/Utilities/main/Functions.lua"))(),
 }
-local ModuleScripts = {
-	ModuleEvents = require(ReSt.ClientModules.Module_Events),
-	MainGame = require(Plr.PlayerGui.MainUI.Initiator.Main_Game),
-}
-local EntityConnections = {}
 
+local ModuleScripts = {
+    ModuleEvents = require(ReSt.ClientModules.Module_Events),
+    MainGame = require(Plr.PlayerGui.MainUI.Initiator.Main_Game),
+}
+
+local EntityConnections = {}
 local Spawner = {}
 
 -- Misc Functions
 function onCharacterAdded(char)
-	Char, Hum = char, char:WaitForChild("Humanoid")
+    Char, Hum = char, char:WaitForChild("Humanoid")
 end
 
 function getPlayerRoot()
-	return Char:FindFirstChild("HumanoidRootPart") or Char:FindFirstChild("Head")
+    return Char:FindFirstChild("HumanoidRootPart") or Char:FindFirstChild("Head")
 end
 
--- ✅ Di chuyển bằng Tween
 function dragEntity(entityModel, pos, speed)
-	local entityConnections = EntityConnections[entityModel]
+    local entityConnections = EntityConnections[entityModel]
 
-	if entityConnections.currentTween then
-		entityConnections.currentTween:Cancel()
-	end
+    if entityConnections.movementNode then
+        entityConnections.movementNode:Disconnect()
+        entityConnections.movementNode = nil
+    end
 
-	local rootPart = entityModel.PrimaryPart
-	if not rootPart then return end
+    local tweenInfo = TweenInfo.new(1.8, Enum.EasingStyle.Linear)
+    local tween = TweenService:Create(entityModel.PrimaryPart, tweenInfo, {CFrame = CFrame.new(pos.X, pos.Y, pos.Z)})
 
-	local startPos = rootPart.Position
-	local distance = (pos - startPos).Magnitude
-	local duration = distance / speed
+    local tweenCompletedConn
+    tweenCompletedConn = tween.Completed:Connect(function()
+        if tweenCompletedConn then
+            tweenCompletedConn:Disconnect()
+            tweenCompletedConn = nil
+        end
+        entityConnections.movementNode = nil
+    end)
 
-	local tweenInfo = TweenInfo.new(duration, Enum.EasingStyle.Linear)
-	local goal = {CFrame = CFrame.new(pos)}
+    entityConnections.movementNode = tweenCompletedConn
+    tween:Play()
 
-	local tween = TweenService:Create(entityModel.PrimaryPart, tweenInfo, goal)
-	entityConnections.currentTween = tween
-	tween:Play()
-	tween.Completed:Wait()
+    repeat task.wait(0.3) until entityConnections.movementNode == nil
 end
 
 function loadSound(soundData)
-	local sound = Instance.new("Sound")
-	local soundId = tostring(soundData[1])
-	local properties = soundData[2]
+    local sound = Instance.new("Sound")
+    local soundId = tostring(soundData[1])
+    local properties = soundData[2]
 
-	for i, v in next, properties do
-		if i ~= "SoundId" and i ~= "Parent" then
-			sound[i] = v
-		end
-	end
+    for i, v in next, properties do
+        if i ~= "SoundId" and i ~= "Parent" then
+            sound[i] = v
+        end
+    end
 
-	if soundId:find("rbxasset://") then
-		sound.SoundId = soundId
-	else
-		local numberId = soundId:gsub("%D", "")
-		sound.SoundId = "rbxassetid://".. numberId
-	end
+    if soundId:find("rbxasset://") then
+        sound.SoundId = soundId
+    else
+        local numberId = soundId:gsub("%D", "")
+        sound.SoundId = "rbxassetid://".. numberId
+    end
 
-	sound.Parent = workspace
-	return sound
+    sound.Parent = workspace
+
+    return sound
 end
 
--- ⚙️ Tạo entity
+-- Functions
 Spawner.createEntity = function(config)
-	for i, v in next, SelfModules.DefaultConfig do
-		if config[i] == nil then
-			config[i] = v
-		end
-	end
+    for i, v in next, SelfModules.DefaultConfig do
+        if config[i] == nil then
+            config[i] = v
+        end
+    end
 
-	config.Speed = StaticRushSpeed / 100 * config.Speed
-	local entityModel = LoadCustomInstance(config.Model)
+    config.Speed = StaticRushSpeed / 100 * config.Speed
 
-	if typeof(entityModel) == "Instance" and entityModel:IsA("Model") then
-		entityModel.PrimaryPart = entityModel.PrimaryPart or entityModel:FindFirstChildWhichIsA("BasePart")
-		if entityModel.PrimaryPart then
-			entityModel.PrimaryPart.Anchored = true
-			if config.CustomName then
-				entityModel.Name = config.CustomName
-			end
-			entityModel:SetAttribute("IsCustomEntity", true)
-			entityModel:SetAttribute("NoAI", false)
+    local entityModel = LoadCustomInstance(config.Model)
 
-			return {
-				Model = entityModel,
-				Config = config,
-				Debug = {
-					OnEntitySpawned = function() end,
-					OnEntityDespawned = function() end,
-					OnEntityStartMoving = function() end,
-					OnEntityFinishedRebound = function() end,
-					OnEntityEnteredRoom = function() end,
-					OnLookAtEntity = function() end,
-					OnDeath = function() end
-				}
-			}
-		end
-	end
+    if typeof(entityModel) == "Instance" and entityModel.ClassName == "Model" then
+        entityModel.PrimaryPart = entityModel.PrimaryPart or entityModel:FindFirstChildWhichIsA("BasePart")
+
+        if entityModel.PrimaryPart then
+            entityModel.PrimaryPart.Anchored = true
+
+            if config.CustomName then
+                entityModel.Name = config.CustomName
+            end
+
+            entityModel:SetAttribute("IsCustomEntity", true)
+            entityModel:SetAttribute("NoAI", false)
+
+            local entityTable = {
+                Model = entityModel,
+                Config = config,
+                Debug = {
+                    OnEntitySpawned = function() end,
+                    OnEntityDespawned = function() end,
+                    OnEntityStartMoving = function() end,
+                    OnEntityFinishedRebound = function() end,
+                    OnEntityEnteredRoom = function() end,
+                    OnLookAtEntity = function() end,
+                    OnDeath = function() end
+                }
+            }
+
+            return entityTable
+        end
+    end
 end
 
--- ▶️ Chạy entity
 Spawner.runEntity = function(entityTable)
-	local nodes = {}
+    local nodes = {}
 
-	for _, room in next, workspace.CurrentRooms:GetChildren() do
-		local pathfindNodes = room:FindFirstChild("PathfindNodes")
-		local fakeNode = Instance.new("Part")
-		fakeNode.Name = "1"
-		fakeNode.CFrame = room:WaitForChild("RoomExit").CFrame - Vector3.new(0, room.RoomExit.Size.Y / 2, 0)
-		pathfindNodes = {fakeNode}
-		table.sort(pathfindNodes, function(a, b)
-			return tonumber(a.Name) < tonumber(b.Name)
-		end)
+    for _, room in next, workspace.CurrentRooms:GetChildren() do
+        local pathfindNodes = room:FindFirstChild("PathfindNodes")
 
-		for _, node in next, pathfindNodes do
-			nodes[#nodes + 1] = node
-		end
-	end
+        local fakeNode = Instance.new("Part")
+        fakeNode.Name = "1"
+        fakeNode.CFrame = room:WaitForChild("RoomExit").CFrame - Vector3.new(0, room.RoomExit.Size.Y / 2, 0)
 
-	local entityModel = entityTable.Model:Clone()
-	local startNodeIndex = entityTable.Config.BackwardsMovement and #nodes or 1
-	local startNodeOffset = entityTable.Config.BackwardsMovement and -50 or 50
+        if pathfindNodes then
+            pathfindNodes = {fakeNode}
+        else
+            pathfindNodes = {fakeNode}
+        end
 
-	EntityConnections[entityModel] = {}
-	local entityConnections = EntityConnections[entityModel]
+        table.sort(pathfindNodes, function(a, b)
+            return tonumber(a.Name) < tonumber(b.Name)
+        end)
 
-	entityModel:PivotTo(nodes[startNodeIndex].CFrame * CFrame.new(0, 0, startNodeOffset) + Vector3.new(0, 3.5 + entityTable.Config.HeightOffset, 0))
-	entityModel.Parent = workspace
-	task.spawn(entityTable.Debug.OnEntitySpawned)
+        for _, node in next, pathfindNodes do
+            nodes[#nodes + 1] = node
+        end
+    end
 
-	-- Âm thanh spawn
-	local spawn = Instance.new("Sound")
-	wait(4)
-	spawn.Parent = entityModel.PrimaryPart
-	spawn.Name = "ReboundSpawn"
-	spawn.SoundId = "rbxassetid://9114221327"
-	spawn.Volume = 5
-	spawn.PlaybackSpeed = 1.2
-	spawn.RollOffMaxDistance = 10000
-	spawn.RollOffMinDistance = 450
-	spawn:Play()
+    local entityModel = entityTable.Model:Clone()
+    local startNodeIndex = entityTable.Config.BackwardsMovement and #nodes or 1
+    local startNodeOffset = entityTable.Config.BackwardsMovement and -50 or 50
 
-	-- Âm thanh di chuyển
-	local move = GetGitSound("https://github.com/check78/worldcuuuup/blob/main/DoomBegin.mp3?raw=true","Reboun")
-	move.Parent = entityModel.PrimaryPart
-	move.Name = "ReboundMoving"
-	move.Volume = 0
-	move.Looped = true
-	local vroom = TweenService:Create(move, TweenInfo.new(1), {Volume = 0.5})
+    EntityConnections[entityModel] = {}
+    local entityConnections = EntityConnections[entityModel]
 
-	local distort = Instance.new("DistortionSoundEffect")
-	distort.Level = 0.75
-	distort.Parent = move
+    entityModel:PivotTo(nodes[startNodeIndex].CFrame * CFrame.new(0, 0, startNodeOffset) + Vector3.new(0, 3.5 + entityTable.Config.HeightOffset, 0))
+    entityModel.Parent = workspace
+    task.spawn(entityTable.Debug.OnEntitySpawned)
 
-	local tree = Instance.new("TremoloSoundEffect")
-	tree.Depth = 1
-	tree.Duty = 1
-	tree.Frequency = 5
-	tree.Parent = move
+    local ItemName = entityModel
+    -- Thay vì PrimaryPart nếu không có thì lấy RushNew, hoặc basepart đầu tiên
+    ItemName.PrimaryPart = ItemName:FindFirstChild("RushNew") or ItemName.PrimaryPart or ItemName:FindFirstChildWhichIsA("BasePart")
 
-	local eq = Instance.new("EqualizerSoundEffect")
-	eq.HighGain = -60
-	eq.MidGain = 10
-	eq.LowGain = 10
-	eq.Parent = move
+    if ItemName.PrimaryPart == nil then
+        warn("Entity không có PrimaryPart hoặc RushNew hoặc BasePart! Script có thể lỗi.")
+        return
+    end
 
-	vroom:Play()
-	move:Play()
+    if ItemName:FindFirstChild("Rebound_Cue") then
+        ItemName.Rebound_Cue:Destroy()
+    end
 
-	-- Bắt đầu di chuyển
-	task.wait(entityTable.Config.DelayTime)
+    if ItemName.PrimaryPart:FindFirstChild("Footsteps") then
+        ItemName.PrimaryPart.Footsteps:Destroy()
+    end
 
-	task.spawn(entityTable.Debug.OnEntityStartMoving)
+    if ItemName.PrimaryPart:FindFirstChild("Idle") then
+        ItemName.PrimaryPart.Idle:Destroy()
+    end
 
-	local cyclesConfig = entityTable.Config.Cycles
-	if entityTable.Config.BackwardsMovement then
-		local inverseNodes = {}
-		for i = #nodes, 1, -1 do
-			table.insert(inverseNodes, nodes[i])
-		end
-		nodes = inverseNodes
-	end
+    -- Tạo âm thanh spawn
+    local spawn = Instance.new("Sound")
+    wait(4)
+    spawn.Parent = ItemName.PrimaryPart
+    spawn.Name = "ReboundSpawn"
+    spawn.SoundId = "rbxassetid://9114221327"
+    spawn.Volume = 5
+    spawn.PlaybackSpeed = 1.2
+    spawn.RollOffMaxDistance = 10000
+    spawn.RollOffMinDistance = 450
+    spawn:Play()
 
-	for cycle = 1, math.max(math.random(cyclesConfig.Min, cyclesConfig.Max), 1) do
-		for i = 1, #nodes do
-			dragEntity(entityModel, nodes[i].Position + Vector3.new(0, 3.5 + entityTable.Config.HeightOffset, 0), entityTable.Config.Speed)
-		end
+    -- Khi âm thanh spawn kết thúc thì chạy thẳng đến phòng người chơi
+    spawn.Ended:Connect(function()
+        local root = getPlayerRoot()
+        if entityModel and root then
+            local targetPart = entityModel:FindFirstChild("RushNew") or entityModel.PrimaryPart or entityModel:FindFirstChildWhichIsA("BasePart")
+            if not targetPart then return end
 
-		if cyclesConfig.Max > 1 then
-			for i = #nodes, 1, -1 do
-				dragEntity(entityModel, nodes[i].Position + Vector3.new(0, 3.5 + entityTable.Config.HeightOffset, 0), entityTable.Config.Speed)
-			end
-		end
+            local playerRoom = nil
+            for _, room in workspace.CurrentRooms:GetChildren() do
+                if room:FindFirstChild("RoomExit") and (room.RoomExit.Position - root.Position).Magnitude < 100 then
+                    playerRoom = room
+                    break
+                end
+            end
 
-		task.spawn(entityTable.Debug.OnEntityFinishedRebound)
-		if cycle < cyclesConfig.Max then
-			task.wait(cyclesConfig.WaitTime)
-		end
-	end
+            if playerRoom and playerRoom:FindFirstChild("RoomExit") then
+                local targetPos = playerRoom.RoomExit.Position + Vector3.new(0, 3.5 + entityTable.Config.HeightOffset, 0)
+                dragEntity(entityModel, targetPos, entityTable.Config.Speed)
+            end
+        end
+    end)
 
-	-- Cleanup
-	if not entityModel:GetAttribute("NoAI") then
-		for _, v in next, entityConnections do
-			if typeof(v) == "RBXScriptConnection" then
-				v:Disconnect()
-			elseif typeof(v) == "Instance" and v:IsA("Tween") then
-				v:Cancel()
-			end
-		end
-		task.spawn(entityTable.Debug.OnEntityDespawned)
-		entityModel.PrimaryPart.Anchored = false
-		entityModel.PrimaryPart.CanCollide = false
-		wait(6)
-		entityModel:Destroy()
-	end
+    local move = GetGitSound("https://github.com/check78/worldcuuuup/blob/main/DoomBegin.mp3?raw=true","Reboun")
+    move.Parent = ItemName.PrimaryPart
+    move.Name = "ReboundMoving"
+    move.Volume = 0
+    move.Looped = true
+
+    local vroom = TweenService:Create(move, TweenInfo.new(1),{Volume = 0.5})
+    local distort = Instance.new("DistortionSoundEffect")
+    distort.Level = 0.75
+    distort.Parent = move
+
+    move.RollOffMaxDistance = 2000
+    move.RollOffMinDistance = 50
+
+    local tree = Instance.new("TremoloSoundEffect")
+    tree.Depth = 1
+    tree.Duty = 1
+    tree.Frequency = 5
+    tree.Parent = move
+
+    local eq = Instance.new("EqualizerSoundEffect")
+    eq.HighGain = -60
+    eq.MidGain = 10
+    eq.LowGain = 10
+    eq.Parent = move
+
+    vroom:Play()
+    move:Play()
+
+    if CG:FindFirstChild("JumpscareGui") or (Plr.PlayerGui.MainUI.Death.HelpfulDialogue.Visible and not Plr.PlayerGui.MainUI.DeathPanelDead.Visible) then
+        warn("on death screen, mute entity")
+        for _, v in next, entityModel:GetDescendants() do
+            if v.ClassName == "Sound" and v.Playing then
+                v:Stop()
+            end
+        end
+    end
+
+       if entityTable.Config.FlickerLights[1] then
+        ModuleScripts.ModuleEvents.flickerLights(entityTable.Config.FlickerLights[2], entityTable.Config.FlickerLights[3], entityTable.Config.FlickerLights[4])
+    end
+
+    -- Entity chạy qua các nodes (nếu cần)
+    local index = entityTable.Config.BackwardsMovement and #nodes or 1
+    local step = entityTable.Config.BackwardsMovement and -1 or 1
+
+    task.spawn(function()
+        while nodes[index] do
+            if not entityModel or not entityModel.PrimaryPart then break end
+            local nodePos = nodes[index].Position + Vector3.new(0, 3.5 + entityTable.Config.HeightOffset, 0)
+            dragEntity(entityModel, nodePos, entityTable.Config.Speed)
+
+            -- Gọi callback khi vào phòng (nếu có)
+            if entityTable.Debug.OnEntityEnteredRoom then
+                task.spawn(entityTable.Debug.OnEntityEnteredRoom, nodes[index])
+            end
+
+            index = index + step
+            task.wait(0.1)
+        end
+
+        -- Khi entity kết thúc chạy, gọi callback
+        if entityTable.Debug.OnEntityFinishedRebound then
+            task.spawn(entityTable.Debug.OnEntityFinishedRebound)
+        end
+
+        -- Dọn dẹp entity khi xong
+        if entityModel and entityModel.Parent then
+            entityModel:Destroy()
+        end
+    end)
+
+    return entityModel
 end
 
--- 🎃 Jumpscare logic
-Spawner.runJumpscare = function(config)
-	local image1 = LoadCustomAsset(config.Image1)
-	local image2 = LoadCustomAsset(config.Image2)
-	local sound1 = config.Sound1 and loadSound(config.Sound1)
-	local sound2 = config.Sound2 and loadSound(config.Sound2)
-
-	local JumpscareGui = Instance.new("ScreenGui")
-	local Background = Instance.new("Frame")
-	local Face = Instance.new("ImageLabel")
-
-	JumpscareGui.Name = "JumpscareGui"
-	JumpscareGui.IgnoreGuiInset = true
-	JumpscareGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
-
-	Background.Name = "Background"
-	Background.BackgroundColor3 = Color3.new(0, 0, 0)
-	Background.BorderSizePixel = 0
-	Background.Size = UDim2.new(1, 0, 1, 0)
-	Background.ZIndex = 999
-
-	Face.Name = "Face"
-	Face.AnchorPoint = Vector2.new(0.5, 0.5)
-	Face.BackgroundTransparency = 1
-	Face.Position = UDim2.new(0.5, 0, 0.5, 0)
-	Face.ResampleMode = Enum.ResamplerMode.Pixelated
-	Face.Size = UDim2.new(0, 150, 0, 150)
-	Face.Image = image1
-
-	Face.Parent = Background
-	Background.Parent = JumpscareGui
-	JumpscareGui.Parent = CG
-
-	local tease = config.Tease
-	local absHeight = JumpscareGui.AbsoluteSize.Y
-	local minTeaseSize = absHeight / 5
-	local maxTeaseSize = absHeight / 2.5
-
-	if tease[1] then
-		local teaseAmount = math.random(tease.Min, tease.Max)
-		sound1:Play()
-
-		for _ = 1, teaseAmount do
-			task.wait(math.random(100, 200) / 100)
-			local grow = (maxTeaseSize - minTeaseSize) / teaseAmount
-			Face.Size = UDim2.new(0, Face.AbsoluteSize.X + grow, 0, Face.AbsoluteSize.Y + grow)
-		end
-
-		task.wait(math.random(100, 200) / 100)
-	end
-
-	if config.Flashing[1] then
-		task.spawn(function()
-			while JumpscareGui.Parent do
-				Background.BackgroundColor3 = config.Flashing[2]
-				task.wait(math.random(25, 100) / 1000)
-				Background.BackgroundColor3 = Color3.new(0, 0, 0)
-				task.wait(math.random(25, 100) / 1000)
-			end
-		end)
-	end
-
-	if config.Shake then
-		task.spawn(function()
-			local origin = Face.Position
-			while JumpscareGui.Parent do
-				Face.Position = origin + UDim2.new(0, math.random(-10, 10), 0, math.random(-10, 10))
-				Face.Rotation = math.random(-5, 5)
-				task.wait()
-			end
-		end)
-	end
-
-	Face.Image = image2
-	Face.Size = UDim2.new(0, maxTeaseSize, 0, maxTeaseSize)
-	sound2:Play()
-
-	TS:Create(Face, TweenInfo.new(0.75), {
-		Size = UDim2.new(0, absHeight * 3, 0, absHeight * 3),
-		ImageTransparency = 0.5
-	}):Play()
-	task.wait(0.75)
-	JumpscareGui:Destroy()
-
-	if sound1 then sound1:Destroy() end
-	if sound2 then sound2:Destroy() end
-end
-
--- 🎮 Setup nhân vật
+-- Xử lý khi nhân vật respawn
 Plr.CharacterAdded:Connect(onCharacterAdded)
 
--- 🔒 Tránh xóa PathfindNodes
-if not SpawnerSetup then
-	getgenv().SpawnerSetup = true
-	workspace.DescendantRemoving:Connect(function(des)
-		if des.Name == "PathfindNodes" then
-			des:Clone().Parent = des.Parent
-		end
-	end)
-end
+-- Sử dụng ví dụ: tạo entity và chạy nó
+--[[
+local entityConfig = {
+    Model = workspace.Entities.Rebound, -- Thay bằng model thật
+    Speed = 120,
+    HeightOffset = 1,
+    FlickerLights = {true, 0.5, 3, 2},
+    BackwardsMovement = false,
+    CustomName = "Rebound",
+}
 
-return Spawner
+local newEntity = Spawner.createEntity(entityConfig)
+if newEntity then
+    Spawner.runEntity(newEntity)
+end
+]]
+
