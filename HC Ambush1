@@ -34,7 +34,7 @@ local entity = spawner.Create({
         Values = {1.5, 20, 0.1, 1} -- Magnitude, Roughness, FadeIn, FadeOut
     },
     Movement = {
-        Speed = 256,
+        Speed = 300,
         Delay = 6,
         Reversed = false
     },
@@ -42,8 +42,8 @@ local entity = spawner.Create({
         Enabled = true,
         Type = "Ambush", -- "Blitz"
         Min = 3,
-        Max = 3,
-        Delay = 0.6
+        Max = 4,
+        Delay = 0.1
     },
     Damage = {
         Enabled = true,
@@ -145,8 +145,6 @@ Overlay.ImageTransparency = 0
 Overlay.ZIndex = 998
 Overlay.Parent = Background
 
-wait(0.656)
-
 -- Face image (jumpscare face)
 Face.Name = "Face"
 Face.AnchorPoint = Vector2.new(0.5, 0.5)
@@ -212,7 +210,7 @@ end)
 
 -- Jumpscare zoom effect
 game.TweenService:Create(Face, TweenInfo.new(1, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
-	Size = UDim2.new(1.5, 0, 1.5, 0),
+	Size = UDim2.new(2.5, 0, 2.5, 0),
 	ImageTransparency = 0
 }):Play()
 
