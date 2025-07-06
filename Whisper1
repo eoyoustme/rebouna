@@ -3,7 +3,7 @@ local chr = plr.Character or plr.CharacterAdded:Wait()
 local humrp = chr:WaitForChild("HumanoidRootPart")
 local RunService = game:GetService("RunService")
 
-local speed = 16
+local speed = 5
 local Move = true
 
 local entityModel = game:GetObjects("rbxassetid://128240312608241")[1]
@@ -22,7 +22,7 @@ RunService.Heartbeat:Connect(function(dt)
     entityModel:SetPrimaryPartCFrame(newCFrame)
 end)
 
-local entityPart = entityModel:FindFirstChild("RushNew")
+local entityPart = entityModel:FindFirstChild("Whisper")
 if entityPart then
     entityPart.Touched:Connect(function(hit)
         local h = hit.Parent and hit.Parent:FindFirstChild("Humanoid")
