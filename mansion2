@@ -117,12 +117,6 @@ entity:SetCallback("OnDespawned", function()
 	print("Entity has despawned")
 end)
 
--- Define services
-local TweenService = game:GetService("TweenService")
-local Players = game:GetService("Players")
-local workspace = game:GetService("Workspace")
-local RunService = game:GetService("RunService")
-
 -- Set up a callback for when the entity damages the player.
 entity:SetCallback("OnDamagePlayer", function(newHealth)
 	if newHealth == 0 then
