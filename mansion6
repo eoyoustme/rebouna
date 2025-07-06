@@ -127,35 +127,19 @@ entity:SetCallback("OnDamagePlayer", function(newHealth)
 			local player = Players.LocalPlayer
 			local character = player.Character or player.CharacterAdded:Wait()
 			local humanoid = character:WaitForChild("Humanoid", 5)
-			local humanoidRootPart = character:WaitForChild("HumanoidRootPart", 5)
 			local camera = workspace.CurrentCamera
 
 			local entityModel = workspace:FindFirstChild("mansion")
-			local primaryPart = entityModel and entityModel:FindFirstChild("RushNew")
-			if not (primaryPart and humanoidRootPart and humanoid) then return end
+			if not (entityModel and humanoid and camera) then return end
 
-			-- Entity follows player (optional)
-			local to = true
-			task.spawn(function()
-				while to and primaryPart.Parent and player.Character do
-					local root = player.Character:FindFirstChild("HumanoidRootPart")
-					if root then
-						local targetCFrame = root.CFrame
-						local tween = TweenService:Create(primaryPart, TweenInfo.new(5000, Enum.EasingStyle.Quad), {CFrame = targetCFrame})
-						tween:Play()
-						tween.Completed:Wait()
-					end
-					task.wait(0.1)
-				end
-			end)
+			local primaryPart = entityModel.PrimaryPart or entityModel:FindFirstChildWhichIsA("BasePart")
+			if not primaryPart then return end
 
-			wait(1)
-
-			-- Lock camera to RushNew
+			-- Khoá camera vào entity
 			camera.CameraType = Enum.CameraType.Scriptable
-			camera.CFrame = primaryPart.CFrame
+			camera.CFrame = primaryPart.CFrame * CFrame.new(0, 2, 8) * CFrame.Angles(0, math.rad(180), 0)
 
-			-- Jumpscare sound
+			-- Phát âm thanh jumpscare
 			local function GetGitSound(GithubSnd, SoundName)
 				local url = GithubSnd
 				if not isfile(SoundName .. ".mp3") then
@@ -163,20 +147,17 @@ entity:SetCallback("OnDamagePlayer", function(newHealth)
 				end
 				local sound = Instance.new("Sound")
 				sound.SoundId = (getcustomasset or getsynasset)(SoundName .. ".mp3")
+				sound.Volume = 3
+				sound.Parent = workspace
+				sound:Play()
 				return sound
 			end
 
-			local crash = GetGitSound("https://github.com/eoyoustme/rebouna/blob/main/Kill_with_static.mp3?raw=true", "Crashund")
-			crash.Volume = 3
-			crash.Parent = workspace
-			crash.PlaybackSpeed = 1
-			crash:Play()
+			local crashSound = GetGitSound("https://github.com/eoyoustme/rebouna/blob/main/Kill_with_static.mp3?raw=true", "Crashund")
 
-			-- Wait 3 seconds then kill player
+			-- Đợi 3 giây rồi giết player và xoá entity
 			task.wait(3)
-			humanoid.Health = 0
-
-			-- Destroy entity
+			if humanoid then humanoid.Health = 0 end
 			if entityModel and entityModel.Parent then
 				entityModel:Destroy()
 			end
