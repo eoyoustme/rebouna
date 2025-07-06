@@ -33,7 +33,7 @@ local entity = spawner.Create({
 	},
 	Damage = {
 		Enabled = true,
-		Range = 60,
+		Range = 40,
 		Amount = 0.01
 	},
 	Crucifixion = {
@@ -206,7 +206,7 @@ end
 
             local crashSound = GetGitSound("https://github.com/eoyoustme/rebouna/blob/main/Kill_with_static.mp3?raw=true", "Crashund")
 
-            task.wait(1)
+            task.wait(0.1)
 
             -- UI jumpscare
             local screenGui = Instance.new("ScreenGui")
