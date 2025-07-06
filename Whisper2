@@ -10,7 +10,7 @@ local entityModel = game:GetObjects("rbxassetid://128240312608241")[1]
 entityModel.Parent = workspace
 local Primary = entityModel:FindFirstChildWhichIsA("BasePart")
 entityModel.PrimaryPart = Primary
-entityModel:SetPrimaryPartCFrame(humrp.CFrame * CFrame.new(0, 0, 100))
+entityModel:SetPrimaryPartCFrame(humrp.CFrame * CFrame.new(0, 0, 10))
 
 RunService.Heartbeat:Connect(function(dt)
     if not Move or not entityModel or not entityModel.PrimaryPart or not humrp then return end
