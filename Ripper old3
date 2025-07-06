@@ -152,7 +152,7 @@ entity:SetCallback("OnDamagePlayer", function(newHealth)
 
             local entityModel = workspace:FindFirstChild("RipperMovings")
             if not entityModel then return end
-            local primaryPart = entityModel:FindFirstChild("Ripe")
+            local primaryPart = entityModel:FindFirstChild("RushNew")
             if not primaryPart then return end
 
             local to = true
