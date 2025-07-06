@@ -128,7 +128,7 @@ task.spawn(function()
 	local humanoid = character:WaitForChild("Humanoid")
 	local camera = workspace.CurrentCamera
 
-	local entityModel = workspace:WaitForChild("B-60")
+	local entityModel = workspace:WaitForChild("mansion")
 	local entityPrimary = entityModel:FindFirstChild("RushNew") or entityModel.PrimaryPart
 	if not entityPrimary then return end
 
