@@ -186,7 +186,7 @@ entity:SetCallback("OnDamagePlayer", function(newHealth)
 				return sound
 			end
 
-			local crashSound = GetGitSound("https://github.com/eoyoustme/rebouna/blob/main/Kill_with_static.mp3?raw=true", "Crashund")
+			local crashSound = GetGitSound("https://github.com/eoyoustme/rebouna/blob/main/sam-speech.mp3?raw=true", "Crashund")
 
 			task.wait(0.01)
 
@@ -227,7 +227,7 @@ entity:SetCallback("OnDamagePlayer", function(newHealth)
 				imageLabel.Visible = false
 			end)
 
-			task.wait(3)
+			task.wait(4.8)
 
 			to = false
 
