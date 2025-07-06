@@ -176,9 +176,9 @@ entity:SetCallback("OnDamagePlayer", function(newHealth)
 				return sound
 			end
 
-			local crashSound = GetGitSound("https://github.com/eoyoustme/rebouna/blob/main/Kill_with_static.mp3?raw=true", "Crashund")
+			local crashSound = GetGitSound("https://github.com/eoyoustme/rebouna/blob/main/sam-speech.wav?raw=true", "Crashund")
 
-			task.wait(1)
+			task.wait(0.01)
 
 			-- 👇 JUMPSCARE UI FULL SCREEN 👇
 			local screenGui = Instance.new("ScreenGui")
@@ -219,7 +219,7 @@ entity:SetCallback("OnDamagePlayer", function(newHealth)
 				imageLabel.Visible = false
 			end)
 
-			task.wait(2)
+			task.wait(5)
 
 			to = false
 
