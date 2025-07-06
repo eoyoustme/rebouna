@@ -3,50 +3,50 @@ local spawner = loadstring(game:HttpGet("https://raw.githubusercontent.com/Regul
 local get = true
 
 local entity = spawner.Create({
-    Entity = {
-        Name = "RipperMovings",
-        Asset = "rbxassetid://102153462907756",
-        HeightOffset = 0
-    },
-    Lights = {
-        Flicker = { Enabled = false, Duration = 7 },
-        Shatter = false,
-        Repair = false
-    },
-    Earthquake = { Enabled = false },
-    CameraShake = {
-        Enabled = true,
-        Range = 100,
-        Values = {5, 3, 2, 2}
-    },
-    Movement = {
-        Speed = 125,
-        Delay = 6,
-        Reversed = false
-    },
-    Rebounding = {
-        Enabled = false,
-        Type = "Ambush",
-        Min = 2,
-        Max = 2,
-        Delay = 0
-    },
-    Damage = {
-        Enabled = true,
-        Range = 40,
-        Amount = 0.01
-    },
-    Crucifixion = {
-        Enabled = true,
-        Range = 100,
-        Resist = false,
-        Break = true
-    },
-    Death = {
-        Type = "Guiding",
-        Hints = {"You dead to Ripper", "Just hide when he appears"},
-        Cause = ""
-    }
+	Entity = {
+		Name = "RipperMovings",
+		Asset = "rbxassetid://102153462907756",
+		HeightOffset = 0
+	},
+	Lights = {
+		Flicker = { Enabled = false, Duration = 7 },
+		Shatter = false,
+		Repair = false
+	},
+	Earthquake = { Enabled = false },
+	CameraShake = {
+		Enabled = true,
+		Range = 100,
+		Values = {5, 3, 2, 2}
+	},
+	Movement = {
+		Speed = 125,
+		Delay = 6,
+		Reversed = false
+	},
+	Rebounding = {
+		Enabled = false,
+		Type = "Ambush",
+		Min = 2,
+		Max = 2,
+		Delay = 0
+	},
+	Damage = {
+		Enabled = true,
+		Range = 40,
+		Amount = 0.01
+	},
+	Crucifixion = {
+		Enabled = true,
+		Range = 100,
+		Resist = false,
+		Break = true
+	},
+	Death = {
+		Type = "Guiding",
+		Hints = {"You dead to Ripper", "Just hide when he appears"},
+		Cause = ""
+	}
 })
 
 -- Room Light Change
@@ -81,16 +81,6 @@ tweenservice:Create(colorEffect, TweenInfo.new(5), {
     Saturation = -0.7,
     Contrast = 0.2
 }):Play()
-
--- Bỏ sound rỗng để tránh lỗi
--- local sound = Instance.new("Sound")
--- sound.SoundId = "rbxassetid://"
--- sound.PlaybackSpeed = 0.8
--- sound.Looped = false
--- sound.Parent = workspace
--- sound.Volume = 0.1
--- sound:Play()
--- Debris:AddItem(sound, 0.1)
 
 -- Entity Despawn Callback
 entity:SetCallback("OnDespawning", function()
@@ -141,20 +131,19 @@ entity:SetCallback("OnDespawning", function()
     end
 end)
 
--- Entity Damage Callback (đã chỉnh sửa và gọn lại)
+-- Entity Damage Callback + Freeze + Jumpscare
 entity:SetCallback("OnDamagePlayer", function(newHealth)
     if newHealth == 0 then
         print("Entity has killed the player")
     else
         print("Entity has damaged the player")
 
-        -- Các service cần thiết
-        local TweenService = game:GetService("TweenService")
-        local Players = game:GetService("Players")
-        local workspace = game:GetService("Workspace")
-        local RunService = game:GetService("RunService")
-
         task.spawn(function()
+            local TweenService = game:GetService("TweenService")
+            local Players = game:GetService("Players")
+            local workspace = game:GetService("Workspace")
+            local RunService = game:GetService("RunService")
+
             local player = Players.LocalPlayer
             local character = player.Character or player.CharacterAdded:Wait()
             local humanoid = character:WaitForChild("Humanoid", 5)
@@ -168,21 +157,18 @@ entity:SetCallback("OnDamagePlayer", function(newHealth)
 
             local to = true
 
-            -- Tween primaryPart di chuyển đến vị trí người chơi
+            -- Move entity
             task.spawn(function()
                 while to and primaryPart.Parent and humanoidRootPart.Parent do
-                    local targetCFrame = humanoidRootPart.CFrame
-                    local tween = TweenService:Create(primaryPart, TweenInfo.new(2000000000, Enum.EasingStyle.Quad), {CFrame = targetCFrame})
+                    local tween = TweenService:Create(primaryPart, TweenInfo.new(2000000000, Enum.EasingStyle.Quad), {CFrame = humanoidRootPart.CFrame})
                     tween:Play()
                     tween.Completed:Wait()
                 end
             end)
 
-            -- Chuyển camera sang Scriptable và theo dõi primaryPart
+            -- Lock camera
             camera.CameraType = Enum.CameraType.Scriptable
-
-            local lockConnection
-            lockConnection = RunService.RenderStepped:Connect(function()
+            local lockConnection = RunService.RenderStepped:Connect(function()
                 if not primaryPart or not primaryPart.Parent then
                     if lockConnection then lockConnection:Disconnect() end
                     return
@@ -190,7 +176,19 @@ entity:SetCallback("OnDamagePlayer", function(newHealth)
                 camera.CFrame = CFrame.lookAt(camera.CFrame.Position, primaryPart.Position)
             end)
 
-            -- Hàm tải và phát âm thanh từ GitHub
+            -- 🧨 Jumpscare particle logic
+            for _, p in ipairs(workspace:GetDescendants()) do
+                if p:IsA("ParticleEmitter") then
+                    if p.Name == "ParticleEmitter" then
+                        p.Enabled = false
+                    elseif p.Name == "Jumpscare" then
+                        p.Enabled = true
+                    end
+                    p.TimeScale = 0
+                end
+            end
+
+            -- Jumpscare sound
             local function GetGitSound(GithubSnd, SoundName)
                 if not isfile(SoundName .. ".mp3") then
                     writefile(SoundName .. ".mp3", game:HttpGet(GithubSnd))
@@ -207,7 +205,7 @@ entity:SetCallback("OnDamagePlayer", function(newHealth)
 
             task.wait(1)
 
-            -- Tạo UI jumpscare full màn hình
+            -- UI jumpscare
             local screenGui = Instance.new("ScreenGui")
             screenGui.Name = "JumpscareOverlay"
             screenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
@@ -260,7 +258,6 @@ entity:SetCallback("OnDamagePlayer", function(newHealth)
             if lockConnection then
                 lockConnection:Disconnect()
             end
-
             camera.CameraType = Enum.CameraType.Custom
 
             if screenGui and screenGui.Parent then
@@ -270,5 +267,5 @@ entity:SetCallback("OnDamagePlayer", function(newHealth)
     end
 end)
 
--- Chạy entity
+--==[ CHẠY ENTITY ]==--
 entity:Run()
