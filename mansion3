@@ -117,6 +117,9 @@ entity:SetCallback("OnDespawned", function()
 	print("Entity has despawned")
 end)
 
+local TweenService = game:GetService("TweenService")
+local Players = game:GetService("Players")
+
 entity:SetCallback("OnDamagePlayer", function(newHealth)
 	if newHealth == 0 then
 		print("Entity has killed the player")
@@ -126,25 +129,39 @@ entity:SetCallback("OnDamagePlayer", function(newHealth)
 		task.spawn(function()
 			local player = Players.LocalPlayer
 			local character = player.Character or player.CharacterAdded:Wait()
-			local humanoid = character:WaitForChild("Humanoid", 5000)
+			local humanoid = character:WaitForChild("Humanoid", 5)
+			local humanoidRootPart = character:WaitForChild("HumanoidRootPart", 5)
 			local camera = workspace.CurrentCamera
 
 			local entityModel = workspace:FindFirstChild("mansion")
-			if not (entityModel and humanoid and camera) then return end
+			if not (entityModel and humanoid and humanoidRootPart and camera) then return end
 
-			local primaryPart = entityModel.PrimaryPart or entityModel:FindFirstChildWhichIsA("BasePart")
-			if not primaryPart then return end
+			local entityPrimaryPart = entityModel:FindFirstChild("RushNew") or entityModel.PrimaryPart
+			if not entityPrimaryPart then return end
 
-			-- Khóa camera theo hướng nhìn vào entity
+			-- Hàm tween di chuyển entity tới vị trí target (ở đây là người chơi)
+			local function Moving(targetCFrame, dur)
+				local tween_info = TweenInfo.new(dur, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+				local tween = TweenService:Create(entityPrimaryPart, tween_info, {CFrame = targetCFrame})
+				tween:Play()
+				tween.Completed:Wait()
+			end
+
+			-- Entity bay tới người chơi trong 4 giây
+			Moving(humanoidRootPart.CFrame, 400000)
+
+			-- Khóa camera, giữ vị trí camera gốc, nhìn về entity
+			local originalCameraPosition = camera.CFrame.Position
 			camera.CameraType = Enum.CameraType.Scriptable
 
 			local lockConnection
 			lockConnection = game:GetService("RunService").RenderStepped:Connect(function()
-				if not primaryPart or not primaryPart.Parent then
+				if not entityPrimaryPart or not entityPrimaryPart.Parent then
 					lockConnection:Disconnect()
 					return
 				end
-				camera.CFrame = CFrame.lookAt(camera.CFrame.Position, primaryPart.Position)
+
+				camera.CFrame = CFrame.lookAt(originalCameraPosition, entityPrimaryPart.Position)
 			end)
 
 			-- Phát âm thanh jumpscare
