@@ -223,7 +223,7 @@ end)
 
 -- Flashing overlay effect (alternate between 2 images)
 local overlayImages = {
-	"rbxassetid://211780776", -- Hình overlay 1
+	"rbxassetid://184251462", -- Hình overlay 1
 	"rbxassetid://236542974"  -- Hình overlay 2
 }
 
