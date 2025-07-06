@@ -189,7 +189,7 @@ if humanoid then
     humanoid.JumpPower = 0
 end
 
-          task.wait(1)
+          task.wait(0.1)
 
             -- Jumpscare sound
             local function GetGitSound(GithubSnd, SoundName)
