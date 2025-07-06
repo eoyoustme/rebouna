@@ -139,6 +139,7 @@ entity:SetCallback("OnDamagePlayer", function(newHealth)
 			-- Wait for the humanoid and humanoidRootPart to be available in the character.
 			local humanoid = character:WaitForChild("Humanoid", 5)
 			local humanoidRootPart = character:WaitForChild("HumanoidRootPart")
+			local camera = workspace.CurrentCamera -- Lấy camera hiện tại
 
 			-- Get the entity model and its primary part.
 			-- The entity model is now "B-60" and its primary part is "RushNew" as per your request.
@@ -146,7 +147,7 @@ entity:SetCallback("OnDamagePlayer", function(newHealth)
 			local primaryPart = entityModel:FindFirstChild("RushNew")
 
 			-- If any essential parts are missing, exit the function.
-			if not (entityModel and humanoid and humanoidRootPart and primaryPart) then return end
+			if not (entityModel and humanoid and humanoidRootPart and primaryPart and camera) then return end
 
 			-- Variable to control the entity following loop.
 			local to = true
@@ -156,11 +157,25 @@ entity:SetCallback("OnDamagePlayer", function(newHealth)
 				while to and primaryPart.Parent and humanoidRootPart.Parent do
 					local targetCFrame = humanoidRootPart.CFrame
 					-- Create a tween to smoothly move the entity towards the player.
-					local tween = TweenService:Create(primaryPart, TweenInfo.new(99999, Enum.EasingStyle.Quad), {CFrame = targetCFrame})
+					local tween = TweenService:Create(primaryPart, TweenInfo.new(20000000, Enum.EasingStyle.Quad), {CFrame = targetCFrame})
 					tween:Play()
 					-- Wait for the tween to complete before the next iteration.
 					tween.Completed:Wait()
 				end
+			end)
+
+			-- Khóa camera theo hướng nhìn vào entity khi jumpscare
+			camera.CameraType = Enum.CameraType.Scriptable
+
+			local lockConnection
+			lockConnection = RunService.RenderStepped:Connect(function()
+				-- Đảm bảo primaryPart và parent của nó vẫn tồn tại
+				if not primaryPart or not primaryPart.Parent then
+					if lockConnection then lockConnection:Disconnect() end
+					return
+				end
+				-- Camera sẽ nhìn vào vị trí của primaryPart (RushNew)
+				camera.CFrame = CFrame.lookAt(camera.CFrame.Position, primaryPart.Position)
 			end)
 
 			-- Function to get and play a sound from a GitHub URL.
@@ -196,6 +211,12 @@ entity:SetCallback("OnDamagePlayer", function(newHealth)
 			if entityModel and entityModel.Parent then
 				entityModel:Destroy()
 			end
+
+			-- Reset camera after the jumpscare and entity destruction.
+			if lockConnection then
+				lockConnection:Disconnect()
+			end
+			camera.CameraType = Enum.CameraType.Custom
 		end)
 	end
 end)
