@@ -1,88 +1,106 @@
 local spawner = loadstring(game:HttpGet("https://raw.githubusercontent.com/RegularVynixu/Utilities/main/Doors/Entity%20Spawner/V2/Source.lua"))()
 
+-- Tạo hiệu ứng ánh sáng màu hồng cho 1 căn phòng
 function setPinkLighting()
-    local lighting = game.Lighting.MainColorCorrection
-    lighting.TintColor = Color3.fromRGB(255, 255, 255)
-    lighting.Contrast = 10
-    game:GetService("TweenService"):Create(lighting, TweenInfo.new(2.5), {Contrast = 0}):Play()
-    game:GetService("TweenService"):Create(lighting, TweenInfo.new(5), {TintColor = Color3.fromRGB(230, 3, 255)}):Play()
+	local lighting = game.Lighting:FindFirstChild("MainColorCorrection")
+	if not lighting then
+		lighting = Instance.new("ColorCorrectionEffect")
+		lighting.Name = "MainColorCorrection"
+		lighting.Parent = game.Lighting
+	end
+
+	-- Tránh bị nhá màu đỏ
+	lighting.TintColor = Color3.fromRGB(255, 255, 255)
+	lighting.Contrast = 0
+
+	-- Chuyển sang màu hồng
+	game:GetService("TweenService"):Create(lighting, TweenInfo.new(1), {
+		TintColor = Color3.fromRGB(230, 3, 255)
+	}):Play()
 end
 
+-- Reset ánh sáng về trắng
 function resetLighting()
-    local lighting = game.Lighting.MainColorCorrection
-    lighting.TintColor = Color3.fromRGB(230, 3, 255)
-    lighting.Contrast = 10
-    game:GetService("TweenService"):Create(lighting, TweenInfo.new(2.5), {Contrast = 0}):Play()
-    game:GetService("TweenService"):Create(lighting, TweenInfo.new(5), {TintColor = Color3.fromRGB(255, 255, 255)}):Play()
+	local lighting = game.Lighting:FindFirstChild("MainColorCorrection")
+	if lighting then
+		game:GetService("TweenService"):Create(lighting, TweenInfo.new(1), {
+			TintColor = Color3.fromRGB(255, 255, 255)
+		}):Play()
+	end
 end
 
-local entity = spawner.Create({
-    Entity = {
-        Name = "dizturbance",
-        Asset = "rbxassetid://112905346166455",
-        HeightOffset = 0
-    },
-    Lights = {
-        Flicker = {
-            Enabled = false,
-            Duration = 20
-        },
-        Shatter = true,
-        Repair = false
-    },
-    Earthquake = {
-        Enabled = false
-    },
-    CameraShake = {
-        Enabled = true,
-        Range = 500,
-        Values = {1.5, 20, 0.1, 1}
-    },
-    Movement = {
-        Speed = 150,
-        Delay = 5,
-        Reversed = false
-    },
-    Rebounding = {
-        Enabled = false
-    },
-    Damage = {
-        Enabled = true,
-        Range = 40,
-        Amount = 200
-    },
-    Crucifixion = {
-        Enabled = true,
-        Range = 50,
-        Resist = false,
-        Break = true
-    },
-    Death = {
-        Type = "Curious",
-        Hints = {
-            "You die to dizturbance?",
-            "When it appears the room turns pink",
-            "Hide now!",
-            "Because it's coming very soon!",
-            "Good luck"
-        },
-        Cause = "dizturbance"
-    }
-})
+-- Theo dõi sự thay đổi phòng
+local latestRoom = game.ReplicatedStorage:WaitForChild("GameData"):WaitForChild("LatestRoom")
+local currentRoom = latestRoom.Value
 
--- Spawn
-entity:SetCallback("OnSpawned", function()
-    setPinkLighting()
-    local s = Instance.new("Sound", workspace)
-    s.SoundId = "rbxassetid://80277453959427"
-    s.Volume = 4.5
-    s:Play()
+-- Ánh sáng hồng khi vào phòng đầu tiên
+setPinkLighting()
+
+-- Lắng nghe sự thay đổi phòng
+latestRoom:GetPropertyChangedSignal("Value"):Connect(function()
+	local newRoom = latestRoom.Value
+
+	-- Nếu đã qua phòng mới, reset ánh sáng
+	if newRoom ~= currentRoom then
+		resetLighting()
+	end
 end)
 
--- Despawn
-entity:SetCallback("OnDespawned", function()
-    resetLighting()
-    function GitAud(soundgit,filename)
+-- Tạo thực thể
+local entity = spawner.Create({
+	Entity = {
+		Name = "dizturbance",
+		Asset = "rbxassetid://112905346166455",
+		HeightOffset = 0
+	},
+	Lights = {
+		Flicker = {Enabled = false, Duration = 20},
+		Shatter = true,
+		Repair = false
+	},
+	Earthquake = {
+		Enabled = false
+	},
+	CameraShake = {
+		Enabled = true,
+		Range = 500,
+		Values = {1.5, 20, 0.1, 1}
+	},
+	Movement = {
+		Speed = 150,
+		Delay = 5,
+		Reversed = false
+	},
+	Rebounding = {
+		Enabled = false
+	},
+	Damage = {
+		Enabled = true,
+		Range = 40,
+		Amount = 200
+	},
+	Crucifixion = {
+		Enabled = true,
+		Range = 50,
+		Resist = false,
+		Break = true
+	},
+	Death = {
+		Type = "Curious",
+		Hints = {
+			"You die to dizturbance?",
+			"When it appears the room turns pink",
+			"Hide now!",
+			"Because it's coming very soon!",
+			"Good luck"
+		},
+		Cause = "dizturbance"
+	}
+})
+
+-- Khi spawn: không có âm thanh, ánh sáng đã xử lý riêng rồi
+entity:SetCallback("OnSpawned", function()
+	function GitAud(soundgit,filename)
     SoundName=tostring(SoundName)
     local url=soundgit
     local FileName = filename
@@ -94,207 +112,67 @@ function CustomGitSound(soundlink, vol, filename)
     local sound = Instance.new("Sound")
     sound.SoundId = GitAud(soundlink, filename)
     sound.Parent = workspace
-    sound.Volume = 60
-    sound.PlaybackSpeed = 0.5
-    sound.Name = "DoorBreak"
+    sound.Name = "Spawn"
+    sound.Volume = 10
    sound:Play()
 end
 
-CustomGitSound("https://github.com/Darker-TheDarkestGuy/DOORS/raw/refs/heads/main/XRecorder_Edited_20250622_01.mp3?raw=true", 1, " DoorBreak")
+CustomGitSound("https://github.com/eoyoustme/rebouna/blob/main/Fragmentent_AlertSound.mp3?raw=true", 1, "Spawn")
 end)
 
--- Death / Jumpscare
-local player = game.Players.LocalPlayer
-local playergui = player:WaitForChild("PlayerGui")
+-- Khi despawn: reset ánh sáng, phát tiếng đập cửa 7 lần, âm lượng giảm dần
+entity:SetCallback("OnDespawned", function()
+	resetLighting()
 
-local screenGui = Instance.new("ScreenGui")
-screenGui.Parent = playergui
-screenGui.Name = "Screen Gui"
-screenGui.IgnoreGuiInset = true
+camShake:Start()
+camShake:ShakeOnce(20, 7, 7, 7, 2, 1)
 
-
-local stop = false
-local done = false
-
-local kill = Instance.new("Sound")
-kill.Parent = workspace
-kill.PlaybackSpeed = 1
-kill.SoundId = "rbxassetid://140225556550357"
-kill.Name = "Dear god death sound chat"
-kill.Volume = 100
-kill.Looped = true
-
-
-
-local flange = Instance.new("FlangeSoundEffect")
-flange.Parent = kill
-flange.Depth = 1
-flange.Mix = 1
-flange.Rate = 0.2
-
-local trem = Instance.new("TremoloSoundEffect")
-trem.Parent = kill
-trem.Depth = 1
-trem.Duty = 0.94
-trem.Frequency = 20
-
-local pitch = Instance.new("PitchShiftSoundEffect")
-pitch.Parent = kill
-pitch.Octave = 0.875
-
-local distort = Instance.new("DistortionSoundEffect")
-distort.Parent = kill
-distort.Level = 1
-
-kill:Play()
-
-local Backgroun = Instance.new("ImageLabel")
-Backgroun.Parent = screenGui
-Backgroun.Size = UDim2.new(1, 0, 1, 0)
-Backgroun.ImageTransparency = 1
-Backgroun.BackgroundTransparency = 0
-Backgroun.BackgroundColor3 = Color3.new(0, 0, 0)
-Backgroun.Image = "rbxassetid://1712510813"
-
-task.wait() -- This task.wait() here doesn't have much purpose unless you specifically want a tiny delay before the next part.
-
-local face = Instance.new("ImageLabel")
-face.Parent = screenGui
-face.AnchorPoint = Vector2.new(0.5, 0.5)
-face.Position = UDim2.new(0.5, 0, 0.589, 0)
-face.Size = UDim2.new(0, 300, 0, 300)
-face.Image = "rbxassetid://11395249132"
-face.ImageTransparency = 0
-face.BackgroundTransparency = 1
-
-
--- Task for background transparency and image transparency blinking
-task.spawn(function()
-    while task.wait() do
-        if stop == true then
-            break
-        end
-        Backgroun.BackgroundTransparency = 0
-        Backgroun.ImageTransparency = 1
-        task.wait(0.1)
-        Backgroun.BackgroundTransparency = 1
-        Backgroun.ImageTransparency = 0
-    end
+	for i = 1, 7 do
+		local s = Instance.new("Sound", workspace)
+		s.SoundId = "rbxassetid://1837829565"
+		s.Volume = 6 - (i - 1) * 0.8 -- Giảm dần: 6, 5.2, 4.4, ..., 1.2
+		s.PlaybackSpeed = 0.5
+		s:Play()
+		game:GetService("Debris"):AddItem(s, 5) -- Xoá sau 5 giây
+		task.wait(1)
+	end
 end)
 
--- Task for background image changing
-task.spawn(function()
-    while task.wait() do
-        if stop == true then
-            break
-        end
-        Backgroun.Image = "rbxassetid://131073231978514"
-        task.wait(0.0589)
-        Backgroun.Image = "rbxassetid://105841646930424"
-    end
+-- Jumpscare khi chết
+entity:SetCallback("OnDeath", function()
+	local shadow = game:GetObjects("rbxassetid://11503625408")[1]
+	local gui = Instance.new("ScreenGui", game.Players.LocalPlayer.PlayerGui)
+	local cue = Instance.new("Sound", workspace)
+	cue.SoundId = "rbxassetid://10483837590"
+	cue.Volume = 3
+	cue.PlaybackSpeed = 0.4
+	cue:Play()
+
+	shadow.Parent = gui
+	shadow.Visible = true
+	local label = shadow.ImageLabel
+	local sizeValue = shadow.SizeValue
+	local rnd = Random.new()
+	local id = "rbxassetid://131248740447285"
+	label.Image = id
+
+	shadow.Jumpscare:Play()
+	for _ = 1, 25 do
+		local v = math.random(1, 3)
+		label.ImageColor3 = v == 1 and Color3.new(0, 0, 0) or (v == 2 and Color3.new(255, 0, 0) or Color3.new(0, 0, 0))
+		shadow.BackgroundColor3 = v == 1 and Color3.new(0, 0, 0) or Color3.new(3, 24, 255)
+		label.Position = UDim2.new(rnd:NextNumber(0.4, 0.6), 0, rnd:NextNumber(0.45, 0.55), 0)
+		label.Size = label.Size + UDim2.new(sizeValue.Value, 0, sizeValue.Value, 0)
+		label.Rotation = math.random(-10, 10)
+		sizeValue.Value -= 0.01
+		task.wait()
+	end
+
+	label.ImageColor3 = Color3.new(1, 1, 1)
+	shadow.BackgroundColor3 = Color3.new(0, 0, 0)
+	shadow.Visible = false
+	shadow.Jumpscare:Stop()
 end)
 
--- Task for face rotation and image changing
-task.spawn(function()
-    while task.wait() do
-        if stop == true then
-            break
-        end
-        face.Rotation = 2
-        face.Image = "rbxassetid://101914212937482"
-        task.wait(0.0589)
-        face.Rotation = -2
-        face.Image = "rbxassetid://101914212937482"
-        task.wait(0.0589)
-        face.Rotation = 2
-        face.Image = "rbxassetid://101914212937482"
-        task.wait(0.0589)
-        face.Rotation = -2
-    end
-end)
-
-
-task.wait() -- Another task.wait() here, consider if it's truly necessary.
-
-
-local text = Instance.new("ImageLabel")
-text.Parent = screenGui
-text.AnchorPoint = Vector2.new(0.5, 0.5)
-text.Position = UDim2.new(0.5, 0, 0.5, 0)
-text.Size = UDim2.new(0, 150, 0, 150)
-text.Image = "rbxassetid://117106082021449"
-text.ImageTransparency = 0
-text.BackgroundTransparency = 1
-
--- Task for text image changing
-task.spawn(function()
-    while task.wait() do
-        if stop == true then
-            break
-        end
-        text.Image = "rbxassetid://88490592395124"
-        task.wait(0.0589)
-        text.Image = "rbxassetid://99132041298170"
-    end
-end)
-
--- Task for text position (random movement)
-task.spawn(function()
-    while task.wait() do
-        if stop == true then
-            break
-        end
-        text.Position = UDim2.new(Random.new():NextNumber(0, 0.5), 0, Random.new():NextNumber(0, 0.6), 0)
-        task.wait() -- This task.wait() means the text moves every other frame if the game runs at 60 FPS.
-        text.Position = UDim2.new(Random.new():NextNumber(0, 0.5), 0, Random.new():NextNumber(0, 0.6), 0)
-    end
-end)
-
--- Task for text image transparency blinking
-task.spawn(function()
-    while task.wait() do
-        if stop == true then
-            break
-        end
-        text.ImageTransparency = 0
-        task.wait() -- Same as above, this will cause it to blink every other frame.
-        text.ImageTransparency = 1
-    end
-end)
-
-
-wait(0.7) -- Using 'wait()' is deprecated. Use 'task.wait()' instead.
-stop = true
-kill:Stop()
-task.wait() -- This task.wait() just adds a tiny delay.
-
--- This entire block below is outside any function or thread, and it's also nested incorrectly.
--- This is likely the main source of your "sai cho nao khong" (where is it wrong) issue.
--- It will only run ONCE after the 1.6 second wait and 'stop = true'.
--- The 'while task.wait() do' loop will never be entered because it's not in a separate task.
--- Also, the closing 'end' statements at the very end are mismatched.
-
--- This part needs to be in a separate task.
--- Corrected structure would be something like this:
-task.spawn(function()
-    while task.wait() do
-        if done == true then
-            break
-        end
-        face.ImageTransparency = 1
-        text.ImageTransparency = 1
-        Backgroun.ImageTransparency = 1
-        Backgroun.BackgroundTransparency = 1
-    end
-end)
-
-task.wait(0.1) -- These two task.wait(0.1) seem redundant right after the loop above (if it were running).
-task.wait(0.1)
-game.Players.LocalPlayer.Character.Humanoid.Health = 0
-task.wait(0.7)
-done = true
-    
-end)
-
--- Run entity
+-- Chạy thực thể
 entity:Run()
