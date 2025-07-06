@@ -5,7 +5,7 @@ local get = true
 local entity = spawner.Create({
     Entity = {
         Name = "RipperMovings",
-        Asset = "rbxassetid://132829496671105",
+        Asset = "rbxassetid://102153462907756",
         HeightOffset = 0
     },
     Lights = {
