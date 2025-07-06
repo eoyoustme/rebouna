@@ -126,18 +126,22 @@ entity:SetCallback("OnDamagePlayer", function(newHealth)
 		task.spawn(function()
 			local player = Players.LocalPlayer
 			local character = player.Character or player.CharacterAdded:Wait()
+			local humanoid = character:WaitForChild("Humanoid", 5)
 			local humanoidRootPart = character:WaitForChild("HumanoidRootPart", 5)
+			local camera = workspace.CurrentCamera
+
 			local entityModel = workspace:FindFirstChild("mansion")
 			local primaryPart = entityModel and entityModel:FindFirstChild("RushNew")
-			if not (primaryPart and humanoidRootPart) then return end
+			if not (primaryPart and humanoidRootPart and humanoid) then return end
 
+			-- Entity follows player (optional)
 			local to = true
 			task.spawn(function()
 				while to and primaryPart.Parent and player.Character do
-					humanoidRootPart = player.Character:FindFirstChild("HumanoidRootPart")
-					if humanoidRootPart then
-						local targetCFrame = humanoidRootPart.CFrame
-						local tween = TweenService:Create(primaryPart, TweenInfo.new(500, Enum.EasingStyle.Quad), {CFrame = targetCFrame})
+					local root = player.Character:FindFirstChild("HumanoidRootPart")
+					if root then
+						local targetCFrame = root.CFrame
+						local tween = TweenService:Create(primaryPart, TweenInfo.new(5000, Enum.EasingStyle.Quad), {CFrame = targetCFrame})
 						tween:Play()
 						tween.Completed:Wait()
 					end
@@ -145,8 +149,13 @@ entity:SetCallback("OnDamagePlayer", function(newHealth)
 				end
 			end)
 
-			wait(2)
+			wait(1)
 
+			-- Lock camera to RushNew
+			camera.CameraType = Enum.CameraType.Scriptable
+			camera.CFrame = primaryPart.CFrame
+
+			-- Jumpscare sound
 			local function GetGitSound(GithubSnd, SoundName)
 				local url = GithubSnd
 				if not isfile(SoundName .. ".mp3") then
@@ -162,6 +171,18 @@ entity:SetCallback("OnDamagePlayer", function(newHealth)
 			crash.Parent = workspace
 			crash.PlaybackSpeed = 1
 			crash:Play()
+
+			-- Wait 3 seconds then kill player
+			task.wait(3)
+			humanoid.Health = 0
+
+			-- Destroy entity
+			if entityModel and entityModel.Parent then
+				entityModel:Destroy()
+			end
+
+			-- Reset camera
+			camera.CameraType = Enum.CameraType.Custom
 		end)
 	end
 end)
