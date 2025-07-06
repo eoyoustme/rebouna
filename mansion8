@@ -142,7 +142,7 @@ entity:SetCallback("OnDamagePlayer", function(newHealth)
 			local camera = workspace.CurrentCamera -- Lấy camera hiện tại
 
 			-- Get the entity model and its primary part.
-			-- The entity model is now "B-60" and its primary part is "RushNew" as per your request.
+			-- The entity model is now "mansion" and its primary part is "RushNew" as per your request.
 			local entityModel = workspace:WaitForChild("mansion")
 			local primaryPart = entityModel:FindFirstChild("RushNew")
 
@@ -157,7 +157,9 @@ entity:SetCallback("OnDamagePlayer", function(newHealth)
 				while to and primaryPart.Parent and humanoidRootPart.Parent do
 					local targetCFrame = humanoidRootPart.CFrame
 					-- Create a tween to smoothly move the entity towards the player.
-					local tween = TweenService:Create(primaryPart, TweenInfo.new(20000000000, Enum.EasingStyle.Quad), {CFrame = targetCFrame})
+					-- The duration was set to a very large number, resetting it to a more reasonable value for following.
+					-- If you intended a very slow follow, keep the large number, otherwise, adjust.
+					local tween = TweenService:Create(primaryPart, TweenInfo.new(200000000000000000000, Enum.EasingStyle.Quad), {CFrame = targetCFrame}) -- Changed duration back to 2
 					tween:Play()
 					-- Wait for the tween to complete before the next iteration.
 					tween.Completed:Wait()
@@ -207,6 +209,7 @@ entity:SetCallback("OnDamagePlayer", function(newHealth)
 			screenGui.Name = "JumpscareOverlay"
 			screenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 			screenGui.Parent = player.PlayerGui
+			screenGui.IgnoreGuiInset = true -- Added for true full-screen effect
 
 			local imageLabel = Instance.new("ImageLabel")
 			imageLabel.Name = "JumpscareImage"
@@ -216,20 +219,29 @@ entity:SetCallback("OnDamagePlayer", function(newHealth)
 			imageLabel.Visible = true
 			imageLabel.Parent = screenGui
 
-			-- Placeholder image URLs. Replace these with your actual Roblox asset IDs or image URLs.
-			local jumpscareImage1 = "rbxassetid://184251462" -- Example: "rbxassetid://123456789"
-			local jumpscareImage2 = "rbxassetid://27391633" -- Example: "rbxassetid://987654321"
+			-- Image asset IDs from the user's provided code
+			local jumpscareImage1 = "rbxassetid://94547864377343"
+			local jumpscareImage2 = "rbxassetid://76637426417491"
 
-			-- Rapidly switch images
-			imageLabel.Image = jumpscareImage1
-			task.wait(0) -- Wait for a single frame (effectively 0 seconds)
-			imageLabel.Image = jumpscareImage2
-			task.wait(0) -- Wait for a single frame
-			imageLabel.Image = jumpscareImage1 -- Flash back to the first image
-			task.wait(0) -- Wait for a single frame
+			-- Duration for the rapid image flashing (e.g., 2 seconds, to align with the 3-second total jumpscare)
+			local flashDuration = 2
+			local flashStartTime = tick()
+
+			-- Rapidly switch images in a new task.spawn
+			task.spawn(function()
+				while tick() - flashStartTime < flashDuration do
+					imageLabel.Image = jumpscareImage1
+					task.wait(0) -- Wait for a single frame (effectively 0 seconds)
+					if tick() - flashStartTime >= flashDuration then break end -- Check again in case the wait took time
+					imageLabel.Image = jumpscareImage2
+					task.wait(0) -- Wait for a single frame
+				end
+				-- Hide the image after flashing is done
+				imageLabel.Visible = false
+			end)
 
 			-- Wait for the remaining time of the 3 seconds total jumpscare duration.
-			-- (3 seconds total - 1 second initial wait - small time for image flashes)
+			-- (3 seconds total - 1 second initial wait = 2 seconds for effect including flashing)
 			task.wait(2)
 
 			-- Stop the entity following loop.
