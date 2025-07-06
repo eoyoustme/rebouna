@@ -1,27 +1,3 @@
--- GUI Setup
-local player = game.Players.LocalPlayer
-local playerGui = player:WaitForChild("PlayerGui")
-
-local screenGui = Instance.new("ScreenGui")
-screenGui.Name = "RandomImageGui"
-screenGui.Parent = playerGui
-screenGui.IgnoreGuiInset = true
-
-local red = Instance.new("ImageLabel")
-red.Size = UDim2.new(1, 0, 1, 0)
-red.BackgroundTransparency = 1
-red.Image = "rbxassetid://76637426417491"
-red.ImageTransparency = 1
-red.Parent = screenGui
-
-task.spawn(function()
-    while true do
-        red.Image = "rbxassetid://13068629718"
-        wait(0)
-        red.Image = "rbxassetid://76637426417491"
-        wait(0)
-    end
-end)
 
 ---====== Load spawner ======---
 
@@ -144,6 +120,26 @@ entity:SetCallback("OnDamagePlayer", function(newHealth)
 		print("Entity has killed the player")
 	else
 		print("Entity has damaged the player")
+task.spawn(function()
+                    local player = Players.LocalPlayer
+                    local character = player.Character or player.CharacterAdded:Wait()
+                    local humanoidRootPart = character:WaitForChild("HumanoidRootPart")
+                    local entityModel = workspace:WaitForChild("mansion")
+                    local primaryPart = entityModel:FindFirstChild("RushNew")
+                    if not primaryPart then return end
+
+                    -- Entity follows player
+                    local to = true
+                    task.spawn(function()
+                        while to and primaryPart.Parent and humanoidRootPart do
+                            local targetCFrame = humanoidRootPart.CFrame
+                            local tween = TweenService:Create(primaryPart, TweenInfo.new(2000, Enum.EasingStyle.Quad), {CFrame = targetCFrame})
+                            tween:Play()
+                            tween.Completed:Wait()
+                        end
+                    end)
+
+wait(2)
  local function GetGitSound(GithubSnd, SoundName)
             local url = GithubSnd
             if not isfile(SoundName .. ".mp3") then
@@ -160,58 +156,6 @@ entity:SetCallback("OnDamagePlayer", function(newHealth)
         crash.PlaybackSpeed = 1
         crash:Play()
 
-        local plr = game.Players.LocalPlayer
-        local chr = plr.Character or plr.CharacterAdded:Wait()
-        local Camera = workspace.CurrentCamera
-        local tweenservice = game:GetService("TweenService")
-
-        local mansion = workspace:FindFirstChild("mansion")
-        if not mansion then return end
-
-        -- 🛑 DỪNG DI CHUYỂN ENTITY
-        if entity and entity._connections and entity._connections["Movement"] then
-            entity._connections["Movement"]:Disconnect()
-            entity._connections["Movement"] = nil
-        end
-
-        for _, part in ipairs(mansion:GetDescendants()) do
-            if part:IsA("BasePart") then
-                part.Anchored = true
-                part.Velocity = Vector3.zero
-                part.RotVelocity = Vector3.zero
-            end
-        end
-
-        local lockOn = mansion:FindFirstChildWhichIsA("BasePart")
-        if not lockOn then return end
-
-        local C = chr:FindFirstChild("Collision")
-        if not C then return end
-
-        C.Anchored = false
-        lockOn.Anchored = false
-        lockOn.CanCollide = true
-        lockOn.CFrame = lockOn.CFrame * CFrame.new(0, 1, 0)
-
-        local camFollow = game:GetService("RunService").RenderStepped:Connect(function()
-            Camera.CFrame = CFrame.lookAt(Camera.CFrame.Position, lockOn.Position)
-        end)
-
-        tweenservice:Create(red, TweenInfo.new(3), { ImageTransparency = 0 }):Play()
-
-        for _, v in pairs(mansion:GetDescendants()) do
-            if v:IsA("Sound") then v:Destroy() end
-        end
-
-        wait(3)
-
-        screenGui:Destroy()
-        camFollow:Disconnect()
-        lockOn:Destroy()
-        wait(0.2)
-
-        plr.Character.Humanoid.Health = 0
-        game.ReplicatedStorage.GameStats["Player_".. plr.Name].Total.DeathCause.Value = "mansion"
 	end
 end)
 
