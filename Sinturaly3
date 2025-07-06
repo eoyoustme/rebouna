@@ -76,38 +76,14 @@ local entity = spawner.Create({
 
 entity:SetCallback("OnSpawned", function()
     print("OnSpawned: Thực thể đã được sinh ra.")
-    -- Lấy model Singularity tương tự như cách tìm A-60 trước đây
-    local MAX_FIND_TIME = 5
-    local foundModel = nil
-    local startTime = tick()
-    while not foundModel and (tick() - startTime < MAX_FIND_TIME) do
-        foundModel = entity.Character 
-        if not foundModel then
-            foundModel = Workspace:FindFirstChild(entity.Entity.Name)
-        end
-        if not foundModel then
-            wait(0.1)
-        end
-    end
-    singularityModel = foundModel
-
-    if singularityModel then
-        print("OnSpawned: Đã lấy được Model Singularity:", singularityModel.Name)
-        -- Kiểm tra PrimaryPart nếu bạn muốn teleport Singularity (nhưng yêu cầu này là jumpscare GUI)
-        if not singularityModel.PrimaryPart then
-            warn("OnSpawned: Model Singularity không có PrimaryPart được đặt. Sẽ không ảnh hưởng đến jumpscare GUI.")
-        end
-    else
-        warn("OnSpawned: KHÔNG THỂ LẤY ĐƯỢC Model Singularity sau khi sinh.")
-    end
-
-    -- Hiệu ứng ánh sáng
-    game.Lighting.MainColorCorrection.TintColor = Color3.fromRGB(0, 0, 0)
-    game.Lighting.MainColorCorrection.Contrast = 1
-    local tween = TweenService:Create(game.Lighting.MainColorCorrection, TweenInfo.new(2.5), {Contrast = 0})
-    tween:Play()
-    local TW = TweenService:Create(game.Lighting.MainColorCorrection, TweenInfo.new(80),{TintColor = Color3.fromRGB(5, 5, 5)})
-    TW:Play()
+    game.Lighting.MainColorCorrection.TintColor = Color3.fromRGB(255, 255, 255)
+game.Lighting.MainColorCorrection.Contrast = 0.1
+local tween = game:GetService("TweenService")
+tween:Create(game.Lighting.MainColorCorrection, TweenInfo.new(2.5), {Contrast = 0}):Play()
+local TweenService = game:GetService("TweenService")
+local TW = TweenService:Create(game.Lighting.MainColorCorrection, TweenInfo.new(5),{TintColor = Color3.fromRGB(30,30,30)})
+TW:Play()
+wait(0)
 end)
 
 entity:SetCallback("OnStartMoving", function()
@@ -140,6 +116,14 @@ end)
 
 entity:SetCallback("OnDespawning", function()
     print("OnDespawning: Thực thể đang biến mất")
+wait(2)
+game.Lighting.MainColorCorrection.TintColor = Color3.fromRGB(30,30,30)
+game.Lighting.MainColorCorrection.Contrast = 0.1
+local tween = game:GetService("TweenService")
+tween:Create(game.Lighting.MainColorCorrection, TweenInfo.new(2.5), {Contrast = 0}):Play()
+local TweenService = game:GetService("TweenService")
+local TW = TweenService:Create(game.Lighting.MainColorCorrection, TweenInfo.new(5),{TintColor = Color3.fromRGB(255, 255, 255)})
+TW:Play()
 end)
 
 entity:SetCallback("OnDespawned", function()
