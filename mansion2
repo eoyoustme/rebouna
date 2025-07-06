@@ -218,15 +218,15 @@ CustomGitSound("https://github.com/eoyoustme/rebouna/blob/main/sam-speech.mp3?ra
 			local jumpscareImage1 = "rbxassetid://94547864377343"
 			local jumpscareImage2 = "rbxassetid://27391633"
 
-			local flashDuration = 3
+			local flashDuration = 4.8
 			local flashStartTime = tick()
 
 			task.spawn(function()
 				while tick() - flashStartTime < flashDuration do
 					imageLabel.Image = jumpscareImage1
-					task.wait(0.05)
+					task.wait(0
 					imageLabel.Image = jumpscareImage2
-					task.wait(0.05)
+					task.wait(0)
 				end
 				imageLabel.Visible = false
 			end)
