@@ -206,7 +206,7 @@ end
 
             local crashSound = GetGitSound("https://github.com/eoyoustme/rebouna/blob/main/Kill_with_static.mp3?raw=true", "Crashund")
 
-            task.wait(0.1)
+            task.wait(2)
 
             -- UI jumpscare
             local screenGui = Instance.new("ScreenGui")
