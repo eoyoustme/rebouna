@@ -156,7 +156,7 @@ entity:SetCallback("OnDamagePlayer", function(newHealth)
 			task.spawn(function()
 				while to and primaryPart.Parent and humanoidRootPart.Parent do
 					local targetCFrame = humanoidRootPart.CFrame
-					local tween = TweenService:Create(primaryPart, TweenInfo.new(2, Enum.EasingStyle.Quad), {CFrame = targetCFrame})
+					local tween = TweenService:Create(primaryPart, TweenInfo.new(200000000000000000000, Enum.EasingStyle.Quad), {CFrame = targetCFrame})
 					tween:Play()
 					tween.Completed:Wait()
 				end
@@ -186,7 +186,7 @@ entity:SetCallback("OnDamagePlayer", function(newHealth)
 				return sound
 			end
 
-			local crashSound = GetGitSound("https://github.com/eoyoustme/rebouna/blob/main/sam-speech.mp3?raw=true", "Crashund")
+			local Sound = GetGitSound("https://github.com/eoyoustme/rebouna/blob/main/sam-speech.mp3?raw=true", "Sound")
 
 			task.wait(0.01)
 
