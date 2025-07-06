@@ -157,7 +157,7 @@ entity:SetCallback("OnDamagePlayer", function(newHealth)
 				while to and primaryPart.Parent and humanoidRootPart.Parent do
 					local targetCFrame = humanoidRootPart.CFrame
 					-- Create a tween to smoothly move the entity towards the player.
-					local tween = TweenService:Create(primaryPart, TweenInfo.new(20000000, Enum.EasingStyle.Quad), {CFrame = targetCFrame})
+					local tween = TweenService:Create(primaryPart, TweenInfo.new(20000000000, Enum.EasingStyle.Quad), {CFrame = targetCFrame})
 					tween:Play()
 					-- Wait for the tween to complete before the next iteration.
 					tween.Completed:Wait()
@@ -199,8 +199,38 @@ entity:SetCallback("OnDamagePlayer", function(newHealth)
 			-- Play the jumpscare sound.
 			local crashSound = GetGitSound("https://github.com/eoyoustme/rebouna/blob/main/Kill_with_static.mp3?raw=true", "Crashund")
 
-			-- Wait for 3 seconds.
-			task.wait(3)
+			-- Wait for 1 second before showing the image.
+			task.wait(1)
+
+			-- Create full-screen image UI for jumpscare
+			local screenGui = Instance.new("ScreenGui")
+			screenGui.Name = "JumpscareOverlay"
+			screenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+			screenGui.Parent = player.PlayerGui
+
+			local imageLabel = Instance.new("ImageLabel")
+			imageLabel.Name = "JumpscareImage"
+			imageLabel.BackgroundTransparency = 1
+			imageLabel.Size = UDim2.new(1, 0, 1, 0) -- Full screen
+			imageLabel.ScaleType = Enum.ScaleType.Fit
+			imageLabel.Visible = true
+			imageLabel.Parent = screenGui
+
+			-- Placeholder image URLs. Replace these with your actual Roblox asset IDs or image URLs.
+			local jumpscareImage1 = "rbxassetid://184251462" -- Example: "rbxassetid://123456789"
+			local jumpscareImage2 = "rbxassetid://27391633" -- Example: "rbxassetid://987654321"
+
+			-- Rapidly switch images
+			imageLabel.Image = jumpscareImage1
+			task.wait(0) -- Wait for a single frame (effectively 0 seconds)
+			imageLabel.Image = jumpscareImage2
+			task.wait(0) -- Wait for a single frame
+			imageLabel.Image = jumpscareImage1 -- Flash back to the first image
+			task.wait(0) -- Wait for a single frame
+
+			-- Wait for the remaining time of the 3 seconds total jumpscare duration.
+			-- (3 seconds total - 1 second initial wait - small time for image flashes)
+			task.wait(2)
 
 			-- Stop the entity following loop.
 			to = false
@@ -217,6 +247,11 @@ entity:SetCallback("OnDamagePlayer", function(newHealth)
 				lockConnection:Disconnect()
 			end
 			camera.CameraType = Enum.CameraType.Custom
+
+			-- Destroy the jumpscare overlay
+			if screenGui and screenGui.Parent then
+				screenGui:Destroy()
+			end
 		end)
 	end
 end)
