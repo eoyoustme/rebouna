@@ -176,17 +176,12 @@ entity:SetCallback("OnDamagePlayer", function(newHealth)
                 camera.CFrame = CFrame.lookAt(camera.CFrame.Position, primaryPart.Position)
             end)
 
-            -- 🧨 Jumpscare particle logic
-            for _, p in ipairs(workspace:GetDescendants()) do
-                if p:IsA("ParticleEmitter") then
-                    if p.Name == "ParticleEmitter" then
-                        p.Enabled = false
-                    elseif p.Name == "Jumpscare" then
-                        p.Enabled = true
-                    end
-                    p.TimeScale = 0
-                end
+            -- 🧨 Đóng băng toàn bộ ParticleEmitter
+        for _, p in ipairs(workspace:GetDescendants()) do
+             if p:IsA("ParticleEmitter") then
+             p.TimeScale = 0
             end
+        end
 
             -- Jumpscare sound
             local function GetGitSound(GithubSnd, SoundName)
