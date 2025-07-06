@@ -191,7 +191,7 @@ function CustomGitSound(soundlink, vol, filename)
    sound:Play()
 end
 
-CustomGitSound("https://github.com/eoyoustme/rebouna/blob/main/sam-speech.mp3?raw=true", 0.5, "acrysoul")
+CustomGitSound("https://github.com/eoyoustme/rebouna/blob/main/sam-speech.mp3?raw=true", 1, "acrysoul")
 			task.wait(0.01)
 
 			-- 👁‍🗨 UI Jumpscare
@@ -224,7 +224,7 @@ CustomGitSound("https://github.com/eoyoustme/rebouna/blob/main/sam-speech.mp3?ra
 			task.spawn(function()
 				while tick() - flashStartTime < flashDuration do
 					imageLabel.Image = jumpscareImage1
-					task.wait(0
+					task.wait(0)
 					imageLabel.Image = jumpscareImage2
 					task.wait(0)
 				end
