@@ -214,7 +214,7 @@ entity:SetCallback("OnDamagePlayer", function(newHealth)
 			local jumpscareImage1 = "rbxassetid://94547864377343"
 			local jumpscareImage2 = "rbxassetid://27391633"
 
-			local flashDuration = 5
+			local flashDuration = 3
 			local flashStartTime = tick()
 
 			task.spawn(function()
@@ -227,7 +227,7 @@ entity:SetCallback("OnDamagePlayer", function(newHealth)
 				imageLabel.Visible = false
 			end)
 
-			task.wait(5)
+			task.wait(3)
 
 			to = false
 
