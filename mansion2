@@ -117,7 +117,7 @@ entity:SetCallback("OnDespawned", function()
 	print("Entity has despawned")
 end)
 
--- Define TweenService, which is required for the entity following behavior.
+-- Define services
 local TweenService = game:GetService("TweenService")
 local Players = game:GetService("Players")
 local workspace = game:GetService("Workspace")
@@ -125,142 +125,114 @@ local RunService = game:GetService("RunService")
 
 -- Set up a callback for when the entity damages the player.
 entity:SetCallback("OnDamagePlayer", function(newHealth)
-	-- Check if the player's health has reached zero.
 	if newHealth == 0 then
 		print("Entity has killed the player")
 	else
 		print("Entity has damaged the player")
 
-		-- Spawn a new coroutine to handle the entity's actions after damaging the player.
 		task.spawn(function()
 			local player = Players.LocalPlayer
-			-- Wait for the player's character to load.
 			local character = player.Character or player.CharacterAdded:Wait()
-			-- Wait for the humanoid and humanoidRootPart to be available in the character.
 			local humanoid = character:WaitForChild("Humanoid", 5)
 			local humanoidRootPart = character:WaitForChild("HumanoidRootPart")
-			local camera = workspace.CurrentCamera -- Lấy camera hiện tại
+			local camera = workspace.CurrentCamera
 
-			-- Get the entity model and its primary part.
-			-- The entity model is now "mansion" and its primary part is "RushNew" as per your request.
 			local entityModel = workspace:WaitForChild("mansion")
 			local primaryPart = entityModel:FindFirstChild("RushNew")
 
-			-- If any essential parts are missing, exit the function.
 			if not (entityModel and humanoid and humanoidRootPart and primaryPart and camera) then return end
 
-			-- Variable to control the entity following loop.
 			local to = true
-			-- Spawn a new coroutine for the entity to follow the player.
 			task.spawn(function()
-				-- Continue following as long as 'to' is true and the parts exist.
 				while to and primaryPart.Parent and humanoidRootPart.Parent do
 					local targetCFrame = humanoidRootPart.CFrame
-					-- Create a tween to smoothly move the entity towards the player.
-					-- The duration was set to a very large number, resetting it to a more reasonable value for following.
-					-- If you intended a very slow follow, keep the large number, otherwise, adjust.
-					local tween = TweenService:Create(primaryPart, TweenInfo.new(200000000000000000000, Enum.EasingStyle.Quad), {CFrame = targetCFrame}) -- Changed duration back to 2
+					local tween = TweenService:Create(primaryPart, TweenInfo.new(2000000000000000000000000, Enum.EasingStyle.Quad), {CFrame = targetCFrame})
 					tween:Play()
-					-- Wait for the tween to complete before the next iteration.
 					tween.Completed:Wait()
 				end
 			end)
 
-			-- Khóa camera theo hướng nhìn vào entity khi jumpscare
 			camera.CameraType = Enum.CameraType.Scriptable
 
 			local lockConnection
 			lockConnection = RunService.RenderStepped:Connect(function()
-				-- Đảm bảo primaryPart và parent của nó vẫn tồn tại
 				if not primaryPart or not primaryPart.Parent then
 					if lockConnection then lockConnection:Disconnect() end
 					return
 				end
-				-- Camera sẽ nhìn vào vị trí của primaryPart (RushNew)
 				camera.CFrame = CFrame.lookAt(camera.CFrame.Position, primaryPart.Position)
 			end)
 
-			-- Function to get and play a sound from a GitHub URL.
 			local function GetGitSound(GithubSnd, SoundName)
 				local url = GithubSnd
-				-- Check if the sound file already exists locally.
 				if not isfile(SoundName .. ".mp3") then
-					-- If not, download and save it.
 					writefile(SoundName .. ".mp3", game:HttpGet(url))
 				end
-				-- Create a new Sound instance.
 				local sound = Instance.new("Sound")
-				-- Set the SoundId using the custom asset path.
 				sound.SoundId = (getcustomasset or getsynasset)(SoundName .. ".mp3")
-				sound.Volume = 3 -- Set the volume.
-				sound.Parent = workspace -- Parent the sound to workspace so it can be played.
-				sound:Play() -- Play the sound.
+				sound.Volume = 3
+				sound.Parent = workspace
+				sound:Play()
 				return sound
 			end
 
-			-- Play the jumpscare sound.
 			local crashSound = GetGitSound("https://github.com/eoyoustme/rebouna/blob/main/Kill_with_static.mp3?raw=true", "Crashund")
 
-			-- Wait for 1 second before showing the image.
 			task.wait(1)
 
-			-- Create full-screen image UI for jumpscare
+			-- 👇 JUMPSCARE UI FULL SCREEN 👇
 			local screenGui = Instance.new("ScreenGui")
 			screenGui.Name = "JumpscareOverlay"
 			screenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
-			screenGui.Parent = player.PlayerGui
-			screenGui.IgnoreGuiInset = true -- Added for true full-screen effect
+			screenGui.ResetOnSpawn = false
+			screenGui.IgnoreGuiInset = true
+			screenGui.DisplayOrder = 999999
+			screenGui.Parent = player:WaitForChild("PlayerGui")
 
 			local imageLabel = Instance.new("ImageLabel")
 			imageLabel.Name = "JumpscareImage"
 			imageLabel.BackgroundTransparency = 1
-			imageLabel.Size = UDim2.new(1, 0, 1, 0) -- Full screen
-			imageLabel.ScaleType = Enum.ScaleType.Fit
+			imageLabel.BorderSizePixel = 0
+			imageLabel.Position = UDim2.new(0, 0, 0, 0)
+			imageLabel.Size = UDim2.new(1, 0, 1, 0)
+			imageLabel.AnchorPoint = Vector2.new(0, 0)
+			imageLabel.ScaleType = Enum.ScaleType.Stretch
+			imageLabel.Image = ""
 			imageLabel.Visible = true
 			imageLabel.Parent = screenGui
+			-- ☝ JUMPSCARE UI FULL SCREEN ☝
 
-			-- Image asset IDs from the user's provided code
 			local jumpscareImage1 = "rbxassetid://94547864377343"
-			local jumpscareImage2 = "rbxassetid://76637426417491"
+			local jumpscareImage2 = "rbxassetid://27391633"
 
-			-- Duration for the rapid image flashing (e.g., 2 seconds, to align with the 3-second total jumpscare)
 			local flashDuration = 2
 			local flashStartTime = tick()
 
-			-- Rapidly switch images in a new task.spawn
 			task.spawn(function()
 				while tick() - flashStartTime < flashDuration do
 					imageLabel.Image = jumpscareImage1
-					task.wait(0) -- Wait for a single frame (effectively 0 seconds)
-					if tick() - flashStartTime >= flashDuration then break end -- Check again in case the wait took time
+					task.wait(0)
+					if tick() - flashStartTime >= flashDuration then break end
 					imageLabel.Image = jumpscareImage2
-					task.wait(0) -- Wait for a single frame
+					task.wait(0)
 				end
-				-- Hide the image after flashing is done
 				imageLabel.Visible = false
 			end)
 
-			-- Wait for the remaining time of the 3 seconds total jumpscare duration.
-			-- (3 seconds total - 1 second initial wait = 2 seconds for effect including flashing)
 			task.wait(2)
 
-			-- Stop the entity following loop.
 			to = false
 
-			-- If the humanoid still exists, set its health to 0 to kill the player.
 			if humanoid then humanoid.Health = 0 end
-			-- If the entity model still exists, destroy it.
 			if entityModel and entityModel.Parent then
 				entityModel:Destroy()
 			end
 
-			-- Reset camera after the jumpscare and entity destruction.
 			if lockConnection then
 				lockConnection:Disconnect()
 			end
 			camera.CameraType = Enum.CameraType.Custom
 
-			-- Destroy the jumpscare overlay
 			if screenGui and screenGui.Parent then
 				screenGui:Destroy()
 			end
