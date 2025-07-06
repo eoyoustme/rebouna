@@ -3,14 +3,14 @@ local chr = plr.Character or plr.CharacterAdded:Wait()
 local humrp = chr:WaitForChild("HumanoidRootPart")
 local RunService = game:GetService("RunService")
 
-local speed = 5
+local speed = 10
 local Move = true
 
 local entityModel = game:GetObjects("rbxassetid://128240312608241")[1]
 entityModel.Parent = workspace
 local Primary = entityModel:FindFirstChildWhichIsA("BasePart")
 entityModel.PrimaryPart = Primary
-entityModel:SetPrimaryPartCFrame(humrp.CFrame * CFrame.new(0, 0, 10))
+entityModel:SetPrimaryPartCFrame(humrp.CFrame * CFrame.new(0, 0, 30))
 
 RunService.Heartbeat:Connect(function(dt)
     if not Move or not entityModel or not entityModel.PrimaryPart or not humrp then return end
@@ -27,7 +27,7 @@ if entityPart then
     entityPart.Touched:Connect(function(hit)
         local h = hit.Parent and hit.Parent:FindFirstChild("Humanoid")
         if h and hit:IsDescendantOf(chr) then
-            h:TakeDamage(10)
+            h:TakeDamage(100)
             local stats = game:GetService("ReplicatedStorage").GameStats
             if stats:FindFirstChild("Player_" .. plr.Name) then
                 stats["Player_" .. plr.Name].Total.DeathCause.Value = "Whisper"
