@@ -151,98 +151,113 @@ entity:SetCallback("OnDamagePlayer", function(newHealth)
 	if newHealth <= 0 then -- Kiểm tra máu <= 0 để đảm bảo người chơi đã chết
 		print("OnDamagePlayer: Entity đã giết người chơi. Kích hoạt jumpscare...")
 
-        -- Chơi âm thanh kill
-        local cue2 = Instance.new("Sound")
-        cue2.Parent = Workspace -- Để âm thanh phát ra từ thế giới
-        cue2.Name = "Spawn"
-        cue2.SoundId = "rbxassetid://7861818231"
-        cue2.Volume = 99999 -- Volume rất lớn
-        cue2.PlaybackSpeed = 0.9
-        cue2:Play()
-        Debris:AddItem(cue2, 5) -- Tự động xóa âm thanh sau 5 giây
+-- UI Construction
+local JumpscareGui = Instance.new("ScreenGui")
+local Background = Instance.new("Frame")
+local Overlay = Instance.new("ImageLabel")
+local Face = Instance.new("ImageLabel")
 
-        local player = Players.LocalPlayer
-        if not player or not JUMPSCARE_IMAGE_ID or JUMPSCARE_IMAGE_ID == "rbxassetid://JUMPSCARE_IMAGE_ID_HERE" then
-            warn("Không thể kích hoạt jumpscare: Thiếu LocalPlayer hoặc JUMPSCARE_IMAGE_ID chưa được thay thế.")
-            return
-        end
+JumpscareGui.Name = "JumpscareGui"
+JumpscareGui.IgnoreGuiInset = true
+JumpscareGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+JumpscareGui.Parent = game.Players.LocalPlayer:WaitForChild("PlayerGui")
 
-        local playerGui = player:FindFirstChildOfClass("PlayerGui")
-        if not playerGui then
-            warn("Không thể kích hoạt jumpscare: PlayerGui không tồn tại.")
-            return
-        end
+Background.Name = "Background"
+Background.BackgroundColor3 = Color3.fromRGB(3, 25, 99)
+Background.BorderSizePixel = 1
+Background.Size = UDim2.new(1, 0, 1, 0)
+Background.ZIndex = 999
+Background.Parent = JumpscareGui
 
-        -- Tạo ScreenGui cho jumpscare
-        local jumpscareGui = Instance.new("ScreenGui")
-        jumpscareGui.Name = "SingularityJumpscare"
-        jumpscareGui.Parent = playerGui
-        jumpscareGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+-- Full-screen overlay image
+Overlay.Name = "Overlay"
+Overlay.BackgroundTransparency = 1
+Overlay.Size = UDim2.new(1, 0, 1, 0)
+Overlay.Position = UDim2.new(0, 0, 0, 0)
+Overlay.Image = "rbxassetid://236542974" -- Thay bằng ID hình đầu tiên
+Overlay.ImageTransparency = 0
+Overlay.ZIndex = 998
+Overlay.Parent = Background
 
-        -- Tạo Frame chứa các hình ảnh xung quanh (để nhóm và sắp xếp)
-        local tiledImagesFrame = Instance.new("Frame")
-        tiledImagesFrame.Name = "TiledImages"
-        tiledImagesFrame.Size = UDim2.new(1, 0, 1, 0) -- Toàn màn hình
-        tiledImagesFrame.BackgroundTransparency = 1
-        tiledImagesFrame.Parent = jumpscareGui
+-- Face image (jumpscare face)
+Face.Name = "Face"
+Face.AnchorPoint = Vector2.new(0.5, 0.5)
+Face.BackgroundTransparency = 1
+Face.Position = UDim2.new(0.5, 0, 0.5, 0)
+Face.ResampleMode = Enum.ResamplerMode.Pixelated
+Face.Size = UDim2.new(0, 150, 0, 150)
+Face.Image = "rbxassetid://0"
+Face.ZIndex = 1000
+Face.ImageTransparency = 0
+Face.Parent = Background
 
-        -- Sử dụng UIGridLayout để sắp xếp các hình ảnh nhỏ
-        local gridLayout = Instance.new("UIGridLayout")
-        gridLayout.CellSize = UDim2.new(0.2, 0, 0.2, 0) -- Kích thước ô (ví dụ: 20% chiều rộng/cao màn hình)
-        gridLayout.FillDirection = Enum.FillDirection.Horizontal
-        gridLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center
-        gridLayout.VerticalAlignment = Enum.VerticalAlignment.Center
-        gridLayout.Parent = tiledImagesFrame
-        
-        -- Tạo nhiều hình ảnh nhỏ xung quanh
-        local numRows = 5 -- Số hàng
-        local numCols = 5 -- Số cột
-        for i = 1, numRows * numCols do
-            local tiledImage = Instance.new("ImageLabel")
-            tiledImage.Image = 101016395683805
-            tiledImage.BackgroundTransparency = 1
-            tiledImage.ImageTransparency = 1 -- Bắt đầu mờ
-            tiledImage.ZIndex = 2 -- Đặt ZIndex thấp hơn hình ảnh trung tâm
-            tiledImage.Parent = tiledImagesFrame
+-- Sound setup
+local scare = Instance.new("Sound")
+scare.Name = "MyEarsBurn"
+scare.SoundId = "rbxassetid://6648328129"
+scare.PlaybackSpeed = 1
+scare.Volume = 999
+scare.Parent = JumpscareGui
 
-            -- Animation cho từng hình ảnh nhỏ
-            TweenService:Create(tiledImage, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out, 0, false, math.random(0, 0.1)), {ImageTransparency = 0}):Play()
-        end
+local shift = Instance.new("PitchShiftSoundEffect")
+shift.Octave = 1
+shift.Parent = scare
 
-        -- Tạo hình ảnh jumpscare trung tâm
-        local centerImage = Instance.new("ImageLabel")
-        centerImage.Name = "CentralJumpscareImage"
-        centerImage.Image = JUMPSCARE_IMAGE_ID
-        centerImage.BackgroundTransparency = 1
-        centerImage.ImageTransparency = 1 -- Bắt đầu mờ
-        centerImage.Size = UDim2.new(0.8, 0, 0.8, 0) -- Kích thước lớn
-        centerImage.Position = UDim2.new(0.5, 0, 0.5, 0)
-        centerImage.AnchorPoint = Vector2.new(0.5, 0.5) -- Đặt giữa màn hình
-        centerImage.ZIndex = 3 -- Đặt ZIndex cao nhất để nằm trên cùng
-        centerImage.Parent = jumpscareGui
+local distort = Instance.new("DistortionSoundEffect")
+distort.Level = 0.6
+distort.Parent = scare
 
-        -- Animation cho hình ảnh trung tâm
-        local fadeInTween = TweenService:Create(centerImage, TweenInfo.new(0.1, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {ImageTransparency = 0})
-        fadeInTween:Play()
+local distort2 = Instance.new("DistortionSoundEffect")
+distort2.Level = 0.6
+distort2.Parent = scare
 
-        -- Âm thanh jumpscare (nếu bạn có một âm thanh riêng cho jumpscare ngoài âm thanh cue2)
-        -- local jumpscareSound = Instance.new("Sound")
-        -- jumpscareSound.Parent = centerImage -- Phát từ vị trí hình ảnh
-        -- jumpscareSound.SoundId = "rbxassetid://YOUR_JUMPSCARE_SOUND_ID_HERE"
-        -- jumpscareSound.Volume = 1
-        -- jumpscareSound:Play()
-        -- Debris:AddItem(jumpscareSound, 1.5)
+-- Flashing background
+task.spawn(function()
+	while JumpscareGui.Parent do
+		Background.BackgroundColor3 = Color3.fromRGB(3, 25, 99)
+		task.wait(math.random(25, 100) / 1000)
+		Background.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+		task.wait(math.random(25, 100) / 1000)
+	end
+end)
 
-        -- Thời gian hiển thị jumpscare
-        local jumpscareDuration = 1.2 -- Thời gian jumpscare hiển thị (giây)
-        wait(jumpscareDuration)
+-- Flashing overlay effect (alternate between 2 images)
+local overlayImages = {
+	"rbxassetid://211780776", -- Hình overlay 1
+	"rbxassetid://236542974"  -- Hình overlay 2
+}
 
-        -- Mờ dần và xóa jumpscare GUI
-        local fadeOutTween = TweenService:Create(jumpscareGui, TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {Transparency = 1})
-        fadeOutTween:Play()
+task.spawn(function()
+	local i = 1
+	while JumpscareGui.Parent do
+		Overlay.Image = overlayImages[i]
+		i = i % #overlayImages + 1
+		task.wait(0) -- Đổi hình mỗi 0.5 giây
+	end
+end)
 
-        Debris:AddItem(jumpscareGui, 0.4) -- Xóa GUI sau khi mờ dần
+-- Jumpscare zoom effect
+game.TweenService:Create(Face, TweenInfo.new(1000, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+	Size = UDim2.new(2.5, 0, 2.5, 0),
+	ImageTransparency = 0
+}):Play()
 
+-- Shake effect
+task.spawn(function()
+	local originalPos = Face.Position
+	for i = 1, 15 do
+		local offsetX = math.random(-0, 0)
+		local offsetY = math.random(-0, 0)
+		Face.Position = originalPos + UDim2.new(0, offsetX, 0, offsetY)
+		task.wait(0.03)
+	end
+	Face.Position = originalPos
+end)
+
+-- Play sound and cleanup
+scare:Play()
+task.wait(1.904)
+JumpscareGui:Destroy()
 	else
 		print("OnDamagePlayer: Entity đã gây sát thương cho người chơi (chưa chết)")
 	end
