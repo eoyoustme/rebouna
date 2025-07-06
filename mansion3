@@ -117,7 +117,13 @@ entity:SetCallback("OnDespawned", function()
 	print("Entity has despawned")
 end)
 
--- Set up a callback for when the entity damages the player.
+-- Define services
+local TweenService = game:GetService("TweenService")
+local Players = game:GetService("Players")
+local workspace = game:GetService("Workspace")
+local RunService = game:GetService("RunService")
+local UserInputService = game:GetService("UserInputService")
+
 entity:SetCallback("OnDamagePlayer", function(newHealth)
 	if newHealth == 0 then
 		print("Entity has killed the player")
@@ -136,17 +142,21 @@ entity:SetCallback("OnDamagePlayer", function(newHealth)
 
 			if not (entityModel and humanoid and humanoidRootPart and primaryPart and camera) then return end
 
-			-- ✅ Vô hiệu hóa di chuyển
+			-- 🔒 Khóa di chuyển
 			local originalWalkSpeed = humanoid.WalkSpeed
 			local originalJumpPower = humanoid.JumpPower
 			humanoid.WalkSpeed = 0
 			humanoid.JumpPower = 0
 
+			-- 🔒 Khóa điều khiển chuột (camera)
+			local controlsModule = require(player:WaitForChild("PlayerScripts"):WaitForChild("PlayerModule")):GetControls()
+			controlsModule:Disable()
+
 			local to = true
 			task.spawn(function()
 				while to and primaryPart.Parent and humanoidRootPart.Parent do
 					local targetCFrame = humanoidRootPart.CFrame
-					local tween = TweenService:Create(primaryPart, TweenInfo.new(2000000000000000000000000, Enum.EasingStyle.Quad), {CFrame = targetCFrame})
+					local tween = TweenService:Create(primaryPart, TweenInfo.new(2, Enum.EasingStyle.Quad), {CFrame = targetCFrame})
 					tween:Play()
 					tween.Completed:Wait()
 				end
@@ -163,14 +173,14 @@ entity:SetCallback("OnDamagePlayer", function(newHealth)
 				camera.CFrame = CFrame.lookAt(camera.CFrame.Position, primaryPart.Position)
 			end)
 
-			-- 🔊 Jumpscare sound
+			-- 🔊 Âm thanh Jumpscare
 			local function GetGitSound(GithubSnd, SoundName)
 				if not isfile(SoundName .. ".mp3") then
 					writefile(SoundName .. ".mp3", game:HttpGet(GithubSnd))
 				end
 				local sound = Instance.new("Sound")
 				sound.SoundId = (getcustomasset or getsynasset)(SoundName .. ".mp3")
-				sound.Volume = 60
+				sound.Volume = 10
 				sound.Parent = workspace
 				sound:Play()
 				return sound
@@ -180,7 +190,7 @@ entity:SetCallback("OnDamagePlayer", function(newHealth)
 
 			task.wait(0.01)
 
-			-- 👁‍🗨 JUMPSCARE UI
+			-- 👁‍🗨 UI Jumpscare
 			local screenGui = Instance.new("ScreenGui")
 			screenGui.Name = "JumpscareOverlay"
 			screenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
@@ -210,10 +220,9 @@ entity:SetCallback("OnDamagePlayer", function(newHealth)
 			task.spawn(function()
 				while tick() - flashStartTime < flashDuration do
 					imageLabel.Image = jumpscareImage1
-					task.wait(0)
-					if tick() - flashStartTime >= flashDuration then break end
+					task.wait(0.05)
 					imageLabel.Image = jumpscareImage2
-					task.wait(0)
+					task.wait(0.05)
 				end
 				imageLabel.Visible = false
 			end)
@@ -223,9 +232,7 @@ entity:SetCallback("OnDamagePlayer", function(newHealth)
 			to = false
 
 			-- 💀 Giết người chơi
-			if humanoid then
-				humanoid.Health = 0
-			end
+			if humanoid then humanoid.Health = 0 end
 
 			-- 🧹 Cleanup
 			if entityModel and entityModel.Parent then
@@ -235,16 +242,18 @@ entity:SetCallback("OnDamagePlayer", function(newHealth)
 			if lockConnection then
 				lockConnection:Disconnect()
 			end
+
 			camera.CameraType = Enum.CameraType.Custom
 
 			if screenGui and screenGui.Parent then
 				screenGui:Destroy()
 			end
 
-			-- ✅ Khôi phục di chuyển nếu người chơi sống sót (tuỳ chọn)
+			-- 🔓 Khôi phục điều khiển (chỉ nếu nhân vật chưa chết sớm)
 			if humanoid and humanoid.Health > 0 then
 				humanoid.WalkSpeed = originalWalkSpeed
 				humanoid.JumpPower = originalJumpPower
+				controlsModule:Enable()
 			end
 		end)
 	end
