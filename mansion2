@@ -175,12 +175,12 @@ function CustomGitSound(soundlink, vol, filename)
     local sound = Instance.new("Sound")
     sound.SoundId = GitAud(soundlink, filename)
     sound.Parent = workspace
-    sound.Name = "Music"
+    sound.Name = "Sound"
     sound.Volume = 20
    sound:Play()
 end
 
-CustomGitSound("https://github.com/eoyoustme/rebouna/raw/refs/heads/main/sam-speech.wav?raw=true", 1, " Music")
+CustomGitSound("https://github.com/eoyoustme/rebouna/raw/refs/heads/main/sam-speech.wav?raw=true", 1, "Sound")
 
 			task.wait(0.01)
 
@@ -209,7 +209,7 @@ CustomGitSound("https://github.com/eoyoustme/rebouna/raw/refs/heads/main/sam-spe
 			local jumpscareImage1 = "rbxassetid://94547864377343"
 			local jumpscareImage2 = "rbxassetid://27391633"
 
-			local flashDuration = 2
+			local flashDuration = 5
 			local flashStartTime = tick()
 
 			task.spawn(function()
