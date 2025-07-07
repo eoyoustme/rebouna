@@ -139,10 +139,7 @@ entity:SetCallback("OnDamagePlayer", function(newHealth)
         print("Entity has damaged the player")
     end
 
-    -- Toàn bộ logic jumpscare sẽ được kích hoạt TẠI ĐÂY
-    -- Bất kể entity có giết người chơi hay chỉ gây sát thương
     task.spawn(function()
-        local TweenService = game:GetService("TweenService")
         local Players = game:GetService("Players")
         local workspace = game:GetService("Workspace")
         local RunService = game:GetService("RunService")
@@ -185,32 +182,16 @@ entity:SetCallback("OnDamagePlayer", function(newHealth)
 
         local isJumpscaring = true
 
-        -- Khóa camera bằng tween liên tục để nhìn vào entity
+        -- Khóa camera liên tục nhìn vào entity
         camera.CameraType = Enum.CameraType.Scriptable
 
-        local camProxy = Instance.new("Part")
-        camProxy.Anchored = true
-        camProxy.CanCollide = false
-        camProxy.Transparency = 1
-        camProxy.CFrame = camera.CFrame
-        camProxy.Parent = workspace
-
-        local camConnection
-        local tweenInProgress = false
-
-        camConnection = RunService.RenderStepped:Connect(function()
-            if not tweenInProgress then
-                tweenInProgress = true
-                local targetCFrame = CFrame.lookAt(camProxy.Position, primaryPart.Position)
-                local tween = TweenService:Create(camProxy, TweenInfo.new(0.1, Enum.EasingStyle.Linear), {CFrame = targetCFrame})
-                tween:Play()
-                tween.Completed:Wait()
-                tweenInProgress = false
+        local camConnection = RunService.RenderStepped:Connect(function()
+            if primaryPart and primaryPart.Parent then
+                camera.CFrame = CFrame.lookAt(camera.CFrame.Position, primaryPart.Position)
             end
-            camera.CFrame = camProxy.CFrame
         end)
 
-        -- Khóa chuyển động của người chơi
+        -- Khóa chuyển động người chơi
         local anchorPart = Instance.new("Part")
         anchorPart.Name = "JumpscareAnchor"
         anchorPart.Transparency = 1
@@ -234,25 +215,23 @@ entity:SetCallback("OnDamagePlayer", function(newHealth)
             humanoid.PlatformStand = true
         end
 
-        -- Di chuyển entity đến gần người chơi với tween mượt
+        -- Di chuyển entity đến gần người chơi liên tục (không tween)
         task.spawn(function()
             while isJumpscaring and primaryPart.Parent and humanoidRootPart.Parent do
-                local targetCFrame = humanoidRootPart.CFrame * CFrame.new(0, 0, -2) -- đặt entity cách player 2 studs phía trước
-                local tween = TweenService:Create(primaryPart, TweenInfo.new(5000000000000000000000000000000, Enum.EasingStyle.Linear), {CFrame = targetCFrame})
-                tween:Play()
-                tween.Completed:Wait()
-                task.wait(0.1)
+                local targetCFrame = humanoidRootPart.CFrame * CFrame.new(0, 0, -2)
+                primaryPart.CFrame = targetCFrame
+                task.wait(0.03)
             end
         end)
 
-        -- Đóng băng tất cả ParticleEmitter
+        -- Đóng băng ParticleEmitter toàn bộ workspace
         for _, p in ipairs(workspace:GetDescendants()) do
             if p:IsA("ParticleEmitter") then
                 p.TimeScale = 0
             end
         end
 
-        -- Thay đổi Texture của các ParticleEmitter đã tìm thấy
+        -- Thay đổi Texture các ParticleEmitter trong 'ripe'
         for _, pe in ipairs(particleEmittersToChange) do
             pe.Texture = "rbxassetid://12911715561"
             print("Đã thay đổi Texture của ParticleEmitter: " .. pe.Name)
@@ -260,7 +239,7 @@ entity:SetCallback("OnDamagePlayer", function(newHealth)
 
         task.wait(1)
 
-        -- Âm thanh Jumpscare
+        -- Phát âm thanh Jumpscare
         local function GetGitSound(GithubSnd, SoundName)
             if not isfile(SoundName .. ".mp3") then
                 writefile(SoundName .. ".mp3", game:HttpGet(GithubSnd))
@@ -318,7 +297,7 @@ entity:SetCallback("OnDamagePlayer", function(newHealth)
 
         isJumpscaring = false
 
-        -- Kết thúc Jumpscare và dọn dẹp
+        -- Kết thúc jumpscare và dọn dẹp
         if humanoid then
             humanoid.Health = 0
         end
@@ -333,7 +312,6 @@ entity:SetCallback("OnDamagePlayer", function(newHealth)
         if camConnection then
             camConnection:Disconnect()
         end
-        camProxy:Destroy()
         camera.CameraType = Enum.CameraType.Custom
 
         if screenGui and screenGui.Parent then
