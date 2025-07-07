@@ -25,17 +25,24 @@ local MainGame = MainUI.Initiator.Main_Game
 local Health = MainGame.Health
 local Music = Health.Music
 
-local function getGitSoundId(GithubSoundPath: string, AssetName: string): Sound
-    local Url = GithubSoundPath
-
-    if not isfile(AssetName..".mp3") then 
-        writefile(AssetName..".mp3", game:HttpGet(Url)) 
-    end
-
-    local Sound = Instance.new("Sound")
-    Sound.SoundId = getcustomasset(AssetName..".mp3", true)
-    return Sound 
+function GitAud(soundgit,filename)
+    SoundName=tostring(SoundName)
+    local url=soundgit
+    local FileName = filename
+    writefile(FileName..".mp3", game:HttpGet(url))
+    return (getcustomasset or getsynasset)(FileName..".mp3")
 end
+
+function CustomGitSound(soundlink, vol, filename)
+    local sound = Instance.new("Sound")
+    sound.SoundId = GitAud(soundlink, filename)
+    sound.Parent = workspace
+    sound.Name = "Music"
+    sound.Volume = 16
+   sound:Play()
+end
+
+CustomGitSound("https://github.com/eoyoustme/rebouna/blob/main/Record_2025-07-07-10-54-27.mp3?raw=true", 1, " Music")
 
 Camera.ChildAdded:Connect(
     function(Child): ()
@@ -81,9 +88,5 @@ Camera.ChildAdded:Connect(
         Moon.Texture = "rbxassetid://73986285167458"
         HelpfulDialogue.TextColor3 = Color3.fromRGB(255, 255, 255)
 
-        local CustomMusic = getGitSoundId("https://raw.githubusercontent.com/eoyoustme/rebouna/refs/heads/main/Record_2025-07-07-10-54-27.mp3", "MischeviousLight")
-        CustomMusic.Parent = SoundService
-        CustomMusic.Looped = true
-        CustomMusic:Play()
     end
 )
