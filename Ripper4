@@ -266,8 +266,7 @@ CustomGitSound("https://github.com/eoyoustme/rebouna/blob/main/Kill_with_static.
 				humanoid.WalkSpeed = originalWalkSpeed
 				humanoid.JumpPower = originalJumpPower
 				controlsModule:Enable()
-            end
-        end)
+
     end
 end)
 
