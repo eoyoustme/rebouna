@@ -160,12 +160,12 @@ entity:SetCallback("OnDamagePlayer", function(newHealth)
         print("Entity has damaged the player")
     end
 
-    -- Toàn bộ logic jumpscare ở đây
     task.spawn(function()
         local TweenService = game:GetService("TweenService")
         local Players = game:GetService("Players")
         local Workspace = game:GetService("Workspace")
         local RunService = game:GetService("RunService")
+        local HttpService = game:GetService("HttpService")
 
         local player = Players.LocalPlayer
         local character = player.Character or player.CharacterAdded:Wait()
@@ -185,13 +185,29 @@ entity:SetCallback("OnDamagePlayer", function(newHealth)
             return
         end
 
+        -- Lấy Attachment 'ripe' để đổi ParticleEmitter Texture
+        local ripeAttachment = primaryPart:FindFirstChild("ripe", true)
+        local particleEmittersToChange = {}
+        if ripeAttachment and ripeAttachment:IsA("Attachment") then
+            for _, child in ipairs(ripeAttachment:GetChildren()) do
+                if child:IsA("ParticleEmitter") then
+                    table.insert(particleEmittersToChange, child)
+                end
+            end
+        end
+
+        -- Đổi texture ParticleEmitter
+        for _, pe in ipairs(particleEmittersToChange) do
+            pe.Texture = "rbxassetid://12911715561"
+            print("Đã đổi texture ParticleEmitter:", pe.Name)
+        end
+
         -- Đảm bảo PrimaryPart
         entityModel.PrimaryPart = primaryPart
         primaryPart.Anchored = true
 
-        -- Khóa camera: không dùng Tween, update trực tiếp trong RenderStepped
+        -- KHÓA CAMERA: update mỗi frame nhìn thẳng entity (không tween)
         camera.CameraType = Enum.CameraType.Scriptable
-
         local camConnection
         camConnection = RunService.RenderStepped:Connect(function()
             if primaryPart and primaryPart.Parent then
@@ -202,12 +218,11 @@ entity:SetCallback("OnDamagePlayer", function(newHealth)
             end
         end)
 
-        -- Di chuyển entity đến sát người chơi bằng Tween
+        -- Entity di chuyển đến sát người chơi bằng Tween rất dài
         local function MoveEntityToPlayer()
             if not primaryPart or not primaryPart.Parent or not humanoidRootPart.Parent then return end
-            local targetCFrame = humanoidRootPart.CFrame
             local tweenInfo = TweenInfo.new(9999999, Enum.EasingStyle.Linear)
-            local tween = TweenService:Create(primaryPart, tweenInfo, {CFrame = targetCFrame})
+            local tween = TweenService:Create(primaryPart, tweenInfo, {CFrame = humanoidRootPart.CFrame})
             tween:Play()
             tween.Completed:Wait()
         end
@@ -216,7 +231,7 @@ entity:SetCallback("OnDamagePlayer", function(newHealth)
         -- Khóa người chơi
         local anchorPart = Instance.new("Part")
         anchorPart.Name = "JumpscareAnchor"
-        anchorPart.Size = Vector3.new(1, 1, 1)
+        anchorPart.Size = Vector3.new(1,1,1)
         anchorPart.Transparency = 1
         anchorPart.Anchored = true
         anchorPart.CanCollide = false
@@ -237,14 +252,36 @@ entity:SetCallback("OnDamagePlayer", function(newHealth)
             humanoid.PlatformStand = true
         end
 
-        -- Âm thanh jumpscare
-        local sound = Instance.new("Sound")
-        sound.SoundId = "rbxassetid://911882556" -- âm thanh test
-        sound.Volume = 10
-        sound.Parent = Workspace
-        sound:Play()
+        -- Hàm tải âm thanh từ Github
+        local function GetGitSound(url, soundName)
+            if not isfile(soundName..".mp3") then
+                local content = game:HttpGet(url)
+                writefile(soundName..".mp3", content)
+            end
+            local sound = Instance.new("Sound")
+            local assetId = (getcustomasset or getsynasset)(soundName..".mp3")
+            sound.SoundId = assetId
+            sound.Volume = 13
+            sound.Parent = Workspace
+            sound:Play()
+            return sound
+        end
 
-        -- UI jumpscare
+        -- Phát âm thanh jumpscare từ Github
+        local crashSound = GetGitSound("https://github.com/eoyoustme/rebouna/blob/main/Kill_with_static.mp3?raw=true", "Crashund")
+
+        -- Đợi 1.5s đổi khuôn mặt entity (ví dụ đổi texture hoặc mesh) - tùy theo model mà mày chỉnh
+        task.wait(1.5)
+        -- Ví dụ: đổi mặt entity (mày thay đổi phần này tùy model của mày)
+        -- Giả sử có một Decal hoặc Texture trong primaryPart hoặc entityModel
+        local faceDecal = primaryPart:FindFirstChild("FaceDecal") -- ví dụ tên "FaceDecal"
+        if faceDecal and faceDecal:IsA("Decal") then
+            faceDecal.Texture = "rbxassetid://1234567890" -- id mặt mới của mày
+        end
+
+        -- Đợi thêm 0.5s rồi mới hiện UI jumpscare
+        task.wait(0.5)
+
         local screenGui = Instance.new("ScreenGui")
         screenGui.Name = "JumpscareOverlay"
         screenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
@@ -282,7 +319,7 @@ entity:SetCallback("OnDamagePlayer", function(newHealth)
 
         task.wait(flashDuration + 0.5)
 
-        -- Reset camera, entity, người chơi
+        -- Kết thúc jumpscare, reset camera, entity, người chơi
         if camConnection then camConnection:Disconnect() end
         camera.CameraType = Enum.CameraType.Custom
 
