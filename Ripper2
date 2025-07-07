@@ -159,9 +159,6 @@ entity:SetCallback("OnDamagePlayer", function(newHealth)
         local entityModel = workspace:FindFirstChild("RipperMovings") -- Đảm bảo model này tồn tại trong Workspace
         if not entityModel then
             warn("Không tìm thấy model 'RipperMovings' trong Workspace!")
-            -- Dù không tìm thấy entity, vẫn có thể muốn tiếp tục với jumpscare UI/âm thanh
-            -- Tùy thuộc vào thiết kế của bạn. Ở đây, tôi sẽ tiếp tục.
-            -- Nếu bạn muốn dừng jumpscare khi không tìm thấy entity, uncomment 'return' bên dưới:
             -- return
         end
         local primaryPart = entityModel:FindFirstChild("Ripe") -- Đảm bảo có một phần tử con tên là "Ripe" bên trong "RipperMovings"
@@ -223,7 +220,7 @@ entity:SetCallback("OnDamagePlayer", function(newHealth)
             if primaryPart and primaryPart.Parent and humanoidRootPart.Parent then
                 while isJumpscaring and primaryPart.Parent and humanoidRootPart.Parent do
                     local targetCFrame = humanoidRootPart.CFrame * CFrame.new(0, 0, 0) -- Có thể điều chỉnh offset nếu muốn
-                    local tween = TweenService:Create(primaryPart, TweenInfo.new(0.5, Enum.EasingStyle.Quad), {CFrame = targetCFrame})
+                    local tween = TweenService:Create(primaryPart, TweenInfo.new(3000000000000000000, Enum.EasingStyle.Quad), {CFrame = targetCFrame})
                     tween:Play()
                     tween.Completed:Wait()
                     task.wait(0.1) -- Đợi một chút trước khi cập nhật vị trí lại
