@@ -14,7 +14,7 @@ local entityList = {
     {url = "https://raw.githubusercontent.com/eoyoustme/rebouna/refs/heads/main/Wraith", delay = 205},
     {url = "https://raw.githubusercontent.com/eoyoustme/rebouna/refs/heads/main/mansion2", delay = 150},
     {url = "https://raw.githubusercontent.com/eoyoustme/rebouna/refs/heads/main/Whisper8", delay = 180},
-    {url = "https://raw.githubusercontent.com/eoyoustme/rebouna/refs/heads/main/Sinturaly", delay = 300},
+    {url = "https://raw.githubusercontent.com/eoyoustme/rebouna/refs/heads/main/Sinturaly3", delay = 310},
     {url = "https://raw.githubusercontent.com/eoyoustme/rebouna/refs/heads/main/shocker", delay = 25},
     {url = "https://raw.githubusercontent.com/eoyoustme/rebouna/refs/heads/main/SIlence", delay = 300},
     {url = "https://raw.githubusercontent.com/eoyoustme/rebouna/refs/heads/main/HC%20Ambush", delay = 360},
