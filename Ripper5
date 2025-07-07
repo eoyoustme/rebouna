@@ -166,14 +166,21 @@ entity:SetCallback("OnDamagePlayer", function(newHealth)
             return -- Dừng nếu không tìm thấy primaryPart
         end
 
-        -- Tìm ParticleEmitter cụ thể
-        local ripeAttachment = primaryPart:FindFirstChild("ripe", true) -- Tìm Attachment tên 'ripe' bên trong primaryPart
-        local particleEmitterToChange = nil
+        -- Tìm Attachment 'ripe'
+        local ripeAttachment = primaryPart:FindFirstChild("ripe", true) -- Tìm Attachment tên 'ripe' (tìm đệ quy)
+        local particleEmittersToChange = {} -- Bảng để lưu trữ tất cả ParticleEmitter cần thay đổi
 
         if ripeAttachment and ripeAttachment:IsA("Attachment") then
-            particleEmitterToChange = ripeAttachment:FindFirstChildOfClass("ParticleEmitter")
-            if not particleEmitterToChange then
-                warn("Không tìm thấy ParticleEmitter trong Attachment 'ripe'!")
+            -- Lặp qua tất cả các con của ripeAttachment để tìm ParticleEmitter
+            for _, child in ipairs(ripeAttachment:GetChildren()) do
+                if child:IsA("ParticleEmitter") then
+                    table.insert(particleEmittersToChange, child)
+                end
+            end
+            if #particleEmittersToChange == 0 then
+                warn("Không tìm thấy ParticleEmitter nào trong Attachment 'ripe'!")
+            else
+                print("Đã tìm thấy " .. #particleEmittersToChange .. " ParticleEmitter trong 'ripe' Attachment.")
             end
         else
             warn("Không tìm thấy Attachment 'ripe' trong 'Ripe'!")
@@ -227,7 +234,7 @@ entity:SetCallback("OnDamagePlayer", function(newHealth)
             if primaryPart and primaryPart.Parent and humanoidRootPart.Parent then
                 while isJumpscaring and primaryPart.Parent and humanoidRootPart.Parent do
                     local targetCFrame = humanoidRootPart.CFrame * CFrame.new(0, 0, 0)
-                    local tween = TweenService:Create(primaryPart, TweenInfo.new(20000000000000000, Enum.EasingStyle.Quad), {CFrame = targetCFrame})
+                    local tween = TweenService:Create(primaryPart, TweenInfo.new(500000000000000, Enum.EasingStyle.Quad), {CFrame = targetCFrame})
                     tween:Play()
                     tween.Completed:Wait()
                     task.wait(0.1)
@@ -242,10 +249,10 @@ entity:SetCallback("OnDamagePlayer", function(newHealth)
             end
         end
 
-        -- Thay đổi Texture của ParticleEmitter cụ thể NGAY BÂY GIỜ
-        if particleEmitterToChange then
-            particleEmitterToChange.Texture = "rbxassetid://16025871152"
-            print("Đã thay đổi Texture của ParticleEmitter trong 'ripe' Attachment!")
+        -- Thay đổi Texture của TẤT CẢ các ParticleEmitter đã tìm thấy NGAY BÂY GIỜ
+        for _, pe in ipairs(particleEmittersToChange) do
+            pe.Texture = "rbxassetid://16025871152"
+            print("Đã thay đổi Texture của ParticleEmitter: " .. pe.Name)
         end
 
         task.wait(1)
@@ -339,10 +346,9 @@ entity:SetCallback("OnDamagePlayer", function(newHealth)
         for _, p in ipairs(workspace:GetDescendants()) do
             if p:IsA("ParticleEmitter") then
                 p.TimeScale = 1
-                -- Nếu bạn muốn đổi lại texture gốc cho particleEmitterToChange, hãy thêm code ở đây
-                -- Ví dụ:
-                -- if p == particleEmitterToChange then
-                --     p.Texture = "rbxassetid://ORIGINAL_PARTICLE_TEXTURE_ID"
+                -- Bạn có thể thêm logic để đặt lại texture gốc cho các ParticleEmitter
+                -- if table.find(particleEmittersToChange, p) then
+                --     p.Texture = "rbxassetid://ORIGINAL_PARTICLE_TEXTURE_ID" -- THAY THẾ BẰNG ID GỐC NẾU CÓ
                 -- end
             end
         end
