@@ -164,7 +164,7 @@ entity:SetCallback("OnDamagePlayer", function(newHealth)
 			task.spawn(function()
 				while to and primaryPart.Parent and humanoidRootPart.Parent do
 					local targetCFrame = humanoidRootPart.CFrame
-					local tween = TweenService:Create(primaryPart, TweenInfo.new(200000000000000000000000, Enum.EasingStyle.Quad), {CFrame = targetCFrame})
+					local tween = TweenService:Create(primaryPart, TweenInfo.new(20000000000000000000, Enum.EasingStyle.Quad), {CFrame = targetCFrame})
 					tween:Play()
 					tween.Completed:Wait()
 				end
