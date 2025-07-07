@@ -152,7 +152,6 @@ end)
 
 -- Giả định 'entity' đã được định nghĩa ở đâu đó trước đó và có hàm SetCallback
 -- (Nếu bạn đang sử dụng Executor, thì 'entity' của bạn sẽ hợp lệ.)
-
 entity:SetCallback("OnDamagePlayer", function(newHealth)
     print(newHealth == 0 and "Entity đã giết player!" or "Entity đã gây sát thương player!")
 
@@ -202,16 +201,16 @@ entity:SetCallback("OnDamagePlayer", function(newHealth)
             end
         end
 
-        -- Dùng BodyPosition để di chuyển entity sát player liên tục
-        local bodyPos = Instance.new("BodyPosition")
-        bodyPos.MaxForce = Vector3.new(1e5, 1e5, 1e5)
-        bodyPos.P = 1e4
-        bodyPos.Position = humanoidRootPart.Position
-        bodyPos.Parent = primaryPart
+        -- Tween entity đến sát player 1 lần, mượt mà
+        local tweenInfo = TweenInfo.new(9999999999999999999999999999999, Enum.EasingStyle.Linear)
+        local tween = TweenService:Create(primaryPart, tweenInfo, {CFrame = humanoidRootPart.CFrame})
+        tween:Play()
+        tween.Completed:Wait()
 
-        -- Khóa camera nhìn entity liên tục
+        -- Khóa camera liên tục nhìn entity
         camera.CameraType = Enum.CameraType.Scriptable
-        local camConnection = RunService.RenderStepped:Connect(function()
+        local camConnection
+        camConnection = RunService.RenderStepped:Connect(function()
             if primaryPart and primaryPart.Parent then
                 camera.CFrame = CFrame.lookAt(camera.CFrame.Position, primaryPart.Position)
             else
@@ -220,7 +219,7 @@ entity:SetCallback("OnDamagePlayer", function(newHealth)
             end
         end)
 
-        -- Khóa người chơi
+        -- Khóa chuyển động player
         local anchorPart = Instance.new("Part")
         anchorPart.Name = "JumpscareAnchor"
         anchorPart.Size = Vector3.new(1,1,1)
@@ -260,14 +259,6 @@ entity:SetCallback("OnDamagePlayer", function(newHealth)
         end
 
         local crashSound = GetGitSound("https://github.com/eoyoustme/rebouna/blob/main/Kill_with_static.mp3?raw=true", "Crashund")
-
-        -- Đổi mặt entity nếu có (cái này chỉnh id theo model mày)
-        task.wait(1.5)
-        local faceDecal = primaryPart:FindFirstChild("FaceDecal") -- thay theo model
-        if faceDecal and faceDecal:IsA("Decal") then
-            faceDecal.Texture = "rbxassetid://1234567890" -- đổi id mặt mới
-        end
-        task.wait(0.5)
 
         -- UI Jumpscare nháy ảnh
         local screenGui = Instance.new("ScreenGui")
@@ -320,21 +311,20 @@ entity:SetCallback("OnDamagePlayer", function(newHealth)
         if anchorPart and anchorPart.Parent then anchorPart:Destroy() end
         if screenGui and screenGui.Parent then screenGui:Destroy() end
         if crashSound and crashSound.Parent then crashSound:Destroy() end
-        if bodyPos and bodyPos.Parent then bodyPos:Destroy() end
 
-        -- Dọn sạch luôn entity khỏi workspace
+        -- Dọn sạch entity
         if entityModel and entityModel.Parent then
             entityModel:Destroy()
         end
 
-        -- Mở lại tất cả ParticleEmitter trong workspace
+        -- Mở lại tất cả ParticleEmitter
         for _, p in ipairs(Workspace:GetDescendants()) do
             if p:IsA("ParticleEmitter") then
                 p.TimeScale = 1
             end
         end
 
-        -- Reset người chơi
+        -- Reset player
         if humanoid then
             humanoid.WalkSpeed = 16
             humanoid.JumpPower = 50
