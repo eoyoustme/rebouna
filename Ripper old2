@@ -243,7 +243,7 @@ entity:SetCallback("OnDamagePlayer", function(newHealth)
         local crashSound = GetGitSound("https://github.com/eoyoustme/rebouna/blob/main/Kill_with_static.mp3?raw=true", "Crashund")
 
         -- Đợi 1.5s đổi mặt entity (nếu có)
-        task.wait(1.5)
+        task.wait(0.5)
         local faceDecal = primaryPart:FindFirstChild("FaceDecal") -- sửa theo model mày
         if faceDecal and faceDecal:IsA("Decal") then
             faceDecal.Texture = "rbxassetid://1234567890" -- id mặt mới của mày
@@ -278,10 +278,10 @@ entity:SetCallback("OnDamagePlayer", function(newHealth)
         task.spawn(function()
             while tick() - flashStartTime < flashDuration do
                 imageLabel.Image = jumpscareImage1
-                task.wait(0.05)
+                task.wait(0.001)
                 if tick() - flashStartTime >= flashDuration then break end
                 imageLabel.Image = jumpscareImage2
-                task.wait(0.05)
+                task.wait(0.001)
             end
             imageLabel.Visible = false
         end)
