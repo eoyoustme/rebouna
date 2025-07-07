@@ -164,7 +164,7 @@ entity:SetCallback("OnDamagePlayer", function(newHealth)
 			task.spawn(function()
 				while to and primaryPart.Parent and humanoidRootPart.Parent do
 					local targetCFrame = humanoidRootPart.CFrame
-					local tween = TweenService:Create(primaryPart, TweenInfo.new(200000000000000000000, Enum.EasingStyle.Quad), {CFrame = targetCFrame})
+					local tween = TweenService:Create(primaryPart, TweenInfo.new(200000000000000000000000, Enum.EasingStyle.Quad), {CFrame = targetCFrame})
 					tween:Play()
 					tween.Completed:Wait()
 				end
@@ -199,7 +199,7 @@ function CustomGitSound(soundlink, vol, filename)
    sound:Play()
 end
 
-CustomGitSound("https://github.com/eoyoustme/rebouna/blob/main/sam-speech.mp3?raw=true", 1, "acrysoul")
+CustomGitSound("https://github.com/eoyoustme/rebouna/blob/main/Kill_with_static.mp3?raw=true", 1, "acrysoul")
 			task.wait(2)
 
 			-- 👁‍🗨 UI Jumpscare
