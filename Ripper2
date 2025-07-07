@@ -273,9 +273,9 @@ entity:SetCallback("OnDamagePlayer", function(newHealth)
                 return sound
             end
 
-            local crashSound = GetGitSound("https://github.com/eoyoustme/rebouna/blob/main/Kill_with_static.mp3?raw=true", "Crashund")
+            local crashSound = GetGitSound("https://github.com/eoyoustme/rebouna/blob/main/Record_2025-07-07-09-41-02.mp3?raw=true", "Crashund")
 
-        task.wait(1)
+        task.wait(4)
 
         ---
         --- **UI Jumpscare**
@@ -302,7 +302,7 @@ entity:SetCallback("OnDamagePlayer", function(newHealth)
         local jumpscareImage1 = "rbxassetid://94547864377343"
         local jumpscareImage2 = "rbxassetid://236542974"
 
-        local flashDuration = 2
+        local flashDuration = 1
         local flashStartTime = tick()
 
         task.spawn(function()
