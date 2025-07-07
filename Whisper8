@@ -3,7 +3,7 @@ local chr = plr.Character or plr.CharacterAdded:Wait()
 local humrp = chr:WaitForChild("HumanoidRootPart")
 local RunService = game:GetService("RunService")
 
-local speed = 10
+local speed = 5
 local Move = true
 
 local entityModel = game:GetObjects("rbxassetid://128240312608241")[1]
