@@ -133,24 +133,21 @@ end)
 
 -- Entity Damage Callback + Freeze + Jumpscare
 entity:SetCallback("OnDamagePlayer", function(newHealth)
-    if newHealth == 0 then
-        print("Entity has killed the player")
-    else
-        print("Entity has damaged the player")
-    end
+    print(newHealth == 0 and "Entity đã giết player!" or "Entity đã gây sát thương player!")
 
     task.spawn(function()
+        local TweenService = game:GetService("TweenService")
         local Players = game:GetService("Players")
-        local workspace = game:GetService("Workspace")
+        local Workspace = game:GetService("Workspace")
         local RunService = game:GetService("RunService")
 
         local player = Players.LocalPlayer
         local character = player.Character or player.CharacterAdded:Wait()
         local humanoid = character:WaitForChild("Humanoid", 5)
         local humanoidRootPart = character:WaitForChild("HumanoidRootPart")
-        local camera = workspace.CurrentCamera
+        local camera = Workspace.CurrentCamera
 
-        local entityModel = workspace:FindFirstChild("RipperMovings")
+        local entityModel = Workspace:FindFirstChild("RipperMovings")
         if not entityModel then
             warn("Không tìm thấy model 'RipperMovings' trong Workspace!")
             return
@@ -164,44 +161,49 @@ entity:SetCallback("OnDamagePlayer", function(newHealth)
 
         local ripeAttachment = primaryPart:FindFirstChild("ripe", true)
         local particleEmittersToChange = {}
-
         if ripeAttachment and ripeAttachment:IsA("Attachment") then
             for _, child in ipairs(ripeAttachment:GetChildren()) do
                 if child:IsA("ParticleEmitter") then
                     table.insert(particleEmittersToChange, child)
                 end
             end
-            if #particleEmittersToChange == 0 then
-                warn("Không tìm thấy ParticleEmitter nào trong Attachment 'ripe'!")
-            else
-                print("Đã tìm thấy " .. #particleEmittersToChange .. " ParticleEmitter trong 'ripe' Attachment.")
-            end
-        else
-            warn("Không tìm thấy Attachment 'ripe' trong 'RushNew'!")
         end
 
-        local isJumpscaring = true
+        for _, pe in ipairs(particleEmittersToChange) do
+            pe.Texture = "rbxassetid://12911715561"
+            print("Đã đổi texture ParticleEmitter:", pe.Name)
+        end
 
-        -- Khóa camera liên tục nhìn vào entity
+        entityModel.PrimaryPart = primaryPart
+        primaryPart.Anchored = true
+
+        -- Khóa camera nhìn entity mỗi frame (không tween để mượt)
         camera.CameraType = Enum.CameraType.Scriptable
-
         local camConnection = RunService.RenderStepped:Connect(function()
             if primaryPart and primaryPart.Parent then
                 camera.CFrame = CFrame.lookAt(camera.CFrame.Position, primaryPart.Position)
+            else
+                camConnection:Disconnect()
+                camera.CameraType = Enum.CameraType.Custom
             end
         end)
 
-        -- Khóa chuyển động người chơi
+        -- Tween entity di chuyển sát player rất lâu
+        local tweenInfo = TweenInfo.new(9999999, Enum.EasingStyle.Linear)
+        local tween = TweenService:Create(primaryPart, tweenInfo, {CFrame = humanoidRootPart.CFrame})
+        tween:Play()
+
+        -- Khóa người chơi
         local anchorPart = Instance.new("Part")
         anchorPart.Name = "JumpscareAnchor"
+        anchorPart.Size = Vector3.new(1,1,1)
         anchorPart.Transparency = 1
-        anchorPart.CanCollide = false
-        anchorPart.CanQuery = false
-        anchorPart.CanTouch = false
         anchorPart.Anchored = true
-        anchorPart.Size = Vector3.new(1, 1, 1)
+        anchorPart.CanCollide = false
+        anchorPart.CanTouch = false
+        anchorPart.CanQuery = false
         anchorPart.Position = humanoidRootPart.Position
-        anchorPart.Parent = workspace
+        anchorPart.Parent = Workspace
 
         local weld = Instance.new("WeldConstraint")
         weld.Part0 = humanoidRootPart
@@ -215,48 +217,32 @@ entity:SetCallback("OnDamagePlayer", function(newHealth)
             humanoid.PlatformStand = true
         end
 
-        -- Di chuyển entity đến gần người chơi liên tục (không tween)
-        task.spawn(function()
-            while isJumpscaring and primaryPart.Parent and humanoidRootPart.Parent do
-                local targetCFrame = humanoidRootPart.CFrame * CFrame.new(0, 0, -2)
-                primaryPart.CFrame = targetCFrame
-                task.wait(0.03)
-            end
-        end)
-
-        -- Đóng băng ParticleEmitter toàn bộ workspace
-        for _, p in ipairs(workspace:GetDescendants()) do
-            if p:IsA("ParticleEmitter") then
-                p.TimeScale = 0
-            end
-        end
-
-        -- Thay đổi Texture các ParticleEmitter trong 'ripe'
-        for _, pe in ipairs(particleEmittersToChange) do
-            pe.Texture = "rbxassetid://12911715561"
-            print("Đã thay đổi Texture của ParticleEmitter: " .. pe.Name)
-        end
-
-        task.wait(1)
-
-        -- Phát âm thanh Jumpscare
-        local function GetGitSound(GithubSnd, SoundName)
-            if not isfile(SoundName .. ".mp3") then
-                writefile(SoundName .. ".mp3", game:HttpGet(GithubSnd))
+        -- Hàm lấy âm thanh từ Github, tải nếu chưa có
+        local function GetGitSound(url, soundName)
+            if not isfile(soundName..".mp3") then
+                local content = game:HttpGet(url)
+                writefile(soundName..".mp3", content)
             end
             local sound = Instance.new("Sound")
-            sound.SoundId = (getcustomasset or getsynasset)(SoundName .. ".mp3")
+            local assetId = (getcustomasset or getsynasset)(soundName..".mp3")
+            sound.SoundId = assetId
             sound.Volume = 13
-            sound.Parent = workspace
+            sound.Parent = Workspace
             sound:Play()
             return sound
         end
 
         local crashSound = GetGitSound("https://github.com/eoyoustme/rebouna/blob/main/Kill_with_static.mp3?raw=true", "Crashund")
 
-        task.wait(2)
+        -- Đợi 1.5s đổi mặt entity (nếu có)
+        task.wait(1.5)
+        local faceDecal = primaryPart:FindFirstChild("FaceDecal") -- sửa theo model mày
+        if faceDecal and faceDecal:IsA("Decal") then
+            faceDecal.Texture = "rbxassetid://1234567890" -- id mặt mới của mày
+        end
+        task.wait(0.5)
 
-        -- UI Jumpscare
+        -- UI Jumpscare nháy ảnh
         local screenGui = Instance.new("ScreenGui")
         screenGui.Name = "JumpscareOverlay"
         screenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
@@ -271,7 +257,6 @@ entity:SetCallback("OnDamagePlayer", function(newHealth)
         imageLabel.BorderSizePixel = 0
         imageLabel.Position = UDim2.new(0, 0, 0, 0)
         imageLabel.Size = UDim2.new(1, 0, 1, 0)
-        imageLabel.AnchorPoint = Vector2.new(0, 0)
         imageLabel.ScaleType = Enum.ScaleType.Stretch
         imageLabel.Visible = true
         imageLabel.Parent = screenGui
@@ -295,43 +280,25 @@ entity:SetCallback("OnDamagePlayer", function(newHealth)
 
         task.wait(flashDuration + 0.5)
 
-        isJumpscaring = false
-
-        -- Kết thúc jumpscare và dọn dẹp
+        -- Giết người chơi ngay khi jumpscare kết thúc
         if humanoid then
             humanoid.Health = 0
         end
 
-        if entityModel and entityModel.Parent then
-            entityModel:Destroy()
-        end
+        -- Dọn dẹp
+        if camConnection then camConnection:Disconnect() end
+        camera.CameraType = Enum.CameraType.Custom
 
         if weld and weld.Parent then weld:Destroy() end
         if anchorPart and anchorPart.Parent then anchorPart:Destroy() end
+        if screenGui and screenGui.Parent then screenGui:Destroy() end
 
-        if camConnection then
-            camConnection:Disconnect()
-        end
-        camera.CameraType = Enum.CameraType.Custom
-
-        if screenGui and screenGui.Parent then
-            screenGui:Destroy()
-        end
-
-        for _, p in ipairs(workspace:GetDescendants()) do
-            if p:IsA("ParticleEmitter") then
-                p.TimeScale = 1
-            end
-        end
-
-        if humanoid then
-            humanoid.WalkSpeed = 16
-            humanoid.JumpPower = 50
-            humanoid.AutoRotate = true
-            humanoid.PlatformStand = false
+        if entityModel and entityModel.Parent then
+            entityModel:Destroy()
         end
     end)
 end)
+
 
 --==[ CHẠY ENTITY ]==--
 entity:Run()
