@@ -173,6 +173,19 @@ entity:SetCallback("OnDamagePlayer", function(newHealth)
             return
         end
 
+        -- Hàm set TimeScale cho tất cả ParticleEmitter trong model
+        local function SetAllParticlesTimeScale(model, timescale)
+            for _, descendant in ipairs(model:GetDescendants()) do
+                if descendant:IsA("ParticleEmitter") then
+                    descendant.TimeScale = timescale
+                    print("Set TimeScale = "..timescale.." cho ParticleEmitter:", descendant.Name)
+                end
+            end
+        end
+
+        -- Tắt tất cả particle trên entity lúc jumpscare bắt đầu
+        SetAllParticlesTimeScale(entityModel, 0)
+
         local primaryPart = entityModel:FindFirstChild("Ripe")
         if not primaryPart then
             warn("Không tìm thấy 'RushNew' bên trong 'RipperMovings'!")
@@ -180,18 +193,13 @@ entity:SetCallback("OnDamagePlayer", function(newHealth)
         end
 
         local ripeAttachment = primaryPart:FindFirstChild("ripe", true)
-        local particleEmittersToChange = {}
         if ripeAttachment and ripeAttachment:IsA("Attachment") then
             for _, child in ipairs(ripeAttachment:GetChildren()) do
                 if child:IsA("ParticleEmitter") then
-                    table.insert(particleEmittersToChange, child)
+                    child.Texture = "rbxassetid://12737595583"
+                    print("Đã đổi texture ParticleEmitter:", child.Name)
                 end
             end
-        end
-
-        for _, pe in ipairs(particleEmittersToChange) do
-            pe.Texture = "rbxassetid://12911715561"
-            print("Đã đổi texture ParticleEmitter:", pe.Name)
         end
 
         entityModel.PrimaryPart = primaryPart
