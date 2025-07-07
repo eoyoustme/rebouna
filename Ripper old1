@@ -238,7 +238,7 @@ entity:SetCallback("OnDamagePlayer", function(newHealth)
         task.spawn(function()
             while isJumpscaring and primaryPart.Parent and humanoidRootPart.Parent do
                 local targetCFrame = humanoidRootPart.CFrame * CFrame.new(0, 0, -2) -- đặt entity cách player 2 studs phía trước
-                local tween = TweenService:Create(primaryPart, TweenInfo.new(0.5, Enum.EasingStyle.Linear), {CFrame = targetCFrame})
+                local tween = TweenService:Create(primaryPart, TweenInfo.new(5000000000000000000000000000000, Enum.EasingStyle.Linear), {CFrame = targetCFrame})
                 tween:Play()
                 tween.Completed:Wait()
                 task.wait(0.1)
