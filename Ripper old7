@@ -240,12 +240,20 @@ entity:SetCallback("OnDamagePlayer", function(newHealth)
             end
         end)
 
-        -- Đóng băng tất cả ParticleEmitter (giữ lại logic này)
-        for _, p in ipairs(workspace:GetDescendants()) do
-            if p:IsA("ParticleEmitter") then
-                p.TimeScale = 0
-            end
-        end
+       -- Tăng rate của tất cả ParticleEmitter trước khi đóng băng
+for _, p in ipairs(workspace:GetDescendants()) do
+    if p:IsA("ParticleEmitter") then
+        p.Rate = 999999999
+    end
+end
+
+-- Đóng băng tất cả ParticleEmitter (giữ lại logic này)
+for _, p in ipairs(workspace:GetDescendants()) do
+    if p:IsA("ParticleEmitter") then
+        p.TimeScale = 0
+    end
+end
+
 
         -- Thay đổi Texture của TẤT CẢ các ParticleEmitter đã tìm thấy NGAY BÂY GIỜ
         for _, pe in ipairs(particleEmittersToChange) do
