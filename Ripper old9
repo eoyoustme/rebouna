@@ -139,7 +139,7 @@ entity:SetCallback("OnDamagePlayer", function(newHealth)
         print("Entity has damaged the player")
     end
 
-    -- Toàn bộ logic jumpscare sẽ được kích hoạt TẠI ĐÂY
+-- Toàn bộ logic jumpscare sẽ được kích hoạt TẠI ĐÂY
     -- Bất kể entity có giết người chơi hay chỉ gây sát thương
     task.spawn(function()
         local TweenService = game:GetService("TweenService")
@@ -240,13 +240,12 @@ entity:SetCallback("OnDamagePlayer", function(newHealth)
             end
         end)
 
--- Đóng băng tất cả ParticleEmitter (giữ lại logic này)
-for _, p in ipairs(workspace:GetDescendants()) do
-    if p:IsA("ParticleEmitter") then
-        p.TimeScale = 0
-    end
-end
-
+        -- Đóng băng tất cả ParticleEmitter (giữ lại logic này)
+        for _, p in ipairs(workspace:GetDescendants()) do
+            if p:IsA("ParticleEmitter") then
+                p.TimeScale = 0
+            end
+        end
 
         -- Thay đổi Texture của TẤT CẢ các ParticleEmitter đã tìm thấy NGAY BÂY GIỜ
         for _, pe in ipairs(particleEmittersToChange) do
@@ -254,7 +253,7 @@ end
             print("Đã thay đổi Texture của ParticleEmitter: " .. pe.Name)
         end
 
-        task.wait(0.1)
+        task.wait(1)
 
         ---
         --- **Âm thanh Jumpscare**
