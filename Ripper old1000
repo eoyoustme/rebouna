@@ -348,7 +348,8 @@ task.spawn(function()
         humanoid.JumpPower = 50
         humanoid.AutoRotate = true
         humanoid.PlatformStand = false
-    end
+         end
+     end)
 end)
 
 --==[ CHẠY ENTITY ]==--
