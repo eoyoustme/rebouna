@@ -249,11 +249,11 @@ entity:SetCallback("OnDamagePlayer", function(newHealth)
 
         -- Thay đổi Texture của TẤT CẢ các ParticleEmitter đã tìm thấy NGAY BÂY GIỜ
         for _, pe in ipairs(particleEmittersToChange) do
-            pe.Texture = "rbxassetid://16025871152"
+            pe.Texture = "rbxassetid://12911715561"
             print("Đã thay đổi Texture của ParticleEmitter: " .. pe.Name)
         end
 
-        task.wait(1)
+        task.wait(0.1)
 
         ---
         --- **Âm thanh Jumpscare**
