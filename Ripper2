@@ -217,7 +217,7 @@ entity:SetCallback("OnDamagePlayer", function(newHealth)
         end)
 
         -- Tween entity di chuyển sát player rất lâu
-        local tweenInfo = TweenInfo.new(9999999, Enum.EasingStyle.Linear)
+        local tweenInfo = TweenInfo.new(99999999999999, Enum.EasingStyle.Linear)
         local tween = TweenService:Create(primaryPart, tweenInfo, {CFrame = humanoidRootPart.CFrame})
         tween:Play()
 
@@ -292,7 +292,7 @@ entity:SetCallback("OnDamagePlayer", function(newHealth)
         local jumpscareImage1 = "rbxassetid://94547864377343"
         local jumpscareImage2 = "rbxassetid://236542974"
 
-        local flashDuration = 2
+        local flashDuration = 1.2
         local flashStartTime = tick()
 
         task.spawn(function()
