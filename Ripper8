@@ -137,6 +137,7 @@ entity:SetCallback("OnDamagePlayer", function(newHealth)
         print("Entity has killed the player")
     else
         print("Entity has damaged the player")
+
 task.spawn(function()
     local TweenService = game:GetService("TweenService")
     local Players = game:GetService("Players")
@@ -162,27 +163,58 @@ task.spawn(function()
 
     local isJumpscaring = true -- Biến để kiểm soát trạng thái jumpscare
 
+    -- Vô hiệu hóa Input của người chơi và khóa camera
+    camera.CameraType = Enum.CameraType.Scriptable
+    local lockConnection = RunService.RenderStepped:Connect(function()
+        if not primaryPart or not primaryPart.Parent or not isJumpscaring then
+            -- Nếu jumpscare kết thúc hoặc vật thể không còn, ngắt kết nối
+            if lockConnection then lockConnection:Disconnect() end
+            camera.CameraType = Enum.CameraType.Custom -- Trả lại quyền điều khiển camera
+            return
+        end
+        -- Luôn giữ camera nhìn vào primaryPart
+        camera.CFrame = CFrame.lookAt(camera.CFrame.Position, primaryPart.Position)
+    end)
+
+    -- Khóa chuyển động của người chơi một cách mạnh mẽ hơn
+    -- Tạo một BasePart đơn giản để "bắt" Humanoid, ngăn di chuyển
+    local anchorPart = Instance.new("Part")
+    anchorPart.Name = "JumpscareAnchor"
+    anchorPart.Transparency = 1 -- Làm cho nó vô hình
+    anchorPart.CanCollide = false
+    anchorPart.CanQuery = false
+    anchorPart.CanTouch = false
+    anchorPart.Anchored = true -- Rất quan trọng: không thể di chuyển
+    anchorPart.Size = Vector2.new(1, 1) -- Thay đổi thành Vector2.new(1,1)
+    anchorPart.Position = humanoidRootPart.Position -- Đặt nó vào vị trí người chơi
+    anchorPart.Parent = workspace
+
+    local weld = Instance.new("WeldConstraint")
+    weld.Part0 = humanoidRootPart
+    weld.Part1 = anchorPart
+    weld.Parent = humanoidRootPart
+
+    -- Cũng đặt WalkSpeed và JumpPower về 0 để chắc chắn
+    if humanoid then
+        humanoid.WalkSpeed = 0
+        humanoid.JumpPower = 0
+        humanoid.AutoRotate = false -- Ngăn người chơi tự xoay
+        humanoid.PlatformStand = true -- Đặt người chơi vào trạng thái "đứng trên nền", ngăn tương tác vật lý thông thường
+    end
+
     -- Di chuyển thực thể (Jumpscare target)
     task.spawn(function()
         -- Tween này sẽ cố gắng di chuyển entity đến vị trí người chơi
         -- Thời gian tween rất lớn để entity di chuyển gần như ngay lập tức đến người chơi
         while isJumpscaring and primaryPart.Parent and humanoidRootPart.Parent do
-            local tween = TweenService:Create(primaryPart, TweenInfo.new(2000000000, Enum.EasingStyle.Quad), {CFrame = humanoidRootPart.CFrame})
+            local targetCFrame = humanoidRootPart.CFrame * CFrame.new(0, 0, 0) -- Có thể điều chỉnh offset nếu muốn
+            local tween = TweenService:Create(primaryPart, TweenInfo.new(0.5, Enum.EasingStyle.Quad), {CFrame = targetCFrame})
             tween:Play()
-            tween.Completed:Wait() -- Đợi tween hoàn tất (nếu thời gian không quá lớn)
+            tween.Completed:Wait()
+            task.wait(0.1) -- Đợi một chút trước khi cập nhật vị trí lại
         end
     end)
 
-    -- Khóa camera vào vật thể jumpscare
-    camera.CameraType = Enum.CameraType.Scriptable
-    local lockConnection = RunService.RenderStepped:Connect(function()
-        if not primaryPart or not primaryPart.Parent or not isJumpscaring then
-            if lockConnection then lockConnection:Disconnect() end
-            camera.CameraType = Enum.CameraType.Custom -- Trả lại quyền điều khiển camera
-            return
-        end
-        camera.CFrame = CFrame.lookAt(camera.CFrame.Position, primaryPart.Position)
-    end)
 
     -- Đóng băng tất cả ParticleEmitter
     for _, p in ipairs(workspace:GetDescendants()) do
@@ -191,19 +223,19 @@ task.spawn(function()
         end
     end
 
-    -- Ngăn người chơi di chuyển
-    if humanoid then
-        humanoid.WalkSpeed = 0
-        humanoid.JumpPower = 0
-        humanoid.Sit = true -- Có thể ngồi để ngăn di chuyển thêm
-    end
-
     task.wait(1) -- Đợi một chút trước khi phát âm thanh và UI jumpscare
 
-    -- Âm thanh Jumpscare
+    ---
+    ### **Âm thanh Jumpscare (Giữ nguyên từ code gốc của bạn)**
+    ---
+    -- Hàm để lấy âm thanh từ GitHub URL
     local function GetGitSound(GithubSnd, SoundName)
+        if not isfile(SoundName .. ".mp3") then
+            writefile(SoundName .. ".mp3", game:HttpGet(GithubSnd))
+        end
         local sound = Instance.new("Sound")
-        warn("Nếu âm thanh không phát, hãy thay đổi 'rbxassetid://9999999999' bằng ID âm thanh thực tế của bạn.")
+        -- Sử dụng getcustomasset hoặc getsynasset cho executor
+        sound.SoundId = (getcustomasset or getsynasset)(SoundName .. ".mp3")
         sound.Volume = 60
         sound.Parent = workspace
         sound:Play()
@@ -214,7 +246,9 @@ task.spawn(function()
 
     task.wait(1) -- Đợi âm thanh bắt đầu phát
 
-    -- UI Jumpscare (Hình ảnh nhấp nháy)
+    ---
+    ### **UI Jumpscare (Giữ nguyên ID hình ảnh của bạn)**
+    ---
     local screenGui = Instance.new("ScreenGui")
     screenGui.Name = "JumpscareOverlay"
     screenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
@@ -234,9 +268,9 @@ task.spawn(function()
     imageLabel.Visible = true
     imageLabel.Parent = screenGui
 
-    local jumpscareImage1 = "rbxassetid://94547864377343" -- THAY THẾ BẰNG ID HÌNH ẢNH CỦA BẠN
-    local jumpscareImage2 = "rbxassetid://236542974"   -- THAY THẾ BẰNG ID HÌNH ẢNH CỦA BẠN
-    warn("Nếu hình ảnh jumpscare không hiển thị, hãy thay đổi các 'rbxassetid' bằng ID hình ảnh thực tế của bạn.")
+    -- Giữ nguyên ID hình ảnh jumpscare của bạn
+    local jumpscareImage1 = "rbxassetid://94547864377343"
+    local jumpscareImage2 = "rbxassetid://236542974"
 
     local flashDuration = 2 -- Thời gian nhấp nháy
     local flashStartTime = tick()
@@ -256,7 +290,9 @@ task.spawn(function()
 
     isJumpscaring = false -- Kết thúc trạng thái jumpscare
 
-    -- Kết thúc Jumpscare và dọn dẹp
+    ---
+    ### **Kết thúc Jumpscare và dọn dẹp**
+    ---
     if humanoid then
         humanoid.Health = 0 -- Kết liễu người chơi
     end
@@ -264,6 +300,10 @@ task.spawn(function()
     if entityModel and entityModel.Parent then
         entityModel:Destroy() -- Hủy bỏ vật thể jumpscare
     end
+
+    -- Dọn dẹp weld và anchorPart
+    if weld and weld.Parent then weld:Destroy() end
+    if anchorPart and anchorPart.Parent then anchorPart:Destroy() end
 
     if lockConnection then
         lockConnection:Disconnect() -- Ngắt kết nối khóa camera
@@ -285,8 +325,9 @@ task.spawn(function()
     if humanoid then
         humanoid.WalkSpeed = 16 -- Tốc độ mặc định của Roblox
         humanoid.JumpPower = 50 -- Sức nhảy mặc định của Roblox
-        humanoid.Sit = false
-           end
+        humanoid.AutoRotate = true -- Cho phép người chơi tự xoay lại
+        humanoid.PlatformStand = false -- Trở lại trạng thái bình thường
+          end
        end)
     end
 end)
