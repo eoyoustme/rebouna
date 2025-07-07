@@ -161,6 +161,7 @@ entity:SetCallback("OnDamagePlayer", function(newHealth)
     end
 
     task.spawn(function()
+        local TweenService = game:GetService("TweenService")
         local Players = game:GetService("Players")
         local workspace = game:GetService("Workspace")
         local RunService = game:GetService("RunService")
@@ -177,7 +178,7 @@ entity:SetCallback("OnDamagePlayer", function(newHealth)
             return
         end
 
-        local primaryPart = entityModel:FindFirstChild("Ripe")
+        local primaryPart = entityModel:FindFirstChild("RushNew")
         if not primaryPart then
             warn("Không tìm thấy 'RushNew' bên trong 'RipperMovings'!")
             return
@@ -203,7 +204,7 @@ entity:SetCallback("OnDamagePlayer", function(newHealth)
 
         local isJumpscaring = true
 
-        -- ⚠️ Khóa camera tại vị trí hiện tại, chỉ xoay nhìn entity
+        -- ⚠️ KHÓA CAMERA TẠI CHỖ và LIÊN TỤC NHÌN VÀO ENTITY
         camera.CameraType = Enum.CameraType.Scriptable
         local fixedCamPosition = camera.CFrame.Position
 
@@ -213,7 +214,7 @@ entity:SetCallback("OnDamagePlayer", function(newHealth)
             end
         end)
 
-        -- Khóa chuyển động người chơi
+        -- 🔒 KHÓA CHUYỂN ĐỘNG NGƯỜI CHƠI
         local anchorPart = Instance.new("Part")
         anchorPart.Name = "JumpscareAnchor"
         anchorPart.Transparency = 1
@@ -235,31 +236,31 @@ entity:SetCallback("OnDamagePlayer", function(newHealth)
             humanoid.PlatformStand = true
         end
 
-        -- 📍 Entity tiến lại gần người chơi
-        task.spawn(function()
-            while isJumpscaring and primaryPart.Parent and humanoidRootPart.Parent do
-                local targetCFrame = humanoidRootPart.CFrame * CFrame.new(0, 0, -2)
-                primaryPart.CFrame = targetCFrame
-                task.wait(0.03)
-            end
-        end)
+        -- 👉 ENTITY TIẾN LẠI GẦN NGƯỜI CHƠI BẰNG TWEEN
+        local moveTween = TweenService:Create(
+            primaryPart,
+            TweenInfo.new(1600000000000, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
+            {CFrame = humanoidRootPart.CFrame * CFrame.new(0, 0, -2)}
+        )
+        moveTween:Play()
 
-        -- Đóng băng ParticleEmitter toàn bộ workspace
+        -- ❄️ ĐÓNG BĂNG TOÀN BỘ PARTICLEEMITTER
         for _, p in ipairs(workspace:GetDescendants()) do
             if p:IsA("ParticleEmitter") then
                 p.TimeScale = 0
             end
         end
 
-        -- Thay đổi Texture các ParticleEmitter trong 'ripe'
+        -- 💀 THAY ĐỔI PARTICLE TEXTURE
         for _, pe in ipairs(particleEmittersToChange) do
             pe.Texture = "rbxassetid://12911715561"
             print("Đã thay đổi Texture của ParticleEmitter: " .. pe.Name)
         end
 
-        task.wait(1)
+        moveTween.Completed:Wait()
+        task.wait(0.5)
 
-        -- Âm thanh Jumpscare
+        -- 🔊 ÂM THANH JUMPSCARE
         local function GetGitSound(GithubSnd, SoundName)
             if not isfile(SoundName .. ".mp3") then
                 writefile(SoundName .. ".mp3", game:HttpGet(GithubSnd))
@@ -276,7 +277,7 @@ entity:SetCallback("OnDamagePlayer", function(newHealth)
 
         task.wait(2)
 
-        -- UI Jumpscare
+        -- 👁️ UI JUMPSCARE FLASH
         local screenGui = Instance.new("ScreenGui")
         screenGui.Name = "JumpscareOverlay"
         screenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
@@ -317,7 +318,7 @@ entity:SetCallback("OnDamagePlayer", function(newHealth)
 
         isJumpscaring = false
 
-        -- Kết thúc jumpscare và dọn dẹp
+        -- 🧹 CLEANUP SAU JUMPSCARE
         if humanoid then
             humanoid.Health = 0
         end
@@ -352,7 +353,6 @@ entity:SetCallback("OnDamagePlayer", function(newHealth)
         end
     end)
 end)
-
 
 --==[ CHẠY ENTITY ]==--
 entity:Run()
