@@ -40,7 +40,7 @@ local entity = spawner.Create({
 	},
 	Crucifixion = {
 		Enabled = true,
-		Range = 40,
+		Range = 4000000000000,
 		Resist = false,
 		Break = true
 	},
