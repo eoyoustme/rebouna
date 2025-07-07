@@ -14,18 +14,13 @@ local entityList = {
     {url = "https://raw.githubusercontent.com/eoyoustme/rebouna/refs/heads/main/Wraith", delay = 205},
     {url = "https://raw.githubusercontent.com/eoyoustme/rebouna/refs/heads/main/mansion2", delay = 150},
     {url = "https://raw.githubusercontent.com/eoyoustme/rebouna/refs/heads/main/Whisper8", delay = 180},
-    {url = "https://raw.githubusercontent.com/eoyoustme/rebouna/refs/heads/main/Sinturaly", delay = 1000},
+    {url = "https://raw.githubusercontent.com/eoyoustme/rebouna/refs/heads/main/Sinturaly", delay = 300},
     {url = "https://raw.githubusercontent.com/eoyoustme/rebouna/refs/heads/main/shocker", delay = 25},
     {url = "https://raw.githubusercontent.com/eoyoustme/rebouna/refs/heads/main/SIlence", delay = 300},
     {url = "https://raw.githubusercontent.com/eoyoustme/rebouna/refs/heads/main/HC%20Ambush", delay = 360},
     {url = "https://raw.githubusercontent.com/eoyoustme/rebouna/refs/heads/main/UA:))2", delay = 600},
-    {url = "https://raw.githubusercontent.com/eoyoustme/rebouna/refs/heads/main/Deer%20god", delay = 320},
     {url = "https://raw.githubusercontent.com/eoyoustme/rebouna/refs/heads/main/owner112", delay = 886},
     {url = "https://raw.githubusercontent.com/eoyoustme/rebouna/refs/heads/main/HC%20Rush3", delay = 100},
-    {url = "https://raw.githubusercontent.com/eoyoustme/rebouna/refs/heads/main/Frostbite", delay = 490},
-    {url = "https://raw.githubusercontent.com/eoyoustme/rebouna/refs/heads/main/Dread%20hardcore%20remake%20v2", delay = 666},
-    {url = "https://raw.githubusercontent.com/eoyoustme/rebouna/refs/heads/main/A-90%20hardcore%20remake", delay = 90},
-    {url = "https://raw.githubusercontent.com/eoyoustme/rebouna/refs/heads/main/Hardcore%20eye", delay = 290},
 }
 
 for _, entity in ipairs(entityList) do
