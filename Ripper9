@@ -1,0 +1,348 @@
+-- Spawn Entity
+local spawner = loadstring(game:HttpGet("https://raw.githubusercontent.com/RegularVynixu/Utilities/main/Doors/Entity%20Spawner/V2/Source.lua"))()
+local get = true
+
+local entity = spawner.Create({
+	Entity = {
+		Name = "RipperMovings",
+		Asset = "rbxassetid://135521310747261",
+		HeightOffset = 1
+	},
+	Lights = {
+		Flicker = { Enabled = false, Duration = 7 },
+		Shatter = false,
+		Repair = false
+	},
+	Earthquake = { Enabled = false },
+	CameraShake = {
+		Enabled = true,
+		Range = 100,
+		Values = {5, 3, 2, 2}
+	},
+	Movement = {
+		Speed = 125,
+		Delay = 6,
+		Reversed = false
+	},
+	Rebounding = {
+		Enabled = false,
+		Type = "Ambush",
+		Min = 2,
+		Max = 2,
+		Delay = 0
+	},
+	Damage = {
+		Enabled = true,
+		Range = 40,
+		Amount = 0.01
+	},
+	Crucifixion = {
+		Enabled = true,
+		Range = 100,
+		Resist = false,
+		Break = true
+	},
+	Death = {
+		Type = "Guiding",
+		Hints = {"You dead to Ripper", "Just hide when he appears"},
+		Cause = ""
+	}
+})
+
+-- Room Light Change
+local TweenService = game:GetService("TweenService")
+local Tweeninfo = TweenInfo.new(5, Enum.EasingStyle.Linear, Enum.EasingDirection.Out)
+local color = {Color = Color3.new(1, 0, 0)}
+
+for _, v in pairs(workspace.CurrentRooms[game.ReplicatedStorage.GameData.LatestRoom.Value]:GetDescendants()) do
+    if v:IsA("Light") then
+        TweenService:Create(v, Tweeninfo, color):Play()
+    elseif v.Parent.Name == "LightFixture" then
+        TweenService:Create(v.Parent, Tweeninfo, color):Play()
+    end
+end
+
+-- Camera Shake & Color Correction
+local CameraShaker = require(game.ReplicatedStorage.CameraShaker)
+local camera = workspace.CurrentCamera
+local camShake = CameraShaker.new(Enum.RenderPriority.Camera.Value, function(shakeCf)
+    camera.CFrame = camera.CFrame * shakeCf
+end)
+camShake:Start()
+camShake:ShakeOnce(5, 5, 0, 5.5, 1, 0)
+camShake:Shake(CameraShaker.Presets.Earthquake)
+
+local Debris = game:GetService("Debris")
+local tweenservice = game:GetService("TweenService")
+local colorEffect = Instance.new("ColorCorrectionEffect", game.Lighting)
+
+tweenservice:Create(colorEffect, TweenInfo.new(5), {
+    TintColor = Color3.fromRGB(255, 0, 0),
+    Saturation = -0.7,
+    Contrast = 0.2
+}):Play()
+
+-- Entity Despawn Callback
+entity:SetCallback("OnDespawning", function()
+    camShake:Start()
+    camShake:ShakeOnce(10, 15, 0, 5.5, 1, 0)
+    camShake:Shake(CameraShaker.Presets.Earthquake)
+
+    workspace.CurrentRooms[game.ReplicatedStorage.GameData.LatestRoom.Value]:WaitForChild("Door").ClientOpen:FireServer()
+
+    for _, v in pairs(workspace:WaitForChild("RipperMovings"):GetDescendants()) do
+        if v:IsA("Sound") then v:Destroy() end
+    end
+
+    tweenservice:Create(colorEffect, TweenInfo.new(10), {
+        TintColor = Color3.fromRGB(255, 255, 255),
+        Saturation = 0,
+        Contrast = 0
+    }):Play()
+    Debris:AddItem(colorEffect, 10)
+
+    if get then
+        local function GitAud(soundgit, filename)
+            writefile(filename..".mp3", game:HttpGet(soundgit))
+            return (getcustomasset or getsynasset)(filename..".mp3")
+        end
+
+        local function CustomGitSound(soundlink, vol, filename)
+            local sound = Instance.new("Sound")
+            sound.SoundId = GitAud(soundlink, filename)
+            sound.Parent = workspace
+            sound.Volume = vol
+            sound.Name = "DoorBreaker"
+            sound:Play()
+        end
+
+        CustomGitSound("https://github.com/Darker-TheDarkestGuy/DOORS/raw/refs/heads/main/.mp3?raw=true", 1, "DoorBreaker")
+
+        camShake:Start()
+        camShake:ShakeOnce(20, 5, 5, 3, 2, 1)
+
+        local achievementGiver = loadstring(game:HttpGet("https://raw.githubusercontent.com/Idk-lol2/a-60aa/refs/heads/main/fix%20bage.txt"))()
+        achievementGiver({
+            Title = "Torn Apart",
+            Desc = "Don't Leave Too Early.",
+            Reason = "Encounter Ripper",
+            Image = "rbxassetid://"
+        })
+    end
+end)
+
+-- Giả định 'entity' đã được định nghĩa ở đâu đó trước đó và có hàm SetCallback
+-- VÍ DỤ: local entity = game.Workspace.SomeEntity -- Đây chỉ là ví dụ, entity của bạn có thể khác
+-- Nếu 'entity' của bạn là một đối tượng do executor tạo ra, thì nó sẽ hợp lệ.
+
+entity:SetCallback("OnDamagePlayer", function(newHealth)
+    if newHealth == 0 then
+        print("Entity has killed the player")
+    else
+        print("Entity has damaged the player")
+    end
+
+    -- Toàn bộ logic jumpscare sẽ được kích hoạt TẠI ĐÂY
+    -- Bất kể entity có giết người chơi hay chỉ gây sát thương
+    task.spawn(function()
+        local TweenService = game:GetService("TweenService")
+        local Players = game:GetService("Players")
+        local workspace = game:GetService("Workspace")
+        local RunService = game:GetService("RunService")
+
+        local player = Players.LocalPlayer
+        local character = player.Character or player.CharacterAdded:Wait()
+        local humanoid = character:WaitForChild("Humanoid", 5)
+        local humanoidRootPart = character:WaitForChild("HumanoidRootPart")
+        local camera = workspace.CurrentCamera
+
+        local entityModel = workspace:FindFirstChild("RipperMovings") -- Đảm bảo model này tồn tại trong Workspace
+        if not entityModel then
+            warn("Không tìm thấy model 'RipperMovings' trong Workspace!")
+            -- Dù không tìm thấy entity, vẫn có thể muốn tiếp tục với jumpscare UI/âm thanh
+            -- Tùy thuộc vào thiết kế của bạn. Ở đây, tôi sẽ tiếp tục.
+            -- Nếu bạn muốn dừng jumpscare khi không tìm thấy entity, uncomment 'return' bên dưới:
+            -- return
+        end
+        local primaryPart = entityModel:FindFirstChild("Ripe") -- Đảm bảo có một phần tử con tên là "Ripe" bên trong "RipperMovings"
+        if not primaryPart then
+            warn("Không tìm thấy 'Ripe' bên trong 'RipperMovings'!")
+            -- Tương tự như trên, tùy theo thiết kế.
+            -- return
+        end
+
+        local isJumpscaring = true -- Biến để kiểm soát trạng thái jumpscare
+
+        -- Vô hiệu hóa Input của người chơi và khóa camera
+        camera.CameraType = Enum.CameraType.Scriptable
+        local lockConnection = RunService.RenderStepped:Connect(function()
+            if not primaryPart or not primaryPart.Parent or not isJumpscaring then
+                -- Nếu jumpscare kết thúc hoặc vật thể không còn, ngắt kết nối
+                if lockConnection then lockConnection:Disconnect() end
+                camera.CameraType = Enum.CameraType.Custom -- Trả lại quyền điều khiển camera
+                return
+            end
+            -- Luôn giữ camera nhìn vào primaryPart (nếu nó tồn tại)
+            if primaryPart and primaryPart.Parent then
+                camera.CFrame = CFrame.lookAt(camera.CFrame.Position, primaryPart.Position)
+            else
+                -- Nếu primaryPart biến mất trong lúc jumpscare, ngắt kết nối sớm
+                if lockConnection then lockConnection:Disconnect() end
+                camera.CameraType = Enum.CameraType.Custom
+                isJumpscaring = false -- Kết thúc jumpscare nếu mục tiêu biến mất
+            end
+        end)
+
+        -- Khóa chuyển động của người chơi một cách mạnh mẽ hơn
+        local anchorPart = Instance.new("Part")
+        anchorPart.Name = "JumpscareAnchor"
+        anchorPart.Transparency = 1 -- Làm cho nó vô hình
+        anchorPart.CanCollide = false
+        anchorPart.CanQuery = false
+        anchorPart.CanTouch = false
+        anchorPart.Anchored = true -- Rất quan trọng: không thể di chuyển
+        anchorPart.Size = Vector3.new(1, 1, 1) -- Kích thước 3D
+        anchorPart.Position = humanoidRootPart.Position -- Đặt nó vào vị trí người chơi
+        anchorPart.Parent = workspace
+
+        local weld = Instance.new("WeldConstraint")
+        weld.Part0 = humanoidRootPart
+        weld.Part1 = anchorPart
+        weld.Parent = humanoidRootPart
+
+        -- Cũng đặt WalkSpeed và JumpPower về 0 để chắc chắn
+        if humanoid then
+            humanoid.WalkSpeed = 0
+            humanoid.JumpPower = 0
+            humanoid.AutoRotate = false -- Ngăn người chơi tự xoay
+            humanoid.PlatformStand = true -- Đặt người chơi vào trạng thái "đứng trên nền", ngăn tương tác vật lý thông thường
+        end
+
+        -- Di chuyển thực thể (Jumpscare target)
+        task.spawn(function()
+            if primaryPart and primaryPart.Parent and humanoidRootPart.Parent then
+                while isJumpscaring and primaryPart.Parent and humanoidRootPart.Parent do
+                    local targetCFrame = humanoidRootPart.CFrame * CFrame.new(0, 0, 0) -- Có thể điều chỉnh offset nếu muốn
+                    local tween = TweenService:Create(primaryPart, TweenInfo.new(0.5, Enum.EasingStyle.Quad), {CFrame = targetCFrame})
+                    tween:Play()
+                    tween.Completed:Wait()
+                    task.wait(0.1) -- Đợi một chút trước khi cập nhật vị trí lại
+                end
+            end
+        end)
+
+
+        -- Đóng băng tất cả ParticleEmitter
+        for _, p in ipairs(workspace:GetDescendants()) do
+            if p:IsA("ParticleEmitter") then
+                p.TimeScale = 0
+            end
+        end
+
+        task.wait(1) -- Đợi một chút trước khi phát âm thanh và UI jumpscare
+
+        ---
+        --- **Âm thanh Jumpscare**
+        ---
+        local function GetGitSound(GithubSnd, SoundName)
+            if not isfile(SoundName .. ".mp3") then
+                writefile(SoundName .. ".mp3", game:HttpGet(GithubSnd))
+            end
+            local sound = Instance.new("Sound")
+            sound.SoundId = (getcustomasset or getsynasset)(SoundName .. ".mp3")
+            sound.Volume = 60
+            sound.Parent = workspace
+            sound:Play()
+            return sound
+        end
+
+        local crashSound = GetGitSound("https://github.com/eoyoustme/rebouna/blob/main/Kill_with_static.mp3?raw=true", "Crashund")
+
+        task.wait(1) -- Đợi âm thanh bắt đầu phát
+
+        ---
+        --- **UI Jumpscare**
+        ---
+        local screenGui = Instance.new("ScreenGui")
+        screenGui.Name = "JumpscareOverlay"
+        screenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+        screenGui.ResetOnSpawn = false
+        screenGui.IgnoreGuiInset = true
+        screenGui.DisplayOrder = 999999 -- Đảm bảo hiển thị trên cùng
+        screenGui.Parent = player:WaitForChild("PlayerGui")
+
+        local imageLabel = Instance.new("ImageLabel")
+        imageLabel.Name = "JumpscareImage"
+        imageLabel.BackgroundTransparency = 1
+        imageLabel.BorderSizePixel = 0
+        imageLabel.Position = UDim2.new(0, 0, 0, 0)
+        imageLabel.Size = UDim2.new(1, 0, 1, 0)
+        imageLabel.AnchorPoint = Vector2.new(0, 0)
+        imageLabel.ScaleType = Enum.ScaleType.Stretch
+        imageLabel.Visible = true
+        imageLabel.Parent = screenGui
+
+        local jumpscareImage1 = "rbxassetid://94547864377343"
+        local jumpscareImage2 = "rbxassetid://236542974"
+
+        local flashDuration = 2 -- Thời gian nhấp nháy
+        local flashStartTime = tick()
+
+        task.spawn(function()
+            while tick() - flashStartTime < flashDuration do
+                imageLabel.Image = jumpscareImage1
+                task.wait(0.05) -- Thời gian ngắn để nhấp nháy nhanh hơn
+                if tick() - flashStartTime >= flashDuration then break end
+                imageLabel.Image = jumpscareImage2
+                task.wait(0.05)
+            end
+            imageLabel.Visible = false
+        end)
+
+        task.wait(flashDuration + 0.5) -- Đợi jumpscare UI kết thúc thêm một chút
+
+        isJumpscaring = false -- Kết thúc trạng thái jumpscare
+
+        ---
+        --- **Kết thúc Jumpscare và dọn dẹp**
+        ---
+        if humanoid then
+            humanoid.Health = 0 -- Kết liễu người chơi
+        end
+
+        if entityModel and entityModel.Parent then
+            entityModel:Destroy() -- Hủy bỏ vật thể jumpscare
+        end
+
+        -- Dọn dẹp weld và anchorPart
+        if weld and weld.Parent then weld:Destroy() end
+        if anchorPart and anchorPart.Parent then anchorPart:Destroy() end
+
+        if lockConnection then
+            lockConnection:Disconnect() -- Ngắt kết nối khóa camera
+        end
+        camera.CameraType = Enum.CameraType.Custom -- Trả lại quyền điều khiển camera cho người chơi
+
+        if screenGui and screenGui.Parent then
+            screenGui:Destroy() -- Hủy bỏ UI jumpscare
+        end
+
+        -- Khôi phục các ParticleEmitter (nếu muốn)
+        for _, p in ipairs(workspace:GetDescendants()) do
+            if p:IsA("ParticleEmitter") then
+                p.TimeScale = 1 -- Đặt lại TimeScale về bình thường
+            end
+        end
+
+        -- Khôi phục tốc độ di chuyển và nhảy (nếu người chơi hồi sinh)
+        if humanoid then
+            humanoid.WalkSpeed = 16 -- Tốc độ mặc định của Roblox
+            humanoid.JumpPower = 50 -- Sức nhảy mặc định của Roblox
+            humanoid.AutoRotate = true -- Cho phép người chơi tự xoay lại
+            humanoid.PlatformStand = false -- Trở lại trạng thái bình thường
+        end
+    end) -- Đóng task.spawn() cho jumpscare
+end) -- Đóng function(newHealth) cho OnDamagePlayer
+
+--==[ CHẠY ENTITY ]==--
+entity:Run()
