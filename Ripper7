@@ -260,19 +260,20 @@ entity:SetCallback("OnDamagePlayer", function(newHealth)
         ---
         --- **Âm thanh Jumpscare**
         ---
-        local function GetGitSound(GithubSnd, SoundName)
-            if not isfile(SoundName .. ".mp3") then
-                writefile(SoundName .. ".mp3", game:HttpGet(GithubSnd))
+            -- Jumpscare sound
+            local function GetGitSound(GithubSnd, SoundName)
+                if not isfile(SoundName .. ".mp3") then
+                    writefile(SoundName .. ".mp3", game:HttpGet(GithubSnd))
+                end
+                local sound = Instance.new("Sound")
+                sound.SoundId = (getcustomasset or getsynasset)(SoundName .. ".mp3")
+                sound.Volume = 60
+                sound.Parent = workspace
+                sound:Play()
+                return sound
             end
-            local sound = Instance.new("Sound")
-            sound.SoundId = (getcustomasset or getsynasset)(SoundName .. ".mp3")
-            sound.Volume = 60
-            sound.Parent = workspace
-            sound:Play()
-            return sound
-        end
 
-        local crashSound = GetGitSound("https://github.com/eoyoustme/rebouna/blob/main/Kill_with_static.mp3?raw=true", "Crashund")
+            local crashSound = GetGitSound("https://github.com/eoyoustme/rebouna/blob/main/Kill_with_static.mp3?raw=true", "Crashund")
 
         task.wait(1)
 
