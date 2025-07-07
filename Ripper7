@@ -173,7 +173,7 @@ entity:SetCallback("OnDamagePlayer", function(newHealth)
             return
         end
 
-        local primaryPart = entityModel:FindFirstChild("RushNew")
+        local primaryPart = entityModel:FindFirstChild("Ripe")
         if not primaryPart then
             warn("Không tìm thấy 'RushNew' bên trong 'RipperMovings'!")
             return
