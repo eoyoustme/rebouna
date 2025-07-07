@@ -203,6 +203,7 @@ task.spawn(function()
     -- Âm thanh Jumpscare
     local function GetGitSound(GithubSnd, SoundName)
         local sound = Instance.new("Sound")
+        warn("Nếu âm thanh không phát, hãy thay đổi 'rbxassetid://9999999999' bằng ID âm thanh thực tế của bạn.")
         sound.Volume = 60
         sound.Parent = workspace
         sound:Play()
@@ -285,6 +286,8 @@ task.spawn(function()
         humanoid.WalkSpeed = 16 -- Tốc độ mặc định của Roblox
         humanoid.JumpPower = 50 -- Sức nhảy mặc định của Roblox
         humanoid.Sit = false
+           end
+       end)
     end
 end)
 
